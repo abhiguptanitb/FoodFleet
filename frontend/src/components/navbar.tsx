@@ -1,4 +1,4 @@
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useAppData } from "../context/AppContext";
 import { useEffect, useState } from "react";
 import { CgShoppingCart } from "react-icons/cg";
@@ -13,6 +13,8 @@ import {
 import L from "leaflet";
 import toast from "react-hot-toast";
 import { LuLocateFixed } from "react-icons/lu";
+import { FiLogOut } from "react-icons/fi";
+import { getRoleHomePath } from "../utils/roleRoutes";
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -55,6 +57,9 @@ const RecenterMap = ({
 const Navbar = () => {
   const {
     isAuth,
+    user,
+    setIsAuth,
+    setUser,
     city,
     quauntity,
     location,
@@ -63,8 +68,36 @@ const Navbar = () => {
     refreshCurrentLocation,
   } = useAppData();
   const currLocation = useLocation();
+  const navigate = useNavigate();
 
-  const isHomePage = currLocation.pathname === "/";
+  const homePath = getRoleHomePath(user?.role);
+  const isHomePage =
+    currLocation.pathname === "/browse" ||
+    currLocation.pathname === "/customer" ||
+    currLocation.pathname === "/";
+  const isLoginPage = currLocation.pathname.toLowerCase() === "/login";
+  const isCustomer = !user?.role || user.role === "customer";
+  const roleLabels: Record<string, string> = {
+    customer: "Guest Dining",
+    seller: "Restaurant Partner",
+    rider: "Delivery Partner",
+    admin: "Admin Console",
+  };
+  const roleLabel = isLoginPage
+    ? "Welcome"
+    : user?.role
+      ? roleLabels[user.role] ||
+        `${user.role.charAt(0).toUpperCase()}${user.role.slice(1)}`
+      : roleLabels.customer;
+  const dashboardLabel =
+    user?.role === "seller"
+      ? "Seller Dashboard"
+      : user?.role === "rider"
+        ? "Rider Dashboard"
+        : user?.role === "admin"
+          ? "Admin Panel"
+          : "My Account";
+  const firstLetter = user?.name?.charAt(0)?.toUpperCase() || "F";
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState(searchParams.get("search") || "");
@@ -120,80 +153,156 @@ const Navbar = () => {
     }
   };
 
+  const logoutHandler = () => {
+    localStorage.setItem("token", "");
+    localStorage.removeItem("sellerActiveRestaurantId");
+    setUser(null);
+    setIsAuth(false);
+    toast.success("Logged out successfully");
+    navigate("/login");
+  };
+
   return (
     <>
-      <div className="w-full bg-white shadow-sm">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
-        <Link
-          to={"/"}
-          className="text-2xl font-bold text-[#E23744] cursor-pointer"
-        >
-          FoodFleet
-        </Link>
-
-        <div className="flex items-center gap-4">
-          <Link to={"/cart"} className="relative">
-            <CgShoppingCart className="h-6 w-6 text-[#E23744]" />
-            <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-[#E23744] text-xs font-semibold text-white">
-              {quauntity}
-            </span>
-          </Link>
-
-          {isAuth ? (
-            <Link to="/account" className="font-medium text-[#E23744]">
-              Account
-            </Link>
-          ) : (
-            <Link to="/Login" className="font-medium text-[#E23744]">
-              Login
-            </Link>
-          )}
-        </div>
-      </div>
-
-      {/* search bar */}
-      {isHomePage && (
-        <div className="border-t px-4 py-3">
-          <div className="mx-auto flex max-w-7xl items-center rounded-lg border shadow-sm">
-            <button
-              type="button"
-              onClick={() => setLocationModalOpen(true)}
-              className="flex items-center gap-2 border-r px-3 text-gray-700 transition hover:bg-gray-50"
+      <div className="neon-nav sticky top-0 z-40">
+        <div className="page-wrap">
+          <div className="flex flex-wrap items-center justify-between gap-3 py-3">
+            <Link
+              to={homePath}
+              className="flex items-center gap-3 text-2xl font-black text-[var(--text)]"
             >
-              <BiMapPin className="h-4 w-4 text-[#E23744]" />
-              <span className="max-w-35 truncate text-sm">{city}</span>
-            </button>
-            <div className="flex flex-1 items-center gap-2 px-3">
-              <BiSearch className="h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search for restaurant"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full py-2 text-sm outline-none"
-              />
+              <span className="brand-mark flex h-11 w-11 items-center justify-center rounded-2xl text-lg text-white">
+                F
+              </span>
+              FoodFleet
+            </Link>
+
+            <div className="order-2 mr-auto flex min-w-0 sm:order-none sm:mr-0">
+              <span className="role-badge max-w-[150px] truncate sm:max-w-none">
+                {roleLabel}
+              </span>
             </div>
+
+            {isHomePage && isCustomer && (
+              <div className="order-3 flex w-full flex-col gap-2 lg:order-2 lg:w-auto lg:flex-1 lg:flex-row lg:items-center lg:px-4">
+                <button
+                  type="button"
+                  onClick={() => setLocationModalOpen(true)}
+                  className="flex items-center gap-3 rounded-2xl border-2 border-[var(--text)] bg-white px-3 py-2 text-left text-[var(--text)] shadow-[3px_3px_0_var(--accent-2)] hover:bg-[var(--accent-soft)] lg:min-w-[220px]"
+                >
+                  <BiMapPin className="h-5 w-5 shrink-0 text-[var(--accent)]" />
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--accent)]">
+                      Delivering To
+                    </p>
+                    <span className="block truncate text-sm font-medium">
+                      {city}
+                    </span>
+                  </div>
+                </button>
+
+                <div className="flex flex-1 items-center gap-3 rounded-2xl border-2 border-[var(--text)] bg-white px-3 py-2.5 shadow-[3px_3px_0_var(--accent-3)]">
+                  <BiSearch className="h-5 w-5 text-[var(--accent)]" />
+                  <input
+                    type="text"
+                    placeholder="Search restaurants or cuisines"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="w-full bg-transparent text-sm outline-none placeholder:text-[#7b8790]"
+                  />
+                </div>
+              </div>
+            )}
+
+            {!isLoginPage && (
+              <div className="order-2 flex items-center gap-3 lg:order-3">
+                {isAuth && isCustomer && (
+                  <Link
+                    to={"/cart"}
+                    className="nav-action relative flex h-12 w-12 items-center justify-center rounded-2xl hover:-translate-y-0.5"
+                  >
+                    <CgShoppingCart className="h-6 w-6" />
+                    <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full border border-[var(--text)] bg-[var(--accent)] text-[11px] font-semibold text-white">
+                      {quauntity}
+                    </span>
+                  </Link>
+                )}
+
+                {isAuth ? (
+                  isCustomer ? (
+                    <Link
+                      to="/account"
+                      className="nav-action rounded-2xl px-4 py-3 text-sm font-semibold hover:-translate-y-0.5"
+                    >
+                      {dashboardLabel}
+                    </Link>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Link
+                        to={homePath}
+                        className="nav-action flex min-w-0 items-center gap-3 rounded-2xl px-3 py-2 hover:-translate-y-0.5"
+                      >
+                        {user?.image ? (
+                          <img
+                            src={user.image}
+                            alt={user.name}
+                            className="h-9 w-9 rounded-xl object-cover"
+                          />
+                        ) : (
+                          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--accent)] text-sm font-black text-white">
+                            {firstLetter}
+                          </span>
+                        )}
+                        <span className="hidden min-w-0 text-left md:block">
+                          <span className="block max-w-[170px] truncate text-sm font-black">
+                            {user?.name || dashboardLabel}
+                          </span>
+                          <span className="block max-w-[170px] truncate text-[11px] font-medium text-[var(--text-soft)]">
+                            {user?.email || dashboardLabel}
+                          </span>
+                        </span>
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={logoutHandler}
+                        className="nav-action flex h-12 w-12 items-center justify-center rounded-2xl hover:-translate-y-0.5"
+                        aria-label="Logout"
+                      >
+                        <FiLogOut className="h-5 w-5" />
+                      </button>
+                    </div>
+                  )
+                ) : (
+                <Link
+                  to="/Login"
+                  className="brand-button px-4 py-3 text-sm font-semibold"
+                >
+                  Sign In
+                </Link>
+                )}
+              </div>
+            )}
           </div>
         </div>
-      )}
       </div>
 
       {locationModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4">
-          <div className="w-full max-w-3xl rounded-3xl bg-white p-5 shadow-2xl sm:p-6">
+          <div className="w-full max-w-3xl rounded-[32px] border border-white/70 bg-[#fffdfb] p-5 shadow-[0_26px_70px_rgba(0,0,0,0.25)] sm:p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-xl font-semibold text-slate-900">
-                  Choose Your Location
+                <p className="pill-label">Location</p>
+                <h2 className="mt-3 text-2xl font-semibold text-slate-900">
+                  Choose your delivery area
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  Select automatically or click on the map to choose manually.
+                  Use your current position or tap the map to pin the delivery spot.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setLocationModalOpen(false)}
-                className="rounded-full px-3 py-1 text-sm text-slate-500 hover:bg-slate-100"
+                className="ghost-button rounded-full px-3 py-1 text-sm text-slate-500 hover:bg-slate-100"
               >
                 Close
               </button>
@@ -204,7 +313,7 @@ const Navbar = () => {
                 type="button"
                 onClick={handleUseCurrentLocation}
                 disabled={loadingLocation}
-                className="inline-flex items-center gap-2 rounded-xl bg-[#E23744] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#d32f3a] disabled:opacity-60"
+                className="brand-button px-4 py-3 text-sm font-semibold disabled:opacity-60"
               >
                 <LuLocateFixed size={16} />
                 {loadingLocation ? "Detecting..." : "Use Current Location"}
@@ -214,9 +323,9 @@ const Navbar = () => {
                 type="button"
                 onClick={handleConfirmManualLocation}
                 disabled={loadingLocation || !selectedPoint}
-                className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+                className="ghost-button px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
               >
-                Save Manual Selection
+                Save Pinned Location
               </button>
             </div>
 

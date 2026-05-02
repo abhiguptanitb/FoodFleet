@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { IMenuItem, IRestaurant } from "../types";
+import type { IMenuItem, IOrder, IRestaurant } from "../types";
 import axios from "axios";
 import { restaurantService } from "../main";
 import AddRestaurant from "../components/AddRestaurant";
@@ -8,30 +8,31 @@ import AddMenuItem from "../components/AddMenuItem";
 import RestaurantOrders from "../components/RestaurantOrders";
 import {
   FiEdit3,
-  FiLogOut,
+  FiBarChart2,
+  FiGrid,
   FiMapPin,
   FiPlus,
+  FiPlusCircle,
   FiSave,
   FiShoppingBag,
   FiX,
 } from "react-icons/fi";
 import { BiUpload } from "react-icons/bi";
 import toast from "react-hot-toast";
-import { useAppData } from "../context/AppContext";
+import LoadingState from "../components/LoadingState";
 
 type SellerTab = "menu" | "add-item" | "sales";
 
 const ACTIVE_RESTAURANT_STORAGE_KEY = "sellerActiveRestaurantId";
 
 const Restaurant = () => {
-  const { user, setIsAuth, setUser } = useAppData();
-
   const [restaurants, setRestaurants] = useState<IRestaurant[]>([]);
   const [selectedRestaurantId, setSelectedRestaurantId] = useState("");
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<SellerTab>("menu");
   const [showAddRestaurant, setShowAddRestaurant] = useState(false);
   const [menuItems, setMenuItems] = useState<IMenuItem[]>([]);
+  const [, setRestaurantOrders] = useState<IOrder[]>([]);
   const [togglingRestaurantId, setTogglingRestaurantId] = useState<string | null>(
     null
   );
@@ -42,10 +43,42 @@ const Restaurant = () => {
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editImage, setEditImage] = useState<File | null>(null);
+  const [salesStats, setSalesStats] = useState({
+    revenue: 0,
+    totalOrdersDelivered: 0,
+    topItem: { name: "No sales yet", quantity: 0 },
+  });
 
   const selectedRestaurant =
     restaurants.find((restaurant) => restaurant._id === selectedRestaurantId) ||
     null;
+
+  const fetchSalesStats = async (restaurantId: string) => {
+    try {
+      const { data } = await axios.get(
+        `${restaurantService}/api/order/stats/sales/${restaurantId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      if (data.success && data.stats) {
+        setSalesStats({
+          revenue: data.stats.revenue,
+          totalOrdersDelivered: data.stats.totalOrdersDelivered,
+          topItem: data.stats.topItem || {
+            name: "No sales yet",
+            quantity: 0,
+          },
+        });
+      }
+    } catch (error) {
+      console.log("Error fetching sales stats:", error);
+      // Keep existing stats on error
+    }
+  };
 
   const editingRestaurant = useMemo(
     () =>
@@ -119,10 +152,18 @@ const Restaurant = () => {
   useEffect(() => {
     if (!selectedRestaurant?._id) {
       setMenuItems([]);
+      setRestaurantOrders([]);
+      setSalesStats({
+        revenue: 0,
+        totalOrdersDelivered: 0,
+        topItem: { name: "No sales yet", quantity: 0 },
+      });
       return;
     }
 
     fetchMenuItems(selectedRestaurant._id);
+    fetchSalesStats(selectedRestaurant._id);
+    setRestaurantOrders([]);
     localStorage.setItem(
       ACTIVE_RESTAURANT_STORAGE_KEY,
       selectedRestaurant._id
@@ -212,64 +253,22 @@ const Restaurant = () => {
     }
   };
 
-  const logoutHandler = () => {
-    localStorage.setItem("token", "");
-    localStorage.removeItem(ACTIVE_RESTAURANT_STORAGE_KEY);
-    setIsAuth(false);
-    setUser(null);
-    toast.success("Logged out successfully");
-  };
-
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-gray-500">Loading your restaurants...</p>
-      </div>
+      <LoadingState
+        eyebrow="Partner Workspace"
+        title="Loading your outlets"
+        copy="We are preparing restaurant profiles, menus, sales, and live orders."
+      />
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f4ee] px-4 py-6">
+    <div className="role-page px-4 py-6">
       <div className="mx-auto max-w-7xl space-y-6">
-        <section className="overflow-hidden rounded-[32px] border border-[#ecdccf] bg-white shadow-[0_18px_50px_rgba(120,74,37,0.08)]">
-          <div className="bg-[radial-gradient(circle_at_top_left,_rgba(255,108,55,0.12),_transparent_34%),linear-gradient(135deg,#fff8f1_0%,#fff_58%)] p-4 sm:p-6">
+        <section className="overflow-hidden rounded-[28px] border-2 border-[var(--text)] bg-white shadow-[8px_8px_0_var(--text)]">
+          <div className="bg-[radial-gradient(circle_at_top_left,_var(--role-glow),_transparent_34%),linear-gradient(135deg,#ffffff_0%,var(--accent-soft)_58%)] p-4 sm:p-6">
             <div className="space-y-6">
-              <div className="rounded-[28px] border border-[#edd8ca] bg-white p-5 shadow-[0_16px_40px_rgba(96,61,36,0.08)]">
-                <div className="flex items-center gap-4">
-                  {user?.image ? (
-                    <img
-                      src={user.image}
-                      alt={user.name}
-                      className="h-16 w-16 rounded-2xl object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#fff1e8] text-xl font-semibold text-[#e4572e]">
-                      {user?.name?.[0] || "S"}
-                    </div>
-                  )}
-
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#b48668]">
-                      Seller Profile
-                    </p>
-                    <h2 className="mt-1 truncate text-lg font-semibold text-[#1f1a17]">
-                      {user?.name}
-                    </h2>
-                    <p className="truncate text-sm text-[#6d5d52]">
-                      {user?.email}
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  onClick={logoutHandler}
-                  className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-[#ead4c5] px-4 py-3 text-sm font-semibold text-[#4f3f34] transition hover:border-[#e4572e] hover:text-[#e4572e]"
-                >
-                  <FiLogOut size={16} />
-                  Logout
-                </button>
-              </div>
-
               <div className="-mx-4 overflow-x-auto px-4 pb-2">
                 <div className="mb-4 flex items-center justify-between gap-3 px-1">
                   <p className="text-sm font-semibold text-[#1f1a17]">
@@ -289,8 +288,8 @@ const Restaurant = () => {
                         key={restaurant._id}
                         className={`w-[284px] shrink-0 overflow-hidden rounded-[28px] border bg-white transition ${
                           isActive
-                            ? "border-[#e4572e] shadow-[0_16px_35px_rgba(228,87,46,0.16)]"
-                            : "border-[#ead8cb] shadow-[0_10px_24px_rgba(88,58,37,0.08)]"
+                            ? "border-[var(--accent)] shadow-[6px_6px_0_var(--text)]"
+                            : "border-[#11182733] shadow-[4px_4px_0_rgba(17,24,39,0.1)]"
                         }`}
                       >
                         <div className="relative h-40 overflow-hidden bg-[#f4e8df]">
@@ -311,7 +310,7 @@ const Restaurant = () => {
                               {restaurant.isOpen ? "Open" : "Closed"}
                             </span>
                             {isActive && (
-                              <span className="rounded-full bg-[#e4572e] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
+                              <span className="rounded-full border border-[var(--text)] bg-[var(--accent)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
                                 Active
                               </span>
                             )}
@@ -390,9 +389,9 @@ const Restaurant = () => {
                     onClick={() =>
                       setShowAddRestaurant((currentValue) => !currentValue)
                     }
-                    className="flex w-[250px] shrink-0 flex-col items-center justify-center rounded-[28px] border border-dashed border-[#e5c8b4] bg-white px-6 py-8 text-center transition hover:border-[#e4572e] hover:bg-[#fff8f4]"
+                    className="flex w-[250px] shrink-0 flex-col items-center justify-center rounded-[28px] border-2 border-dashed border-[var(--text)] bg-white px-6 py-8 text-center shadow-[5px_5px_0_var(--accent-2)] transition hover:border-[var(--accent)] hover:bg-[var(--accent-soft)]"
                   >
-                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#fff1e8] text-[#e4572e]">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--accent)] text-white">
                       <FiPlus size={24} />
                     </div>
                     <p className="mt-4 text-base font-semibold text-[#1f1a17]">
@@ -405,52 +404,79 @@ const Restaurant = () => {
                 </div>
               </div>
 
-              {showAddRestaurant && (
-                <div className="rounded-[28px] border border-[#f1d8c7] bg-white p-3 sm:p-4">
-                  <AddRestaurant
-                    fetchMyRestaurant={fetchMyRestaurant}
-                    hasExistingRestaurants={restaurants.length > 0}
-                    onCancel={() => setShowAddRestaurant(false)}
-                  />
-                </div>
-              )}
+              {/* Add Restaurant Modal is rendered below, outside the section */}
             </div>
           </div>
         </section>
 
         {selectedRestaurant && (
-          <RestaurantOrders restaurantId={selectedRestaurant._id} />
+          <RestaurantOrders
+            restaurantId={selectedRestaurant._id}
+            onOrdersChange={setRestaurantOrders}
+          />
         )}
 
         {selectedRestaurant && (
-          <div className="overflow-hidden rounded-[28px] border border-[#edd8ca] bg-white shadow-[0_18px_40px_rgba(94,63,36,0.08)]">
-            <div className="flex border-b border-[#efdfd2]">
+          <div className="overflow-hidden rounded-[28px] border-2 border-[var(--text)] bg-white shadow-[8px_8px_0_var(--text)]">
+            <div className="flex flex-col gap-4 border-b-2 border-[var(--text)] bg-[var(--accent-soft)] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--accent)]">
+                  Restaurant Tools
+                </p>
+                <h2 className="mt-2 text-xl font-semibold text-[#1f1a17]">
+                  {selectedRestaurant.name}
+                </h2>
+              </div>
+
+              <div className="inline-grid grid-cols-3 rounded-2xl border-2 border-[var(--text)] bg-white p-1 shadow-[4px_4px_0_var(--accent-2)]">
               {[
-                { key: "menu", label: "Menu Items" },
-                { key: "add-item", label: "Add Item" },
-                { key: "sales", label: "Sales" },
+                { key: "menu", label: "Menu", icon: FiGrid },
+                { key: "add-item", label: "Add", icon: FiPlusCircle },
+                { key: "sales", label: "Sales", icon: FiBarChart2 },
               ].map((currentTab) => (
-                <button
-                  key={currentTab.key}
-                  onClick={() => setTab(currentTab.key as SellerTab)}
-                  className={`flex-1 px-4 py-4 text-sm font-semibold transition ${
-                    tab === currentTab.key
-                      ? "border-b-2 border-[#e4572e] text-[#e4572e]"
-                      : "text-[#7b6a5f] hover:text-[#312721]"
-                  }`}
-                >
-                  {currentTab.label}
-                </button>
+                  <button
+                    key={currentTab.key}
+                    onClick={() => setTab(currentTab.key as SellerTab)}
+                    className={`inline-flex min-w-20 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition sm:min-w-28 ${
+                      tab === currentTab.key
+                        ? "bg-[var(--accent)] text-white shadow-[3px_3px_0_var(--text)]"
+                        : "text-[#4f5d68] hover:bg-[var(--accent-soft)] hover:text-[var(--text)]"
+                    }`}
+                  >
+                    <currentTab.icon size={16} />
+                    <span>{currentTab.label}</span>
+                  </button>
               ))}
+              </div>
             </div>
 
-            <div className="p-5 sm:p-6">
+            <div className="p-4 sm:p-6">
               {tab === "menu" && (
-                <MenuItems
-                  items={menuItems}
-                  onItemDeleted={() => fetchMenuItems(selectedRestaurant._id)}
-                  isSeller={true}
-                />
+                <div className="space-y-5">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-[var(--accent)]">
+                        {menuItems.length} items listed
+                      </p>
+                      <h3 className="mt-1 text-2xl font-semibold text-[#1f1a17]">
+                        Manage menu availability
+                      </h3>
+                    </div>
+                    <button
+                      onClick={() => setTab("add-item")}
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#1f1a17] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#342a24]"
+                    >
+                      <FiPlusCircle size={16} />
+                      Add Item
+                    </button>
+                  </div>
+
+                  <MenuItems
+                    items={menuItems}
+                    onItemDeleted={() => fetchMenuItems(selectedRestaurant._id)}
+                    isSeller={true}
+                  />
+                </div>
               )}
               {tab === "add-item" && (
                 <AddMenuItem
@@ -459,14 +485,59 @@ const Restaurant = () => {
                 />
               )}
               {tab === "sales" && (
-                <div className="rounded-3xl border border-dashed border-[#e8d8ca] bg-[#fffaf7] p-8 text-center">
-                  <p className="text-lg font-semibold text-[#1f1a17]">
-                    Sales section for {selectedRestaurant.name}
-                  </p>
-                  <p className="mt-2 text-sm text-[#6d5d52]">
-                    This area is ready for branch-wise revenue, order trends,
-                    and performance insights.
-                  </p>
+                <div className="grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
+                  <div className="rounded-3xl border border-[#efdfd2] bg-[#fffaf7] p-5">
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#b48668]">
+                      Sales
+                    </p>
+                    <h3 className="mt-3 text-2xl font-semibold text-[#1f1a17]">
+                      Insights are ready to plug in
+                    </h3>
+                    <p className="mt-3 text-sm leading-6 text-[#6d5d52]">
+                      Use this panel for daily revenue, best sellers, order
+                      volume, and payout snapshots.
+                    </p>
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    {[
+                      {
+                        label: "Revenue",
+                        value: `Rs ${salesStats.revenue.toFixed(2)}`,
+                        detail: "From delivered paid orders",
+                        tone: "text-[#e4572e]",
+                      },
+                      {
+                        label: "Orders",
+                        value: String(salesStats.totalOrdersDelivered),
+                        detail: "Delivered orders counted",
+                        tone: "text-sky-600",
+                      },
+                      {
+                        label: "Top Item",
+                        value: salesStats.topItem.name,
+                        detail: salesStats.topItem.quantity
+                          ? `${salesStats.topItem.quantity} sold`
+                          : "No delivered item sales yet",
+                        tone: "text-emerald-600",
+                      },
+                    ].map((item) => (
+                      <div
+                        key={item.label}
+                        className="rounded-3xl border border-[#efdfd2] bg-white p-5 shadow-[0_14px_28px_rgba(86,57,35,0.06)]"
+                      >
+                        <p className="text-sm font-semibold text-[#6d5d52]">
+                          {item.label}
+                        </p>
+                        <p className={`mt-4 text-2xl font-semibold ${item.tone}`}>
+                          {item.value}
+                        </p>
+                        <p className="mt-2 text-xs leading-5 text-[#8a7464]">
+                          {item.detail}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -556,6 +627,15 @@ const Restaurant = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Add Restaurant Modal */}
+      {showAddRestaurant && (
+        <AddRestaurant
+          fetchMyRestaurant={fetchMyRestaurant}
+          hasExistingRestaurants={restaurants.length > 0}
+          onCancel={() => setShowAddRestaurant(false)}
+        />
       )}
     </div>
   );

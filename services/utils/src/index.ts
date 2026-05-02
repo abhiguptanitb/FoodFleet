@@ -8,7 +8,12 @@ import { connectRabbitMQ } from "./config/rabbitmq.js";
 
 dotenv.config();
 
-connectRabbitMQ();
+try {
+  await connectRabbitMQ();
+} catch (error) {
+  console.error(error instanceof Error ? error.message : error);
+  process.exit(1);
+}
 
 const app = express();
 

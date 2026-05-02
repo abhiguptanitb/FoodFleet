@@ -1,6 +1,9 @@
 import { ObjectId } from "mongodb";
 import TryCatch from "../middlewares/trycatch.js";
 import {
+  getAddressCollection,
+  getCartCollection,
+  getOrderCollection,
   getRestaurantCollection,
   getRiderCollection,
   getUserCollection,
@@ -59,6 +62,79 @@ export const getPendingRiders = TryCatch(async (req, res) => {
   res.json({
     count: riders.length,
     riders,
+  });
+});
+
+export const getCustomers = TryCatch(async (req, res) => {
+  const customers = await (await getUserCollection())
+    .find({ role: "customer" })
+    .sort({ updatedAt: -1, createdAt: -1 })
+    .project({ password: 0 })
+    .toArray();
+
+  res.json({
+    count: customers.length,
+    customers,
+  });
+});
+
+export const deleteCustomer = TryCatch(async (req, res) => {
+  const { id } = req.params;
+
+  if (typeof id !== "string") {
+    return res.status(400).json({
+      message: "invalid customer id",
+    });
+  }
+
+  if (!ObjectId.isValid(id)) {
+    return res.status(400).json({
+      message: "Invalid object id",
+    });
+  }
+
+  const userObjectId = new ObjectId(id);
+  const usersCollection = await getUserCollection();
+
+  const customer = await usersCollection.findOne({
+    _id: userObjectId,
+    role: "customer",
+  });
+
+  if (!customer) {
+    return res.status(404).json({
+      message: "Customer not found",
+    });
+  }
+
+  const userId = userObjectId.toString();
+
+  const ordersResult = await (await getOrderCollection()).deleteMany({ userId });
+  const cartsResult = await (await getCartCollection()).deleteMany({
+    $or: [{ userId }, { userId: userObjectId }],
+  });
+  const addressesResult = await (await getAddressCollection()).deleteMany({
+    userId,
+  });
+  const userResult = await usersCollection.deleteOne({
+    _id: userObjectId,
+    role: "customer",
+  });
+
+  if (userResult.deletedCount === 0) {
+    return res.status(404).json({
+      message: "Customer not found",
+    });
+  }
+
+  res.json({
+    message: "Customer and related records deleted successfully",
+    deleted: {
+      customers: userResult.deletedCount,
+      orders: ordersResult.deletedCount,
+      carts: cartsResult.deletedCount,
+      addresses: addressesResult.deletedCount,
+    },
   });
 });
 

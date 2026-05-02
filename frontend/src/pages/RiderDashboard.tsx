@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAppData } from "../context/AppContext";
 import { useSocket } from "../context/SocketContext";
 import axios from "axios";
@@ -7,10 +7,10 @@ import toast from "react-hot-toast";
 import { BiUpload } from "react-icons/bi";
 import { FiLogOut, FiTrendingUp, FiTruck } from "react-icons/fi";
 import type { IOrder } from "../types";
-import audio from "../assets/faaah.mp3";
 import RiderOrderRequest from "../components/RiderOrderRequest";
 import RiderCurrentOrder from "../components/RiderCurrentOrder";
 import RiderOrderMap from "../components/RiderOrderMap";
+import LoadingState from "../components/LoadingState";
 
 interface IRider {
   _id: string;
@@ -39,7 +39,6 @@ const RiderDashboard = () => {
   const [toggling, setToggling] = useState(false);
   const [incomingOrders, setIncomingOrders] = useState<string[]>([]);
   const [currentOrder, setCurrentOrder] = useState<IOrder | null>(null);
-  const [audioUnlocked, setAudioUnlocked] = useState(false);
   const [statsRange, setStatsRange] = useState<RiderStatsRange>("7d");
   const [statsLoading, setStatsLoading] = useState(false);
   const [stats, setStats] = useState<IRiderStats>({
@@ -47,26 +46,6 @@ const RiderDashboard = () => {
     totalOrdersDelivered: 0,
     range: "7d",
   });
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  useEffect(() => {
-    audioRef.current = new Audio(audio);
-    audioRef.current.preload = "auto";
-  }, []);
-
-  const unlockAudio = async () => {
-    try {
-      if (!audioRef.current) return;
-      await audioRef.current.play();
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      setAudioUnlocked(true);
-      toast.success("Sound Enabled");
-    } catch (error) {
-      toast.error("Tap again to enable sound");
-    }
-  };
-
   useEffect(() => {
     if (!socket) return;
 
@@ -74,11 +53,6 @@ const RiderDashboard = () => {
       setIncomingOrders((prev) =>
         prev.includes(orderId) ? prev : [...prev, orderId]
       );
-
-      if (audioUnlocked && audioRef.current) {
-        audioRef.current.currentTime = 0;
-        audioRef.current.play().catch(() => {});
-      }
 
       setTimeout(() => {
         setIncomingOrders((prev) => prev.filter((id) => id !== orderId));
@@ -90,7 +64,7 @@ const RiderDashboard = () => {
     return () => {
       socket.off("order:available", onOrderAvailable);
     };
-  }, [socket, audioUnlocked]);
+  }, [socket]);
 
   const fetchNearbyAvailableOrders = async () => {
     try {
@@ -317,67 +291,144 @@ const RiderDashboard = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center text-gray-500">
-        Loading rider details...
-      </div>
+      <LoadingState
+        eyebrow="Delivery Workspace"
+        title="Checking rider readiness"
+        copy="We are loading your profile, availability, current order, and earnings snapshot."
+      />
     );
   }
 
   if (!profile)
     return (
-      <div className="min-h-screen bg-gray-50 px-4 py-6">
-        <div className="mx-auto max-w-lg rounded-xl bg-white p-6 shadow-sm space-y-5">
-          <h1 className="text-xl font-semibold">Add Your Profile</h1>
-          <input
-            type="number"
-            placeholder="Aadhar number"
-            value={aadharNumber}
-            onChange={(e) => setaadharNumber(e.target.value)}
-            className="w-full rounded-lg border px-4 py-2 text-sm outline-none"
-          />
-          <input
-            type="number"
-            placeholder="Contact Number"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
-            className="w-full rounded-lg border px-4 py-2 text-sm outline-none"
-          />
+      <div className="page-wrap flex min-h-screen items-center py-8">
+        <div className="grid w-full gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+          <section className="hero-panel fade-up hidden px-8 py-10 lg:block">
+            <div className="flex items-center justify-between gap-4">
+              <p className="pill-label">Rider Onboarding</p>
+              <button
+                onClick={logoutHandler}
+                className="ghost-button px-4 py-2 text-sm font-semibold"
+              >
+                Logout
+              </button>
+            </div>
+            <h1 className="section-title mt-5">
+              Set up your rider profile and start taking deliveries.
+            </h1>
+            <p className="section-copy mt-4 max-w-xl">
+              Add your identity details, upload a profile photo, and share your
+              live location so nearby orders can be assigned correctly.
+            </p>
 
-          <input
-            type="text"
-            placeholder="driving Licence"
-            value={drivingLicenseNumber}
-            onChange={(e) => setDrivingLicenseNumber(e.target.value)}
-            className="w-full rounded-lg border px-4 py-2 text-sm outline-none"
-          />
+            <div className="mt-8 grid gap-4 sm:grid-cols-3">
+              <div className="soft-card p-5">
+                <p className="text-lg font-semibold text-[#1f1a17]">Identity</p>
+                <p className="mt-2 text-sm text-[#6d5d52]">
+                  Submit your Aadhaar and driving licence details.
+                </p>
+              </div>
+              <div className="soft-card p-5">
+                <p className="text-lg font-semibold text-[#1f1a17]">Location</p>
+                <p className="mt-2 text-sm text-[#6d5d52]">
+                  Use your current coordinates for nearby order matching.
+                </p>
+              </div>
+              <div className="soft-card p-5">
+                <p className="text-lg font-semibold text-[#1f1a17]">Approval</p>
+                <p className="mt-2 text-sm text-[#6d5d52]">
+                  Once verified, you can go online and accept deliveries.
+                </p>
+              </div>
+            </div>
+          </section>
 
-          <label className="flex cursor-pointer items-center gap-3 rounded-lg border p-4 text-sm text-gray-600 hover:bg-gray-50">
-            <BiUpload className="h-5 w-5 text-red-500" />
-            {image ? image.name : "Upload your image"}
-            <input
-              type="file"
-              accept="image/*"
-              hidden
-              onChange={(e) => setImage(e.target.files?.[0] || null)}
-            />
-          </label>
+          <section className="glass-card fade-up mx-auto w-full max-w-xl px-6 py-8 sm:px-8 sm:py-10">
+            <div className="flex items-center justify-between gap-4">
+              <p className="pill-label">Create Profile</p>
+              <button
+                onClick={logoutHandler}
+                className="ghost-button px-4 py-2 text-sm font-semibold"
+              >
+                Logout
+              </button>
+            </div>
+            <h1 className="mt-5 text-center text-3xl font-semibold text-[#1f1a17]">
+              Add your rider details
+            </h1>
+            <p className="section-copy mt-3 text-center text-sm">
+              Complete your rider profile once and we will use it for verification
+              and order assignment.
+            </p>
 
-          <button
-            className="w-full rounded-lg py-3 text-sm font-semibold text-white bg-[#e23744]"
-            disabled={submitting}
-            onClick={handleSubmit}
-          >
-            {submitting ? "Submitting..." : "Add Profile"}
-          </button>
+            <div className="mt-8 space-y-4">
+              <input
+                type="number"
+                placeholder="Aadhaar number"
+                value={aadharNumber}
+                onChange={(e) => setaadharNumber(e.target.value)}
+                className="field-input"
+              />
+              <input
+                type="number"
+                placeholder="Contact number"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                className="field-input"
+              />
+
+              <input
+                type="text"
+                placeholder="Driving licence number"
+                value={drivingLicenseNumber}
+                onChange={(e) => setDrivingLicenseNumber(e.target.value)}
+                className="field-input"
+              />
+
+              <label className="flex cursor-pointer items-center gap-3 rounded-[20px] border border-[#e7d3c6] bg-white px-4 py-4 text-sm text-[#6d5d52] shadow-[0_12px_24px_rgba(80,51,31,0.06)] hover:bg-[#fff8f3]">
+                <BiUpload className="h-5 w-5 text-[#e4572e]" />
+                <span className="truncate">
+                  {image ? image.name : "Upload your rider photo"}
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={(e) => setImage(e.target.files?.[0] || null)}
+                />
+              </label>
+
+              <div className="rounded-2xl bg-[#fff7f1] px-4 py-4 text-xs leading-6 text-[#8a6d59]">
+                Your current location will be requested when you submit this form
+                so we can register you for nearby delivery requests.
+              </div>
+
+              <button
+                className="brand-button w-full py-3.5 text-sm font-semibold"
+                disabled={submitting}
+                onClick={handleSubmit}
+              >
+                {submitting ? "Submitting..." : "Create Rider Profile"}
+              </button>
+
+              <button
+                type="button"
+                onClick={logoutHandler}
+                className="ghost-button w-full py-3.5 text-sm font-semibold lg:hidden"
+              >
+                Logout and go to login
+              </button>
+            </div>
+          </section>
         </div>
       </div>
     );
 
   return (
-    <div className="space-y-4 px-4 py-4 sm:px-6">
+    <div className="role-page space-y-4 px-4 py-4 sm:px-6">
       <div className="mx-auto max-w-6xl space-y-4">
         <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-3xl border border-orange-100 bg-white p-5 shadow-sm sm:p-6">
+          <div className="rounded-[26px] border-2 border-[var(--text)] bg-white p-5 shadow-[7px_7px_0_var(--text)] sm:p-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-4">
                 <img
@@ -393,10 +444,10 @@ const RiderDashboard = () => {
                     {profile.phoneNumber}
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
-                    <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
+                    <span className="rounded-full border border-[var(--text)] bg-[var(--accent-2)] px-3 py-1 text-xs font-semibold text-[#07111f]">
                       {profile.isVerified ? "Verified" : "Pending"}
                     </span>
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                    <span className="rounded-full border border-[var(--text)] bg-[var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[var(--accent-deep)]">
                       {profile.isAvailble ? "Online" : "Offline"}
                     </span>
                   </div>
@@ -412,8 +463,8 @@ const RiderDashboard = () => {
                       toggling
                         ? "bg-gray-400"
                         : profile.isAvailble
-                        ? "bg-gray-700 hover:bg-gray-800"
-                        : "bg-[#e23744] hover:bg-[#cc3240]"
+                        ? "bg-[#111827] hover:bg-[#243145]"
+                        : "bg-[var(--accent)] hover:bg-[var(--accent-deep)]"
                     }`}
                   >
                     {toggling
@@ -426,7 +477,7 @@ const RiderDashboard = () => {
 
                 <button
                   onClick={logoutHandler}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+                  className="ghost-button inline-flex items-center justify-center gap-2 px-5 py-3 text-sm font-semibold"
                 >
                   <FiLogOut size={16} />
                   Logout
@@ -434,13 +485,13 @@ const RiderDashboard = () => {
               </div>
             </div>
 
-            <p className="mt-5 text-sm leading-7 text-blue-500">
+            <p className="mt-5 rounded-2xl border border-[var(--accent)] bg-[var(--accent-soft)] px-4 py-3 text-sm leading-7 text-[var(--accent-deep)]">
               Please be within a 500 m radius of any restaurant (which we call a
               hotspot) before going online as a rider to receive orders.
             </p>
           </div>
 
-          <div className="rounded-3xl border border-orange-100 bg-white p-5 shadow-sm sm:p-6">
+          <div className="rounded-[26px] border-2 border-[var(--text)] bg-white p-5 shadow-[7px_7px_0_var(--accent-2)] sm:p-6">
             <div className="flex flex-wrap gap-2">
               {[
                 { key: "today", label: "Today" },
@@ -452,7 +503,7 @@ const RiderDashboard = () => {
                   onClick={() => setStatsRange(option.key as RiderStatsRange)}
                   className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
                     statsRange === option.key
-                      ? "bg-[#e23744] text-white"
+                      ? "bg-[var(--accent)] text-white shadow-[3px_3px_0_var(--text)]"
                       : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                   }`}
                 >
@@ -462,12 +513,12 @@ const RiderDashboard = () => {
             </div>
 
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl bg-gradient-to-br from-[#fff4ef] to-[#fffaf7] p-5">
+              <div className="rounded-2xl border-2 border-[var(--text)] bg-gradient-to-br from-[var(--accent-soft)] to-white p-5">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium text-slate-500">
                     Total Earnings
                   </p>
-                  <FiTrendingUp className="text-[#e23744]" size={18} />
+                  <FiTrendingUp className="text-[var(--accent)]" size={18} />
                 </div>
                 <p className="mt-4 text-3xl font-semibold text-slate-900">
                   {statsLoading ? "..." : `Rs ${stats.totalEarnings}`}
@@ -477,7 +528,7 @@ const RiderDashboard = () => {
                 </p>
               </div>
 
-              <div className="rounded-2xl bg-gradient-to-br from-[#eef8ff] to-[#f8fcff] p-5">
+              <div className="rounded-2xl border-2 border-[var(--text)] bg-gradient-to-br from-[#e8fff6] to-white p-5">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium text-slate-500">
                     Orders Delivered
@@ -494,31 +545,6 @@ const RiderDashboard = () => {
             </div>
           </div>
         </div>
-
-        {!audioUnlocked && (
-          <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3">
-                {/* <span className="text-2xl">Bell</span> */}
-                <div>
-                  <p className="font-medium text-blue-900">
-                    Enable Sound Notification
-                  </p>
-                  <p className="text-sm text-blue-700">
-                    Get notified when new orders arrive
-                  </p>
-                </div>
-              </div>
-
-              <button
-                onClick={unlockAudio}
-                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
-              >
-                Enable sound
-              </button>
-            </div>
-          </div>
-        )}
 
         {profile.isAvailble && incomingOrders.length > 0 && (
           <div className="space-y-3">

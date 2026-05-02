@@ -6,8 +6,14 @@ import riderRoutes from "./routes/rider.js";
 import { connectRabbitMQ } from "./config/rabbitmq.js";
 import { startOrderReadyConsumer } from "./config/orderReady.consumer.js";
 dotenv.config();
-await connectRabbitMQ();
-startOrderReadyConsumer();
+try {
+    await connectRabbitMQ();
+    startOrderReadyConsumer();
+}
+catch (error) {
+    console.error(error instanceof Error ? error.message : error);
+    process.exit(1);
+}
 const app = express();
 app.use(express.json());
 app.use(cors());

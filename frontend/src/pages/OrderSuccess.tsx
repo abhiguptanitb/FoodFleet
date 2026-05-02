@@ -6,7 +6,6 @@ import toast from "react-hot-toast";
 
 const OrderSuccess = () => {
   const [params] = useSearchParams();
-
   const sessionId = params.get("session_id");
 
   useEffect(() => {
@@ -18,20 +17,27 @@ const OrderSuccess = () => {
           sessionId,
         });
 
-        toast.success("Payment successfull 🎉");
+        toast.success("Payment successful");
       } catch (error) {
-        toast.error("Stripe verification faild");
+        toast.error("Stripe verification failed");
         console.log(error);
       }
     };
 
     verifyPayment();
   }, [sessionId]);
+
   return (
-    <div className="flex h-[60vh] items-center justify-center">
-      <h1 className="text-2xl font-bold text-green-600">
-        Payment Successfull 🎉
-      </h1>
+    <div className="page-wrap flex min-h-[60vh] items-center justify-center py-8">
+      <div className="glass-card px-6 py-12 text-center">
+        <p className="pill-label mx-auto w-fit">Stripe</p>
+        <h1 className="mt-4 text-3xl font-semibold text-[#198754]">
+          Payment successful
+        </h1>
+        <p className="section-copy mt-3 text-sm">
+          Your Stripe payment has been verified and your order is confirmed.
+        </p>
+      </div>
     </div>
   );
 };

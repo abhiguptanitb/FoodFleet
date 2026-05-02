@@ -1,6 +1,38 @@
 import { Request, Response, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 
+const normalizeId = (value: unknown) => {
+  if (typeof value === "string" && value.trim()) {
+    return value.trim();
+  }
+
+  if (value && typeof value === "object") {
+    const candidate = value as {
+      toString?: () => string;
+      $oid?: string;
+    };
+
+    if (typeof candidate.$oid === "string" && candidate.$oid.trim()) {
+      return candidate.$oid.trim();
+    }
+
+    if (typeof candidate.toString === "function") {
+      const stringValue = candidate.toString();
+      if (stringValue && stringValue !== "[object Object]") {
+        return stringValue;
+      }
+    }
+  }
+
+  return "";
+};
+
+const normalizeJwtUser = (user: any) => ({
+  ...user,
+  _id: normalizeId(user?._id),
+  restaurantId: normalizeId(user?.restaurantId),
+});
+
 export interface IUser {
   _id: string;
   name: string;
@@ -50,7 +82,7 @@ export const isAuth = async (
       return;
     }
 
-    req.user = decodedValue.user;
+    req.user = normalizeJwtUser(decodedValue.user);
     next();
   } catch (error) {
     res.status(500).json({

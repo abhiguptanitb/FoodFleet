@@ -4,6 +4,40 @@ import { AuthenticatedRequest } from "../middlewares/isAuth.js";
 import TryCatch from "../middlewares/trycatch.js";
 import { Rider } from "../model/Rider.js";
 
+const getUserIdCandidates = (userId: unknown) => {
+  const candidateIds = new Set<string>();
+
+  if (typeof userId === "string" && userId.trim()) {
+    candidateIds.add(userId.trim());
+  }
+
+  if (userId && typeof userId === "object") {
+    const value = userId as {
+      toString?: () => string;
+      $oid?: string;
+    };
+
+    if (typeof value.$oid === "string" && value.$oid.trim()) {
+      candidateIds.add(value.$oid.trim());
+    }
+
+    if (typeof value.toString === "function") {
+      const stringValue = value.toString();
+      if (stringValue && stringValue !== "[object Object]") {
+        candidateIds.add(stringValue);
+      }
+    }
+  }
+
+  return Array.from(candidateIds);
+};
+
+const buildUserIdExpr = (field: string, userId: unknown) => ({
+  $expr: {
+    $in: [{ $toString: `$${field}` }, getUserIdCandidates(userId)],
+  },
+});
+
 export const addRiderProfile = TryCatch(
   async (req: AuthenticatedRequest, res) => {
     const user = req.user;
@@ -50,22 +84,24 @@ export const addRiderProfile = TryCatch(
       latitude,
       longitude,
     } = req.body;
+    const [normalizedUserId] = getUserIdCandidates(user._id);
 
     if (
       !phoneNumber ||
       !aadharNumber ||
       !drivingLicenseNumber ||
       latitude === undefined ||
-      longitude === undefined
+      longitude === undefined ||
+      !normalizedUserId
     ) {
       return res.status(400).json({
         message: "All fields are required",
       });
     }
 
-    const existingProfile = await Rider.findOne({
-      userId: user._id,
-    });
+    const existingProfile = await Rider.findOne(
+      buildUserIdExpr("userId", user._id)
+    );
 
     if (existingProfile) {
       return res.status(400).json({
@@ -74,7 +110,7 @@ export const addRiderProfile = TryCatch(
     }
 
     const riderProfile = await Rider.create({
-      userId: user._id,
+      userId: normalizedUserId,
       picture: uploadResult.url,
       phoneNumber,
       aadharNumber,
@@ -104,7 +140,7 @@ export const fetchMyProfile = TryCatch(
       });
     }
 
-    const account = await Rider.findOne({ userId: user._id });
+    const account = await Rider.findOne(buildUserIdExpr("userId", user._id));
 
     res.json(account);
   }
@@ -140,9 +176,7 @@ export const toggleRiderAvailablity = TryCatch(
       });
     }
 
-    const rider = await Rider.findOne({
-      userId: user._id,
-    });
+    const rider = await Rider.findOne(buildUserIdExpr("userId", user._id));
 
     if (!rider) {
       return res.status(404).json({
@@ -183,7 +217,10 @@ export const acceptOrder = TryCatch(async (req: AuthenticatedRequest, res) => {
     });
   }
 
-  const rider = await Rider.findOne({ userId: riderUserId, isAvailble: true });
+  const rider = await Rider.findOne({
+    ...buildUserIdExpr("userId", riderUserId),
+    isAvailble: true,
+  });
 
   if (!rider) {
     return res.status(404).json({ message: "rider not found" });
@@ -209,7 +246,7 @@ export const acceptOrder = TryCatch(async (req: AuthenticatedRequest, res) => {
     if (data.success) {
       const riderDetails = await Rider.findOneAndUpdate(
         {
-          userId: riderUserId,
+          ...buildUserIdExpr("userId", riderUserId),
           isAvailble: true,
         },
         { isAvailble: false },
@@ -236,7 +273,7 @@ export const fetchMyCurrentOrder = TryCatch(
     }
 
     const rider = await Rider.findOne({
-      userId: riderUserId,
+      ...buildUserIdExpr("userId", riderUserId),
       isVerified: true,
     });
 
@@ -276,7 +313,7 @@ export const fetchNearbyAvailableOrders = TryCatch(
     }
 
     const rider = await Rider.findOne({
-      userId: riderUserId,
+      ...buildUserIdExpr("userId", riderUserId),
       isVerified: true,
       isAvailble: true,
     });
@@ -319,7 +356,7 @@ export const fetchRiderDashboardStats = TryCatch(
       });
     }
 
-    const rider = await Rider.findOne({ userId });
+    const rider = await Rider.findOne(buildUserIdExpr("userId", userId));
 
     if (!rider) {
       return res.status(404).json({
@@ -359,7 +396,7 @@ export const updateOrderStatus = TryCatch(
       });
     }
 
-    const rider = await Rider.findOne({ userId: userId });
+    const rider = await Rider.findOne(buildUserIdExpr("userId", userId));
 
     if (!rider) {
       return res.status(404).json({

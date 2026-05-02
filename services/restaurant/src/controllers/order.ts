@@ -666,3 +666,102 @@ export const updateOrderStatusRider = TryCatch(async (req, res) => {
     });
   }
 });
+
+/**
+ * 📊 Get Restaurant Sales Statistics
+ * - Calculates revenue from delivered paid orders
+ * - Counts total delivered orders
+ * - Finds top-selling item
+ * - Data is persisted at database level (immune to user deletions)
+ * - New sales automatically accumulate
+ */
+export const getRestaurantSalesStats = TryCatch(
+  async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    const { restaurantId } = req.params;
+
+    if (!user) {
+      return res.status(401).json({
+        message: "Unauthorized",
+      });
+    }
+
+    if (!restaurantId) {
+      return res.status(400).json({
+        message: "Restaurant id is required",
+      });
+    }
+
+    // Verify the user owns this restaurant
+    const restaurant = await Restaurant.findById(restaurantId);
+
+    if (!restaurant) {
+      return res.status(404).json({
+        message: "Restaurant not found",
+      });
+    }
+
+    if (restaurant.ownerId !== user._id.toString()) {
+      return res.status(401).json({
+        message: "You are not allowed to view stats for this restaurant",
+      });
+    }
+
+    try {
+      // Get all delivered and paid orders (persistent data)
+      const deliveredOrders = await Order.find({
+        restaurantId: restaurantId,
+        status: "delivered",
+        paymentStatus: "paid",
+      });
+
+      // Calculate total revenue
+      const revenue = deliveredOrders.reduce(
+        (sum, order) => sum + (order.totalAmount || 0),
+        0
+      );
+
+      // Count total delivered orders
+      const totalOrdersDelivered = deliveredOrders.length;
+
+      // Calculate top-selling item
+      const itemSalesMap = new Map<string, number>();
+
+      deliveredOrders.forEach((order) => {
+        order.items.forEach((item) => {
+          const currentCount = itemSalesMap.get(item.name) || 0;
+          itemSalesMap.set(item.name, currentCount + item.quauntity);
+        });
+      });
+
+      const topItemArray = Array.from(itemSalesMap.entries()).sort(
+        (a, b) => b[1] - a[1]
+      );
+
+      const topItem = topItemArray[0]
+        ? {
+            name: topItemArray[0][0],
+            quantity: topItemArray[0][1],
+          }
+        : null;
+
+      return res.json({
+        success: true,
+        stats: {
+          revenue: Number(revenue.toFixed(2)),
+          totalOrdersDelivered,
+          topItem: topItem || {
+            name: "No sales yet",
+            quantity: 0,
+          },
+          lastUpdated: new Date(),
+        },
+      });
+    } catch (error) {
+      console.error("Error calculating sales stats:", error);
+      return res.status(500).json({
+        message: "Error calculating sales statistics",
+      });
+    }
+  }
+);

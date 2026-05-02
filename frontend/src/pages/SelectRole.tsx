@@ -3,14 +3,39 @@ import { useAppData } from "../context/AppContext";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { authService } from "../main";
+import { getRoleHomePath } from "../utils/roleRoutes";
 
 type Role = "customer" | "rider" | "seller" | null;
+
 const SelectRole = () => {
   const [role, setRole] = useState<Role>(null);
   const { setUser } = useAppData();
   const navigate = useNavigate();
-
-  const roles: Role[] = ["customer", "rider", "seller"];
+  const roles: {
+    key: Exclude<Role, null>;
+    accent: string;
+    shadow: string;
+    copy: string;
+  }[] = [
+    {
+      key: "customer",
+      accent: "bg-[#ff3d57]",
+      shadow: "shadow-[5px_5px_0_#ccff00]",
+      copy: "Order from nearby kitchens and track every delivery.",
+    },
+    {
+      key: "rider",
+      accent: "bg-[#00a6ff]",
+      shadow: "shadow-[5px_5px_0_#00ff9d]",
+      copy: "Go online, accept orders, and manage delivery earnings.",
+    },
+    {
+      key: "seller",
+      accent: "bg-[#7c3cff]",
+      shadow: "shadow-[5px_5px_0_#ffcb13]",
+      copy: "Run restaurants, menus, orders, and sales from one place.",
+    },
+  ];
 
   const addRole = async () => {
     try {
@@ -26,45 +51,61 @@ const SelectRole = () => {
 
       localStorage.setItem("token", data.token);
       setUser(data.user);
-
-      navigate("/", { replace: true });
+      navigate(getRoleHomePath(data.user?.role), { replace: true });
     } catch (error) {
-      alert("something went wrong");
+      alert("Something went wrong");
       console.log(error);
     }
   };
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-white px-4">
-      <div className="w-full max-w-sm space-y-6">
-        <h1 className="text-center text-2xl font-bold">Choose your role</h1>
 
-        <div className="space-y-4">
+  return (
+    <div className="page-wrap flex min-h-screen items-center py-8">
+      <div className="hero-panel fade-up mx-auto w-full max-w-2xl px-6 py-10 text-center">
+        <p className="pill-label mx-auto w-fit">Get Started</p>
+        <h1 className="mt-4 text-4xl font-black text-[var(--text)]">
+          Choose how you want to use FoodFleet
+        </h1>
+        <p className="section-copy mx-auto mt-3 max-w-xl text-sm">
+          Pick your lane. Each role gets its own color system and dashboard
+          energy while keeping the same FoodFleet flow underneath.
+        </p>
+
+        <div className="mt-8 grid gap-4 sm:grid-cols-3">
           {roles.map((r) => (
             <button
-              key={r}
-              onClick={() => setRole(r)}
-              className={`
-                    w-full rounded-xl border px-4 py-3 text-sm font-medium capitalize transition ${
-                      role === r
-                        ? "border-[#E23744] bg-[#E23744] text-white"
-                        : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
-                    }
-                    `}
+              key={r.key}
+              onClick={() => setRole(r.key)}
+              className={`rounded-[22px] border-2 px-4 py-5 text-left transition hover:-translate-y-1 ${
+                role === r.key
+                  ? `border-[var(--text)] bg-white ${r.shadow}`
+                  : "border-[#11182733] bg-white hover:border-[var(--text)]"
+              }`}
             >
-              Continue as {r}
+              <span
+                className={`mb-4 flex h-10 w-10 items-center justify-center rounded-2xl border-2 border-[var(--text)] text-sm font-black uppercase text-white ${r.accent}`}
+              >
+                {r.key[0]}
+              </span>
+              <p className="text-lg font-black capitalize text-[var(--text)]">
+                {r.key}
+              </p>
+              <p className="mt-2 text-sm leading-6 text-[var(--text-soft)]">
+                {r.copy}
+              </p>
             </button>
           ))}
         </div>
+
         <button
           disabled={!role}
           onClick={addRole}
-          className={`w-full rounded-xl px-4 py-3 text-sm font-semibold transition ${
+          className={`mt-8 w-full rounded-[20px] py-3.5 text-sm font-semibold transition ${
             role
-              ? "border-[#E23744] bg-[#E23744] text-white hover:bg[#d32f3a]"
-              : "bg-gray-200 text-gray-400 cursor-not-allowed"
+              ? "brand-button"
+              : "cursor-not-allowed rounded-[20px] bg-[#e7dfd7] text-[#9d8e82]"
           }`}
         >
-          Next
+          Continue
         </button>
       </div>
     </div>

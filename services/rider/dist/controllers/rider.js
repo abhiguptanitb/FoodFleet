@@ -2,6 +2,30 @@ import axios from "axios";
 import getBuffer from "../config/datauri.js";
 import TryCatch from "../middlewares/trycatch.js";
 import { Rider } from "../model/Rider.js";
+const getUserIdCandidates = (userId) => {
+    const candidateIds = new Set();
+    if (typeof userId === "string" && userId.trim()) {
+        candidateIds.add(userId.trim());
+    }
+    if (userId && typeof userId === "object") {
+        const value = userId;
+        if (typeof value.$oid === "string" && value.$oid.trim()) {
+            candidateIds.add(value.$oid.trim());
+        }
+        if (typeof value.toString === "function") {
+            const stringValue = value.toString();
+            if (stringValue && stringValue !== "[object Object]") {
+                candidateIds.add(stringValue);
+            }
+        }
+    }
+    return Array.from(candidateIds);
+};
+const buildUserIdExpr = (field, userId) => ({
+    $expr: {
+        $in: [{ $toString: `$${field}` }, getUserIdCandidates(userId)],
+    },
+});
 export const addRiderProfile = TryCatch(async (req, res) => {
     const user = req.user;
     if (!user) {
@@ -30,25 +54,25 @@ export const addRiderProfile = TryCatch(async (req, res) => {
         buffer: fileBuffer.content,
     });
     const { phoneNumber, aadharNumber, drivingLicenseNumber, latitude, longitude, } = req.body;
+    const [normalizedUserId] = getUserIdCandidates(user._id);
     if (!phoneNumber ||
         !aadharNumber ||
         !drivingLicenseNumber ||
         latitude === undefined ||
-        longitude === undefined) {
+        longitude === undefined ||
+        !normalizedUserId) {
         return res.status(400).json({
             message: "All fields are required",
         });
     }
-    const existingProfile = await Rider.findOne({
-        userId: user._id,
-    });
+    const existingProfile = await Rider.findOne(buildUserIdExpr("userId", user._id));
     if (existingProfile) {
         return res.status(400).json({
             message: "Rider profile already exists",
         });
     }
     const riderProfile = await Rider.create({
-        userId: user._id,
+        userId: normalizedUserId,
         picture: uploadResult.url,
         phoneNumber,
         aadharNumber,
@@ -72,7 +96,7 @@ export const fetchMyProfile = TryCatch(async (req, res) => {
             message: "Unauthorized",
         });
     }
-    const account = await Rider.findOne({ userId: user._id });
+    const account = await Rider.findOne(buildUserIdExpr("userId", user._id));
     res.json(account);
 });
 export const toggleRiderAvailablity = TryCatch(async (req, res) => {
@@ -98,9 +122,7 @@ export const toggleRiderAvailablity = TryCatch(async (req, res) => {
             message: "location is required",
         });
     }
-    const rider = await Rider.findOne({
-        userId: user._id,
-    });
+    const rider = await Rider.findOne(buildUserIdExpr("userId", user._id));
     if (!rider) {
         return res.status(404).json({
             message: "Rider profile not found",
@@ -131,7 +153,10 @@ export const acceptOrder = TryCatch(async (req, res) => {
             message: "Please Login",
         });
     }
-    const rider = await Rider.findOne({ userId: riderUserId, isAvailble: true });
+    const rider = await Rider.findOne({
+        ...buildUserIdExpr("userId", riderUserId),
+        isAvailble: true,
+    });
     if (!rider) {
         return res.status(404).json({ message: "rider not found" });
     }
@@ -149,7 +174,7 @@ export const acceptOrder = TryCatch(async (req, res) => {
         });
         if (data.success) {
             const riderDetails = await Rider.findOneAndUpdate({
-                userId: riderUserId,
+                ...buildUserIdExpr("userId", riderUserId),
                 isAvailble: true,
             }, { isAvailble: false }, { new: true });
             res.json({ message: "Order accepted" });
@@ -169,7 +194,7 @@ export const fetchMyCurrentOrder = TryCatch(async (req, res) => {
         });
     }
     const rider = await Rider.findOne({
-        userId: riderUserId,
+        ...buildUserIdExpr("userId", riderUserId),
         isVerified: true,
     });
     if (!rider) {
@@ -199,7 +224,7 @@ export const fetchNearbyAvailableOrders = TryCatch(async (req, res) => {
         });
     }
     const rider = await Rider.findOne({
-        userId: riderUserId,
+        ...buildUserIdExpr("userId", riderUserId),
         isVerified: true,
         isAvailble: true,
     });
@@ -230,7 +255,7 @@ export const fetchRiderDashboardStats = TryCatch(async (req, res) => {
             message: "Please Login",
         });
     }
-    const rider = await Rider.findOne({ userId });
+    const rider = await Rider.findOne(buildUserIdExpr("userId", userId));
     if (!rider) {
         return res.status(404).json({
             message: "Rider profile not found",
@@ -258,7 +283,7 @@ export const updateOrderStatus = TryCatch(async (req, res) => {
             message: "Please Login",
         });
     }
-    const rider = await Rider.findOne({ userId: userId });
+    const rider = await Rider.findOne(buildUserIdExpr("userId", userId));
     if (!rider) {
         return res.status(404).json({
             message: "Please Login",

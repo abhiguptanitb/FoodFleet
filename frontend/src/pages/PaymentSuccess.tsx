@@ -3,49 +3,52 @@ import { useAppData } from "../context/AppContext";
 import { useEffect } from "react";
 import { BiCheckCircle } from "react-icons/bi";
 import { BsArrowRight } from "react-icons/bs";
+import { getRoleHomePath } from "../utils/roleRoutes";
 
 const PaymentSuccess = () => {
   const { paymentId } = useParams<{ paymentId: string }>();
   const navigate = useNavigate();
-
-  const { fetchCart } = useAppData();
+  const { fetchCart, user } = useAppData();
 
   useEffect(() => {
     fetchCart();
   }, []);
+
   return (
-    <div
-      className="flex min-h-[70vh] items-center justify-center
-   px-4"
-    >
-      <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-sm text-center space-y-4">
-        <BiCheckCircle size={64} className="mx-auto text-green-500" />
-
-        <h1 className="text-2xl font-bold text-gray-800">Payment Successful</h1>
-
-        <p className="text-sm text-gray-500">
-          Your order has been placed successfully 🎉
+    <div className="page-wrap flex min-h-[70vh] items-center justify-center py-8">
+      <div className="hero-panel fade-up w-full max-w-xl px-6 py-10 text-center">
+        <BiCheckCircle size={72} className="mx-auto text-[#198754]" />
+        <p className="pill-label mx-auto mt-5 w-fit">Payment Complete</p>
+        <h1 className="mt-4 text-3xl font-semibold text-[#1f1a17]">
+          Your payment was successful
+        </h1>
+        <p className="section-copy mt-3 text-sm">
+          Your order has been placed and the restaurant can start preparing it now.
         </p>
 
         {paymentId && (
-          <div className="rounded-lg bg-gray-50">
-            <span className="text-gray-500">PaymentID: </span>
-            <p className="font-mono break-all text-gray-500">{paymentId}</p>
+          <div className="mx-auto mt-5 max-w-md rounded-2xl bg-white px-4 py-4 text-left shadow-[0_12px_24px_rgba(84,56,35,0.08)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8a6d59]">
+              Payment Reference
+            </p>
+            <p className="mt-2 break-all font-mono text-sm text-[#1f1a17]">
+              {paymentId}
+            </p>
           </div>
         )}
 
-        <div className="space-y-2 pt-2">
+        <div className="mt-6 space-y-3">
           <button
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#e23744] py-3 text-sm font-semibold text-white"
-            onClick={() => navigate("/")}
+            className="brand-button flex w-full items-center justify-center gap-2 py-3.5 text-sm font-semibold"
+            onClick={() => navigate(getRoleHomePath(user?.role))}
           >
             Order More <BsArrowRight size={16} />
           </button>
           <button
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#e23744] py-3 text-sm font-semibold text-white"
+            className="ghost-button flex w-full items-center justify-center gap-2 py-3.5 text-sm font-semibold"
             onClick={() => navigate("/orders")}
           >
-            Your orders <BsArrowRight size={16} />
+            View My Orders <BsArrowRight size={16} />
           </button>
         </div>
       </div>

@@ -5,14 +5,18 @@ import type { IOrder } from "../types";
 import axios from "axios";
 import { restaurantService } from "../main";
 import UserOrderMap from "../components/UserOrderMap";
+import LoadingState from "../components/LoadingState";
+
+const statusLabel = (status: string) => status.replaceAll("_", " ");
 
 const OrderPage = () => {
   const { id } = useParams();
   const { socket } = useSocket();
-
   const [order, setOrder] = useState<IOrder | null>(null);
-
   const [loading, setLoading] = useState(true);
+  const [riderLocation, setRiderLocation] = useState<[number, number] | null>(
+    null
+  );
 
   const fetchOrder = async () => {
     try {
@@ -60,15 +64,10 @@ const OrderPage = () => {
     };
   }, [socket, id]);
 
-  const [riderLocation, setRiderLocation] = useState<[number, number] | null>(
-    null
-  );
-
   useEffect(() => {
     if (!socket) return;
 
     const onRiderLocation = ({ latitude, longitude }: any) => {
-      console.log("Rider Location:", latitude, longitude);
       setRiderLocation([latitude, longitude]);
     };
 
@@ -80,79 +79,124 @@ const OrderPage = () => {
   }, [socket]);
 
   if (loading) {
-    return <p className="text-center text-gray-500">Loading order...</p>;
+    return (
+      <LoadingState
+        eyebrow="Tracking"
+        title="Tuning into your order"
+        copy="We are getting the newest status, payment details, and delivery movement."
+      />
+    );
   }
 
   if (!order) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <p className="text-gray-500">No order Found</p>
+      <div className="page-wrap flex min-h-[60vh] items-center justify-center">
+        <div className="glass-card px-6 py-10 text-center">
+          <h1 className="text-2xl font-semibold text-[#1f1a17]">Order not found</h1>
+          <p className="section-copy mt-3 text-sm">
+            This order may no longer be available.
+          </p>
+        </div>
       </div>
     );
   }
+
   return (
-    <div className="mx-auto max-w-3xl px-4 py-6 space-y-6">
-      <h1 className="text-xl font-bold">Order #{order._id.slice(-6)}</h1>
-      <div className="rounded-lg bg-blue-50 p-3 text-sm font-medium">
-        Status: <span className="capitalize">{order.status}</span>
-      </div>
-
-      <div className="rounded-xl bg-white p-4 shadow-sm space-y-2">
-        <h2 className="font-semibold">Items</h2>
-        {order.items.map((item, i) => (
-          <div className="flex justify-between text-sm" key={i}>
-            <span>
-              {item.name} x {item.quauntity}
-            </span>
-            <span>₹{item.price * item.quauntity}</span>
-          </div>
-        ))}
-      </div>
-
-      <div className="rounded-xl bg-white p-4 shadow-sm space-y-1">
-        <h2 className="font-semibold">Delivery Address</h2>
-        <p className="text-sm text-gray-600">
-          {order.deliveryAddress.fromattedAddress}
-        </p>
-        <p className="text-sm text-gray-600">
-          Mobile: {order.deliveryAddress.mobile}
-        </p>
-      </div>
-
-      <div className="rounded-xl bg-white p-4 shadow-sm space-y-2">
-        <div className="flex justify-between text-sm">
-          <span>SubTotal</span> <span>₹{order.subtotal}</span>
+    <div className="page-wrap space-y-6 py-6">
+      <section className="hero-panel fade-up p-5 sm:p-6">
+        <p className="pill-label">Order Tracking</p>
+        <h1 className="mt-4 text-3xl font-semibold text-[#1f1a17]">
+          Order #{order._id.slice(-6)}
+        </h1>
+        <div className="mt-4 inline-flex rounded-full bg-[#fff3eb] px-4 py-2 text-sm font-semibold capitalize text-[#e4572e]">
+          {statusLabel(order.status)}
         </div>
-        <div className="flex justify-between text-sm">
-          <span>Delivery Fee</span> <span>₹{order.deliveryFee}</span>
-        </div>
-        <div className="flex justify-between text-sm">
-          <span>PlatForm Fee</span> <span>₹{order.platfromFee}</span>
-        </div>
-        <div className="flex justify-between text-sm">
-          <span>Total</span> <span>₹{order.totalAmount}</span>
+      </section>
+
+      <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+        <div className="space-y-6">
+          <section className="soft-card p-5">
+            <h2 className="text-xl font-semibold text-[#1f1a17]">Items</h2>
+            <div className="mt-4 space-y-3">
+              {order.items.map((item, i) => (
+                <div className="flex justify-between text-sm" key={i}>
+                  <span className="text-[#6d5d52]">
+                    {item.name} x {item.quauntity}
+                  </span>
+                  <span className="font-semibold text-[#1f1a17]">
+                    Rs {item.price * item.quauntity}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="soft-card p-5">
+            <h2 className="text-xl font-semibold text-[#1f1a17]">Delivery Address</h2>
+            <p className="mt-4 text-sm leading-6 text-[#6d5d52]">
+              {order.deliveryAddress.fromattedAddress}
+            </p>
+            <p className="mt-2 text-sm text-[#6d5d52]">
+              Contact: {order.deliveryAddress.mobile}
+            </p>
+          </section>
+
+          <section className="soft-card p-5">
+            <h2 className="text-xl font-semibold text-[#1f1a17]">Payment Summary</h2>
+            <div className="mt-4 space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-[#6d5d52]">Subtotal</span>
+                <span className="font-semibold text-[#1f1a17]">Rs {order.subtotal}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[#6d5d52]">Delivery Fee</span>
+                <span className="font-semibold text-[#1f1a17]">
+                  Rs {order.deliveryFee}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[#6d5d52]">Platform Fee</span>
+                <span className="font-semibold text-[#1f1a17]">
+                  Rs {order.platfromFee}
+                </span>
+              </div>
+              <div className="flex justify-between border-t border-[#f1e6dd] pt-3">
+                <span className="text-[#6d5d52]">Total</span>
+                <span className="font-semibold text-[#1f1a17]">
+                  Rs {order.totalAmount}
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span className="rounded-full bg-[#f6efe8] px-3 py-1 text-xs font-semibold capitalize text-[#6d5d52]">
+                Payment method: {order.paymentMethod}
+              </span>
+              <span className="rounded-full bg-[#eef8f1] px-3 py-1 text-xs font-semibold capitalize text-[#25553f]">
+                Payment status: {order.paymentStatus}
+              </span>
+            </div>
+          </section>
         </div>
 
-        <p className="text-xs text-gray-500">
-          Payment Method: {order.paymentMethod}
-        </p>
-        <p className="text-xs text-gray-500">
-          Payment Status: {order.paymentStatus}
-        </p>
+        {(order.status === "rider_assigned" || order.status === "picked_up") && (
+          <section className="soft-card p-4">
+            {riderLocation ? (
+              <UserOrderMap
+                riderLocation={riderLocation}
+                deliveryLocation={[
+                  order.deliveryAddress.latitude!,
+                  order.deliveryAddress.longitude!,
+                ]}
+              />
+            ) : (
+              <div className="flex min-h-[300px] items-center justify-center text-sm text-[#6d5d52]">
+                Waiting for live rider location.
+              </div>
+            )}
+          </section>
+        )}
       </div>
-
-      {(order.status === "rider_assigned" || order.status === "picked_up") &&
-        (riderLocation ? (
-          <UserOrderMap
-            riderLocation={riderLocation}
-            deliveryLocation={[
-              order.deliveryAddress.latitude!,
-              order.deliveryAddress.longitude!,
-            ]}
-          />
-        ) : (
-          <p>Waiting for rider location</p>
-        ))}
     </div>
   );
 };

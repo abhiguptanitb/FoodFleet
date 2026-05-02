@@ -5,6 +5,56 @@ import TryCatch from "../middlewares/trycatch.js";
 import Restaurant from "../models/Restaurant.js";
 import jwt from "jsonwebtoken";
 
+const getUserIdCandidates = (userId: unknown) => {
+  const candidateIds = new Set<string>();
+
+  if (typeof userId === "string" && userId.trim()) {
+    candidateIds.add(userId.trim());
+  }
+
+  if (userId && typeof userId === "object") {
+    const value = userId as {
+      toString?: () => string;
+      $oid?: string;
+    };
+
+    if (typeof value.$oid === "string" && value.$oid.trim()) {
+      candidateIds.add(value.$oid.trim());
+    }
+
+    if (typeof value.toString === "function") {
+      const stringValue = value.toString();
+      if (stringValue && stringValue !== "[object Object]") {
+        candidateIds.add(stringValue);
+      }
+    }
+  }
+
+  return Array.from(candidateIds);
+};
+
+const buildUserIdExpr = (field: string, userId: unknown) => ({
+  $expr: {
+    $in: [{ $toString: `$${field}` }, getUserIdCandidates(userId)],
+  },
+});
+
+const serializeUserForToken = (user: {
+  _id: unknown;
+  name?: string;
+  email?: string;
+  image?: string;
+  role?: string | null;
+  restaurantId?: unknown;
+}) => ({
+  _id: getUserIdCandidates(user._id)[0] || "",
+  name: user.name || "",
+  email: user.email || "",
+  image: user.image || "",
+  role: user.role || null,
+  restaurantId: getUserIdCandidates(user.restaurantId)[0] || "",
+});
+
 export const addRestraunt = TryCatch(async (req: AuthenticatedRequest, res) => {
   const user = req.user;
 
@@ -16,8 +66,9 @@ export const addRestraunt = TryCatch(async (req: AuthenticatedRequest, res) => {
 
   const { name, description, latitude, longitude, formattedAddress, phone } =
     req.body;
+  const [normalizedOwnerId] = getUserIdCandidates(user._id);
 
-  if (!name || !latitude || !longitude) {
+  if (!name || !latitude || !longitude || !normalizedOwnerId) {
     return res.status(400).json({
       message: "Please give all details",
     });
@@ -51,7 +102,7 @@ export const addRestraunt = TryCatch(async (req: AuthenticatedRequest, res) => {
     description,
     phone,
     image: uploadResult.url,
-    ownerId: user._id,
+    ownerId: normalizedOwnerId,
     autoLocation: {
       type: "Point",
       coordinates: [Number(longitude), Number(latitude)],
@@ -73,7 +124,7 @@ export const fetchMyRestaurant = TryCatch(
         message: "Please Login",
       });
     }
-    const sellerRestaurants = await Restaurant.find({ ownerId: req.user._id })
+    const sellerRestaurants = await Restaurant.find(buildUserIdExpr("ownerId", req.user._id))
       .sort({ createdAt: -1 })
       .lean();
 
@@ -101,12 +152,14 @@ export const fetchMyRestaurant = TryCatch(
     }
 
     if (!req.user.restaurantId || req.user.restaurantId !== restaurant._id.toString()) {
+      const serializedUser = serializeUserForToken({
+        ...req.user,
+        restaurantId: restaurant._id.toString(),
+      });
+
       const token = jwt.sign(
         {
-          user: {
-            ...req.user,
-            restaurantId: restaurant._id.toString(),
-          },
+          user: serializedUser,
         },
         process.env.JWT_SEC as string,
         {
@@ -129,7 +182,9 @@ export const fetchMyRestaurants = TryCatch(
       });
     }
 
-    const restaurants = await Restaurant.find({ ownerId: req.user._id }).sort({
+    const restaurants = await Restaurant.find(
+      buildUserIdExpr("ownerId", req.user._id)
+    ).sort({
       createdAt: -1,
     });
 
@@ -158,7 +213,7 @@ export const updateStatusRestaurant = TryCatch(
     const restaurant = await Restaurant.findOneAndUpdate(
       {
         _id: restaurantId,
-        ownerId: req.user._id,
+        ...buildUserIdExpr("ownerId", req.user._id),
       },
       { isOpen: status },
       { new: true }
@@ -190,7 +245,7 @@ export const updateRestaurant = TryCatch(
 
     const restaurant = await Restaurant.findOne({
       _id: restaurantId,
-      ownerId: req.user._id,
+      ...buildUserIdExpr("ownerId", req.user._id),
     });
 
     if (!restaurant) {

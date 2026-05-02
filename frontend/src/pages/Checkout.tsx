@@ -7,6 +7,7 @@ import type { ICart, IMenuItem, IRestaurant } from "../types";
 import toast from "react-hot-toast";
 import { BiCreditCard, BiLoader } from "react-icons/bi";
 import { loadStripe } from "@stripe/stripe-js";
+import LoadingState from "../components/LoadingState";
 
 interface Address {
   _id: string;
@@ -16,18 +17,13 @@ interface Address {
 
 const Checkout = () => {
   const { cart, subTotal, quauntity } = useAppData();
-
   const [addresses, setAddresses] = useState<Address[]>([]);
-
-  const [selectedAddressId, setselectedAddressId] = useState<string | null>(
-    null
-  );
-
+  const [selectedAddressId, setselectedAddressId] = useState<string | null>(null);
   const [loadingAddress, setLoadingAddress] = useState(true);
-
   const [loadingRazorpay, setLoadingRazorpay] = useState(false);
   const [loadingStripe, setLoadingStripe] = useState(false);
   const [creatingOrder, setCreatingOrder] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchAddresses = async () => {
@@ -57,22 +53,24 @@ const Checkout = () => {
     fetchAddresses();
   }, [cart]);
 
-  const navigate = useNavigate();
-
   if (!cart || cart.length === 0) {
     return (
-      <div className="flex min-h-[60vh] item-center justify-center">
-        <p className="text-gray-500 text-lg">Your cart is empty</p>
+      <div className="page-wrap flex min-h-[60vh] items-center justify-center">
+        <div className="glass-card px-6 py-12 text-center">
+          <h1 className="text-2xl font-semibold text-[#1f1a17]">
+            Your cart is empty
+          </h1>
+          <p className="section-copy mt-3 text-sm">
+            Add items before moving to checkout.
+          </p>
+        </div>
       </div>
     );
   }
 
   const restaurant = cart[0].restaurantId as IRestaurant;
-
   const deliveryFee = subTotal < 250 ? 49 : 0;
-
   const platformFee = 7;
-
   const grandTotal = subTotal + deliveryFee + platformFee;
 
   const createOrder = async (paymentMethod: "razorpay" | "stripe") => {
@@ -95,7 +93,7 @@ const Checkout = () => {
 
       return data;
     } catch (error) {
-      toast.error("Failed to create Order");
+      toast.error("Failed to create order");
     } finally {
       setCreatingOrder(false);
     }
@@ -104,12 +102,10 @@ const Checkout = () => {
   const payWithRazorpay = async () => {
     try {
       setLoadingRazorpay(true);
-
       const order = await createOrder("razorpay");
       if (!order) return;
 
       const { orderId, amount } = order;
-
       const { data } = await axios.post(`${utilsService}/api/payment/create`, {
         orderId,
       });
@@ -120,10 +116,9 @@ const Checkout = () => {
         key,
         amount: amount * 100,
         currency: "INR",
-        name: "FoodFleet", //your business name
-        description: "Food Order Payment",
+        name: "FoodFleet",
+        description: "Food order payment",
         order_id: razorpayOrderId,
-
         handler: async (response: any) => {
           try {
             await axios.post(`${utilsService}/api/payment/verify`, {
@@ -133,14 +128,14 @@ const Checkout = () => {
               orderId,
             });
 
-            toast.success("Payment successfull 🎉");
+            toast.success("Payment successful");
             navigate("/paymentsuccess/" + response.razorpay_payment_id);
           } catch (error) {
             toast.error("Payment verification failed");
           }
         },
         theme: {
-          color: "#E23744",
+          color: "#E4572E",
         },
       };
 
@@ -148,7 +143,7 @@ const Checkout = () => {
       razorpay.open();
     } catch (error) {
       console.log(error);
-      toast.error("Payment Failed please refresh page");
+      toast.error("Payment failed. Please refresh the page.");
     } finally {
       setLoadingRazorpay(false);
     }
@@ -164,23 +159,19 @@ const Checkout = () => {
 
       const { orderId } = order;
 
-      try {
-        await stripePromise;
+      await stripePromise;
 
-        const { data } = await axios.post(
-          `${utilsService}/api/payment/stripe/create`,
-          {
-            orderId,
-          }
-        );
-
-        if (data.url) {
-          window.location.href = data.url;
-        } else {
-          toast.error("failed to create payment session");
+      const { data } = await axios.post(
+        `${utilsService}/api/payment/stripe/create`,
+        {
+          orderId,
         }
-      } catch (error) {
-        toast.error("Payment Failed");
+      );
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        toast.error("Failed to create payment session");
       }
     } catch (error) {
       console.log(error);
@@ -189,121 +180,156 @@ const Checkout = () => {
       setLoadingStripe(false);
     }
   };
-  return (
-    <div className="mx-auto max-w-4xl px-4 py-6 space-y-6">
-      <h1 className="text-2xl font-bold">Checkout</h1>
 
-      <div className="rounded-xl bg-white p-4 shadow-sm">
-        <h2 className="text-lg font-semibold">{restaurant.name}</h2>
-        <p className="text-sm text-gray-500">
+  return (
+    <div className="page-wrap space-y-6 py-6">
+      <section className="hero-panel fade-up p-5 sm:p-6">
+        <p className="pill-label">Checkout</p>
+        <h1 className="mt-4 text-3xl font-semibold text-[#1f1a17]">
+          Confirm delivery and payment
+        </h1>
+        <p className="mt-2 text-lg font-medium text-[#1f1a17]">{restaurant.name}</p>
+        <p className="mt-1 text-sm text-[#6d5d52]">
           {restaurant.autoLocation.formattedAddress}
         </p>
-      </div>
+      </section>
 
-      <div className="rounded-xl bg-white p-4 shadow-sm space-y-3">
-        <h3 className="font-semibold">Delivery Address</h3>
+      <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+        <div className="space-y-6">
+          <section className="soft-card p-5">
+            <h2 className="text-xl font-semibold text-[#1f1a17]">
+              Delivery Address
+            </h2>
+            <p className="mt-2 text-sm text-[#6d5d52]">
+              Pick the address where you want this order delivered.
+            </p>
 
-        {loadingAddress ? (
-          <p className="text-sm text-gray-500">Loading addresses...</p>
-        ) : addresses.length === 0 ? (
-          <p className="text-sm text-gray-500">
-            No address found. Please add one
-          </p>
-        ) : (
-          addresses.map((add) => (
-            <label
-              key={add._id}
-              className={`flex gap-3 rounded-lg border p-3 cursor-pointer transition ${
-                selectedAddressId === add._id
-                  ? "border-[#e23744] bg-red-50"
-                  : "hover:bg-gray-50"
-              }`}
-            >
-              <input
-                type="radio"
-                checked={selectedAddressId === add._id}
-                onChange={() => setselectedAddressId(add._id)}
-              />
-              <div>
-                <p className="text-sm font-medium">{add.formattedAddress}</p>
-                <p className="text-xs text-gray-500">{add.mobile}</p>
-              </div>
-            </label>
-          ))
-        )}
-      </div>
-
-      <div className="rounded-xl bg-white p-4 shadow-sm space-y-4">
-        <h3 className="font-semibold">Order Summary</h3>
-
-        {cart.map((cartItem: ICart) => {
-          const item = cartItem.itemId as IMenuItem;
-
-          return (
-            <div className="flex justify-between text-sm" key={cartItem._id}>
-              <span>
-                {item.name} x {cartItem.quauntity}
-              </span>
-              <span>₹{item.price * cartItem.quauntity}</span>
+            <div className="mt-4 space-y-3">
+              {loadingAddress ? (
+                <LoadingState
+                  compact
+                  title="Loading delivery addresses"
+                  copy="We are checking the saved locations for this order."
+                />
+              ) : addresses.length === 0 ? (
+                <p className="rounded-2xl bg-[#fff7f1] px-4 py-4 text-sm text-[#8a6d59]">
+                  No saved address found. Please add one before placing the order.
+                </p>
+              ) : (
+                addresses.map((add) => (
+                  <label
+                    key={add._id}
+                    className={`flex cursor-pointer gap-3 rounded-2xl border p-4 transition ${
+                      selectedAddressId === add._id
+                        ? "border-[#e4572e] bg-[#fff3eb]"
+                        : "border-[#ead8cb] bg-white hover:bg-[#fffaf6]"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      checked={selectedAddressId === add._id}
+                      onChange={() => setselectedAddressId(add._id)}
+                    />
+                    <div>
+                      <p className="text-sm font-semibold text-[#1f1a17]">
+                        {add.formattedAddress}
+                      </p>
+                      <p className="mt-1 text-xs text-[#6d5d52]">
+                        Contact: {add.mobile}
+                      </p>
+                    </div>
+                  </label>
+                ))
+              )}
             </div>
-          );
-        })}
+          </section>
 
-        <hr />
+          <section className="soft-card p-5">
+            <h2 className="text-xl font-semibold text-[#1f1a17]">Payment Method</h2>
+            <p className="mt-2 text-sm text-[#6d5d52]">
+              Choose the payment option you want to use for this order.
+            </p>
 
-        <div className="flex justify-between text-sm">
-          <span>Items ({quauntity})</span>
-          <span>₹{subTotal}</span>
+            <div className="mt-4 space-y-3">
+              <button
+                disabled={!selectedAddressId || loadingRazorpay || creatingOrder}
+                onClick={payWithRazorpay}
+                className="flex w-full items-center justify-center gap-2 rounded-[20px] bg-[#2d7ff9] py-3.5 text-sm font-semibold text-white hover:bg-[#246fe0] disabled:opacity-50"
+              >
+                {loadingRazorpay ? (
+                  <BiLoader size={18} className="animate-spin" />
+                ) : (
+                  <BiCreditCard size={18} />
+                )}
+                Pay with Razorpay
+              </button>
+
+              <button
+                disabled={!selectedAddressId || loadingStripe || creatingOrder}
+                onClick={payWithStripe}
+                className="flex w-full items-center justify-center gap-2 rounded-[20px] bg-[#1f1a17] py-3.5 text-sm font-semibold text-white hover:bg-[#312721] disabled:opacity-50"
+              >
+                {loadingStripe ? (
+                  <BiLoader size={18} className="animate-spin" />
+                ) : (
+                  <BiCreditCard size={18} />
+                )}
+                Pay with Stripe
+              </button>
+            </div>
+          </section>
         </div>
-        <div className="flex justify-between text-sm">
-          <span>Delivery Fee</span>
-          <span>{deliveryFee === 0 ? "Free" : `₹${deliveryFee}`}</span>
-        </div>
-        <div className="flex justify-between text-sm">
-          <span>PlatForm Fee</span>
-          <span>₹{platformFee}</span>
-        </div>
 
-        {subTotal < 250 && (
-          <p className="text-xs text-gray-500">
-            Add Item worth ₹{250 - subTotal} more to get Free delivery
-          </p>
-        )}
+        <section className="soft-card h-fit p-5">
+          <h2 className="text-xl font-semibold text-[#1f1a17]">Order Summary</h2>
+          <div className="mt-4 space-y-3">
+            {cart.map((cartItem: ICart) => {
+              const item = cartItem.itemId as IMenuItem;
 
-        <div className="flex justify-between text-base font-semibold border-t pt-2">
-          <span>Grand Total</span>
-          <span>₹{grandTotal}</span>
-        </div>
-      </div>
+              return (
+                <div
+                  className="flex items-start justify-between gap-4 text-sm"
+                  key={cartItem._id}
+                >
+                  <span className="text-[#6d5d52]">
+                    {item.name} x {cartItem.quauntity}
+                  </span>
+                  <span className="font-semibold text-[#1f1a17]">
+                    Rs {item.price * cartItem.quauntity}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
 
-      <div className="rounded-xl bg-white p-4 shadow-sm space-y-3">
-        <h3 className="font-semibold">Payment Method</h3>
+          <div className="mt-5 space-y-3 border-t border-[#f1e6dd] pt-4">
+            <div className="flex justify-between text-sm text-[#6d5d52]">
+              <span>Items ({quauntity})</span>
+              <span className="font-semibold text-[#1f1a17]">Rs {subTotal}</span>
+            </div>
+            <div className="flex justify-between text-sm text-[#6d5d52]">
+              <span>Delivery Fee</span>
+              <span className="font-semibold text-[#1f1a17]">
+                {deliveryFee === 0 ? "Free" : `Rs ${deliveryFee}`}
+              </span>
+            </div>
+            <div className="flex justify-between text-sm text-[#6d5d52]">
+              <span>Platform Fee</span>
+              <span className="font-semibold text-[#1f1a17]">Rs {platformFee}</span>
+            </div>
 
-        <button
-          disabled={!selectedAddressId || loadingRazorpay || creatingOrder}
-          onClick={payWithRazorpay}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#2D7FF9] py-3 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
-        >
-          {loadingRazorpay ? (
-            <BiLoader size={18} className="animate-spin" />
-          ) : (
-            <BiCreditCard size={18} />
-          )}
-          Pay With Razorpay
-        </button>
+            {subTotal < 250 && (
+              <p className="rounded-2xl bg-[#fff7f1] px-4 py-3 text-xs text-[#8a6d59]">
+                Add items worth Rs {250 - subTotal} more to unlock free delivery.
+              </p>
+            )}
 
-        <button
-          disabled={!selectedAddressId || loadingStripe || creatingOrder}
-          onClick={payWithStripe}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-black py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50"
-        >
-          {loadingRazorpay ? (
-            <BiLoader size={18} className="animate-spin" />
-          ) : (
-            <BiCreditCard size={18} />
-          )}
-          Pay With Stripe
-        </button>
+            <div className="flex justify-between border-t border-[#f1e6dd] pt-3 text-base font-semibold text-[#1f1a17]">
+              <span>Grand Total</span>
+              <span>Rs {grandTotal}</span>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   );

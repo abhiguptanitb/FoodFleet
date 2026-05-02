@@ -148,103 +148,182 @@ const AddRestaurant = ({
     }
   };
   return (
-    <div className={hasExistingRestaurants ? "px-0 py-0" : "min-h-screen bg-gray-50 px-4 py-6"}>
-      <div className="mx-auto max-w-lg rounded-xl bg-white p-6 shadow-sm space-y-5">
-        <div className="flex items-center justify-between gap-3">
-          <h1 className="text-xl font-semibold">
-            {hasExistingRestaurants ? "Add Another Restaurant" : "Add Your Restaurant"}
-          </h1>
-          {onCancel && (
-            <button
-              type="button"
-              onClick={onCancel}
-              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-          )}
-        </div>
-        
-        {/* Restaurant Name */}
-        <input
-          type="text"
-          placeholder="Restaurant name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full rounded-lg border px-4 py-2 text-sm outline-none"
+    <>
+      {/* Backdrop Overlay */}
+      {onCancel && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+          onClick={onCancel}
         />
+      )}
 
-        {/* Contact Number */}
-        <input
-          type="number"
-          placeholder="Contact Number"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          className="w-full rounded-lg border px-4 py-2 text-sm outline-none"
-        />
+      {/* Modal Container */}
+      <div
+        className={`${
+          onCancel
+            ? "fixed inset-0 z-50 flex items-center justify-center p-4"
+            : "min-h-screen bg-gray-50 px-4 py-6"
+        }`}
+      >
+        <div className="w-full max-w-2xl rounded-3xl bg-white p-6 sm:p-8 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
+          {/* Header */}
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#e23744]">
+                New Restaurant
+              </p>
+              <h1 className="mt-2 text-2xl font-semibold text-[#1f1a17]">
+                {hasExistingRestaurants ? "Add Another Restaurant" : "Add Your Restaurant"}
+              </h1>
+              <p className="mt-1 text-sm text-[#6d5d52]">
+                Fill in the details to create a new restaurant outlet.
+              </p>
+            </div>
+            {onCancel && (
+              <button
+                type="button"
+                onClick={onCancel}
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50 transition flex-shrink-0"
+              >
+                ✕
+              </button>
+            )}
+          </div>
 
-        {/* Description */}
-        <textarea
-          placeholder="Restaurant Description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="w-full rounded-lg border px-4 py-2 text-sm outline-none"
-        />
-
-        {/* Image Upload */}
-        <label className="flex cursor-pointer items-center gap-3 rounded-lg border p-4 text-sm text-gray-600 hover:bg-gray-50">
-          <BiUpload className="h-5 w-5 text-red-500" />
-          {image ? image.name : "Upload restaurant image"}
-          <input
-            type="file"
-            accept="image/*"
-            hidden
-            onChange={(e) => setImage(e.target.files?.[0] || null)}
-          />
-        </label>
-
-        {/* 🗺 Map Picker */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700">
-            Restaurant Location
-          </label>
-          <div className="relative h-64 w-full overflow-hidden rounded-lg border">
-            <MapContainer
-              center={[latitude || 28.6139, longitude || 77.209]}
-              zoom={13}
-              className="h-full w-full"
-              style={{ height: "100%", width: "100%" }}
-            >
-              <TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          {/* Form Content */}
+          <div className="space-y-5">
+            {/* Restaurant Name */}
+            <div>
+              <label className="block text-sm font-semibold text-[#1f1a17] mb-2">
+                Restaurant Name
+              </label>
+              <input
+                type="text"
+                placeholder="Enter restaurant name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full rounded-xl border border-[#e8d7c3] px-4 py-3 text-sm outline-none focus:border-[#e23744] focus:ring-1 focus:ring-[#e23744] bg-[#fafaf8]"
               />
-              <LocationPicker setLocation={setLocation} />
-              <LocateMeButton onLocate={setLocation} />
-              {latitude && longitude && (
-                <Marker position={[latitude, longitude]} />
-              )}
-            </MapContainer>
+            </div>
+
+            {/* Contact Number */}
+            <div>
+              <label className="block text-sm font-semibold text-[#1f1a17] mb-2">
+                Contact Number
+              </label>
+              <input
+                type="text"
+                placeholder="Enter contact number"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full rounded-xl border border-[#e8d7c3] px-4 py-3 text-sm outline-none focus:border-[#e23744] focus:ring-1 focus:ring-[#e23744] bg-[#fafaf8]"
+              />
+            </div>
+
+            {/* Description */}
+            <div>
+              <label className="block text-sm font-semibold text-[#1f1a17] mb-2">
+                Restaurant Description
+              </label>
+              <textarea
+                placeholder="Write a brief description about your restaurant"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={3}
+                className="w-full rounded-xl border border-[#e8d7c3] px-4 py-3 text-sm outline-none focus:border-[#e23744] focus:ring-1 focus:ring-[#e23744] bg-[#fafaf8] resize-none"
+              />
+            </div>
+
+            {/* Image Upload */}
+            <div>
+              <label className="block text-sm font-semibold text-[#1f1a17] mb-2">
+                Restaurant Image
+              </label>
+              <label className="flex cursor-pointer items-center justify-center gap-3 rounded-xl border-2 border-dashed border-[#e8d7c3] p-6 text-sm text-gray-600 hover:bg-[#fff5f0] transition bg-[#fafaf8]">
+                <BiUpload className="h-6 w-6 text-[#e23744]" />
+                <div className="text-left">
+                  <p className="font-semibold text-[#1f1a17]">
+                    {image ? image.name : "Upload restaurant image"}
+                  </p>
+                  <p className="text-xs text-[#8a7464] mt-1">
+                    Use a clear square or landscape food photo
+                  </p>
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={(e) => setImage(e.target.files?.[0] || null)}
+                />
+              </label>
+            </div>
+
+            {/* Map Picker */}
+            <div>
+              <label className="block text-sm font-semibold text-[#1f1a17] mb-2">
+                Restaurant Location
+              </label>
+              <p className="text-xs text-[#8a7464] mb-3">
+                Click on the map to select your restaurant's location
+              </p>
+              <div className="relative h-72 w-full overflow-hidden rounded-xl border border-[#e8d7c3]">
+                <MapContainer
+                  center={[latitude || 28.6139, longitude || 77.209]}
+                  zoom={13}
+                  className="h-full w-full"
+                  style={{ height: "100%", width: "100%" }}
+                >
+                  <TileLayer
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                  />
+                  <LocationPicker setLocation={setLocation} />
+                  <LocateMeButton onLocate={setLocation} />
+                  {latitude && longitude && (
+                    <Marker position={[latitude, longitude]} />
+                  )}
+                </MapContainer>
+              </div>
+            </div>
+
+            {/* Selected Address Display */}
+            {formattedAddress && (
+              <div className="flex items-start gap-3 rounded-xl bg-[#f0fdf4] p-4 border border-[#bbf7d0]">
+                <span className="text-lg mt-0.5">📍</span>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#15803d] mb-1">
+                    Selected Location
+                  </p>
+                  <p className="text-sm text-[#166534]">
+                    {formattedAddress}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3 pt-4">
+            {onCancel && (
+              <button
+                type="button"
+                onClick={onCancel}
+                className="flex-1 rounded-xl border border-[#e8d7c3] px-4 py-3 text-sm font-semibold text-[#1f1a17] hover:bg-[#faf9f7] transition"
+              >
+                Cancel
+              </button>
+            )}
+            <button
+              className="flex-1 rounded-xl py-3 text-sm font-semibold text-white bg-[#e23744] hover:bg-[#d32f3a] disabled:opacity-50 disabled:cursor-not-allowed transition"
+              disabled={submitting}
+              onClick={handleSubmit}
+            >
+              {submitting ? "Submitting..." : "Add Restaurant"}
+            </button>
           </div>
         </div>
-
-        {/* 📍 Selected Address Display */}
-        {formattedAddress && (
-          <div className="rounded-lg border bg-green-50 p-3 text-sm">
-            📍 {formattedAddress}
-          </div>
-        )}
-
-        {/* Submit Button */}
-        <button
-          className="w-full rounded-lg py-3 text-sm font-semibold text-white bg-[#e23744] hover:bg-[#d32f3a] disabled:opacity-50 disabled:cursor-not-allowed transition"
-          disabled={submitting}
-          onClick={handleSubmit}
-        >
-          {submitting ? "Submitting..." : "Add Restaurant"}
-        </button>
       </div>
-    </div>
+    </>
   );
 };
 

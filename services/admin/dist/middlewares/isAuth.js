@@ -1,4 +1,27 @@
 import jwt from "jsonwebtoken";
+const normalizeId = (value) => {
+    if (typeof value === "string" && value.trim()) {
+        return value.trim();
+    }
+    if (value && typeof value === "object") {
+        const candidate = value;
+        if (typeof candidate.$oid === "string" && candidate.$oid.trim()) {
+            return candidate.$oid.trim();
+        }
+        if (typeof candidate.toString === "function") {
+            const stringValue = candidate.toString();
+            if (stringValue && stringValue !== "[object Object]") {
+                return stringValue;
+            }
+        }
+    }
+    return "";
+};
+const normalizeJwtUser = (user) => ({
+    ...user,
+    _id: normalizeId(user?._id),
+    restaurantId: normalizeId(user?.restaurantId),
+});
 export const isAuth = async (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;
@@ -22,7 +45,7 @@ export const isAuth = async (req, res, next) => {
             });
             return;
         }
-        req.user = decodedValue.user;
+        req.user = normalizeJwtUser(decodedValue.user);
         next();
     }
     catch (error) {

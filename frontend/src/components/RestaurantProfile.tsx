@@ -81,31 +81,36 @@ const RestaurantProfile = ({ restaurant, isSeller, onUpdate }: props) => {
     toast.success("loggedOut successfully");
   };
   return (
-    <div className="mx-auto max-w-xl rounded-xl bg-white shadow-sm overflow-hidden">
+    <div className="hero-panel fade-up mx-auto max-w-5xl overflow-hidden">
       {restaurant.image && (
         <img
           src={restaurant.image}
           alt=""
-          className="h-48 w-full object-cover"
+          className="h-64 w-full object-cover sm:h-80"
         />
       )}
-      <div className="p-5 space-y-4">
+      <div className="space-y-5 p-6 sm:p-8">
         <div className="flex items-start justify-between">
           <div>
+            <p className="pill-label mb-3">
+              {isOpen ? "Open Now" : "Currently Closed"}
+            </p>
             {editMode ? (
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full rounded border px-2 py-1 text-lg font-semibold"
+                className="field-input text-lg font-semibold"
               />
             ) : (
-              <h2 className="text-xl font-semibold">{restaurant.name}</h2>
+              <h2 className="text-3xl font-semibold text-[#1f1a17]">
+                {restaurant.name}
+              </h2>
             )}
 
-            <div className="mt-1 flex items-center gap-2 text-sm text-gray-500">
-              <BiMapPin className="h-4 w-4 text-red-500" />
+            <div className="mt-3 flex items-center gap-2 text-sm text-[#6d5d52]">
+              <BiMapPin className="h-4 w-4 text-[#e4572e]" />
               {restaurant.autoLocation.formattedAddress ||
-                "Location unavalable"}
+                "Location unavailable"}
             </div>
           </div>
 
@@ -123,53 +128,53 @@ const RestaurantProfile = ({ restaurant, isSeller, onUpdate }: props) => {
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full rounded border px-3 py-2 text-sm"
+            className="field-input min-h-28 text-sm"
           />
         ) : (
-          <p className="text-sm text-gray-600">
-            {restaurant.description || "No description added"}
+          <p className="max-w-3xl text-sm leading-7 text-[#6d5d52]">
+            {restaurant.description ||
+              "No description has been added for this restaurant yet."}
           </p>
         )}
 
-        <div className="flex items-center justify-between pt-3 border-t">
+        <div className="flex flex-col gap-4 border-t border-[#efdfd2] pt-4 sm:flex-row sm:items-center sm:justify-between">
           <span
-            className={`text-sm font-medium ${
-              isOpen ? "text-green-600" : "text-red-500"
+            className={`text-sm font-semibold ${
+              isOpen ? "text-[#198754]" : "text-[#cc4b37]"
             }`}
           >
-            {isOpen ? "OPEN" : "CLOSED"}
+            {isOpen ? "Accepting orders now" : "Temporarily unavailable"}
           </span>
 
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             {editMode && (
               <button
                 onClick={saveChanges}
                 disabled={loading}
-                className="flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700"
+                className="brand-button px-4 py-3 text-sm font-semibold"
               >
                 <BiSave size={16} />
-                Save
+                Save Changes
               </button>
             )}
 
             {isSeller && (
               <button
                 onClick={toggleOpenStatus}
-                className={`rounded-lg px-4 py-1.5 text-sm font-medium text-white ${
+                className={`rounded-2xl px-4 py-3 text-sm font-semibold text-white ${
                   isOpen
-                    ? "bg-red-600 hover:bg-red-700"
-                    : "bg-green-600 hover:bg-green-700"
+                    ? "bg-[#1f1a17] hover:bg-[#352a24]"
+                    : "bg-[#198754] hover:bg-[#146b43]"
                 }`}
               >
-                {isOpen ? "Close Restaurant" : "Open Restaurant"}
+                {isOpen ? "Pause Orders" : "Resume Orders"}
               </button>
             )}
 
             {isSeller && (
               <button
                 onClick={logoutHandler}
-                className={`rounded-lg px-4 py-1.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700
-                `}
+                className="rounded-2xl bg-[#cc4b37] px-4 py-3 text-sm font-semibold text-white hover:bg-[#b73f2d]"
               >
                 Logout
               </button>
@@ -177,7 +182,7 @@ const RestaurantProfile = ({ restaurant, isSeller, onUpdate }: props) => {
           </div>
         </div>
 
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-[#8b786c]">
           Created on {new Date(restaurant.createdAt).toLocaleDateString()}
         </p>
       </div>

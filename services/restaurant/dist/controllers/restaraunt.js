@@ -3,6 +3,38 @@ import getBuffer from "../config/datauri.js";
 import TryCatch from "../middlewares/trycatch.js";
 import Restaurant from "../models/Restaurant.js";
 import jwt from "jsonwebtoken";
+const getUserIdCandidates = (userId) => {
+    const candidateIds = new Set();
+    if (typeof userId === "string" && userId.trim()) {
+        candidateIds.add(userId.trim());
+    }
+    if (userId && typeof userId === "object") {
+        const value = userId;
+        if (typeof value.$oid === "string" && value.$oid.trim()) {
+            candidateIds.add(value.$oid.trim());
+        }
+        if (typeof value.toString === "function") {
+            const stringValue = value.toString();
+            if (stringValue && stringValue !== "[object Object]") {
+                candidateIds.add(stringValue);
+            }
+        }
+    }
+    return Array.from(candidateIds);
+};
+const buildUserIdExpr = (field, userId) => ({
+    $expr: {
+        $in: [{ $toString: `$${field}` }, getUserIdCandidates(userId)],
+    },
+});
+const serializeUserForToken = (user) => ({
+    _id: getUserIdCandidates(user._id)[0] || "",
+    name: user.name || "",
+    email: user.email || "",
+    image: user.image || "",
+    role: user.role || null,
+    restaurantId: getUserIdCandidates(user.restaurantId)[0] || "",
+});
 export const addRestraunt = TryCatch(async (req, res) => {
     const user = req.user;
     if (!user) {
@@ -11,7 +43,8 @@ export const addRestraunt = TryCatch(async (req, res) => {
         });
     }
     const { name, description, latitude, longitude, formattedAddress, phone } = req.body;
-    if (!name || !latitude || !longitude) {
+    const [normalizedOwnerId] = getUserIdCandidates(user._id);
+    if (!name || !latitude || !longitude || !normalizedOwnerId) {
         return res.status(400).json({
             message: "Please give all details",
         });
@@ -36,7 +69,7 @@ export const addRestraunt = TryCatch(async (req, res) => {
         description,
         phone,
         image: uploadResult.url,
-        ownerId: user._id,
+        ownerId: normalizedOwnerId,
         autoLocation: {
             type: "Point",
             coordinates: [Number(longitude), Number(latitude)],
@@ -55,7 +88,7 @@ export const fetchMyRestaurant = TryCatch(async (req, res) => {
             message: "Please Login",
         });
     }
-    const sellerRestaurants = await Restaurant.find({ ownerId: req.user._id })
+    const sellerRestaurants = await Restaurant.find(buildUserIdExpr("ownerId", req.user._id))
         .sort({ createdAt: -1 })
         .lean();
     if (sellerRestaurants.length === 0) {
@@ -73,11 +106,12 @@ export const fetchMyRestaurant = TryCatch(async (req, res) => {
         });
     }
     if (!req.user.restaurantId || req.user.restaurantId !== restaurant._id.toString()) {
+        const serializedUser = serializeUserForToken({
+            ...req.user,
+            restaurantId: restaurant._id.toString(),
+        });
         const token = jwt.sign({
-            user: {
-                ...req.user,
-                restaurantId: restaurant._id.toString(),
-            },
+            user: serializedUser,
         }, process.env.JWT_SEC, {
             expiresIn: "15d",
         });
@@ -91,7 +125,7 @@ export const fetchMyRestaurants = TryCatch(async (req, res) => {
             message: "Please Login",
         });
     }
-    const restaurants = await Restaurant.find({ ownerId: req.user._id }).sort({
+    const restaurants = await Restaurant.find(buildUserIdExpr("ownerId", req.user._id)).sort({
         createdAt: -1,
     });
     res.json({ restaurants });
@@ -111,7 +145,7 @@ export const updateStatusRestaurant = TryCatch(async (req, res) => {
     const restaurantId = req.body.restaurantId || req.user.restaurantId;
     const restaurant = await Restaurant.findOneAndUpdate({
         _id: restaurantId,
-        ownerId: req.user._id,
+        ...buildUserIdExpr("ownerId", req.user._id),
     }, { isOpen: status }, { new: true });
     if (!restaurant) {
         return res.status(404).json({
@@ -133,7 +167,7 @@ export const updateRestaurant = TryCatch(async (req, res) => {
     const restaurantId = req.body.restaurantId || req.user.restaurantId;
     const restaurant = await Restaurant.findOne({
         _id: restaurantId,
-        ownerId: req.user._id,
+        ...buildUserIdExpr("ownerId", req.user._id),
     });
     if (!restaurant) {
         return res.status(404).json({

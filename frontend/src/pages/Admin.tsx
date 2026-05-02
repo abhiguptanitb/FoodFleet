@@ -7,12 +7,15 @@ import {
   FiLogOut,
   FiShield,
   FiShoppingBag,
+  FiTrash2,
   FiTruck,
+  FiUsers,
 } from "react-icons/fi";
 import { adminService } from "../main";
 import AdminRestaurantCard from "../components/AdminRestaurantCard";
 import RiderAdmin from "../components/RiderAdmin";
 import { useAppData } from "../context/AppContext";
+import LoadingState from "../components/LoadingState";
 
 type AdminRestaurant = {
   _id: string;
@@ -41,14 +44,29 @@ type AdminRider = {
   };
 };
 
+type AdminCustomer = {
+  _id: string;
+  name?: string;
+  email?: string;
+  image?: string;
+  role?: string;
+  createdAt?: string;
+};
+
 const Admin = () => {
   const { user, setIsAuth, setUser } = useAppData();
   const navigate = useNavigate();
   const [restaurant, setRestaurant] = useState<AdminRestaurant[]>([]);
   const [riders, setRiders] = useState<AdminRider[]>([]);
+  const [customers, setCustomers] = useState<AdminCustomer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"restaurant" | "rider">("restaurant");
+  const [tab, setTab] = useState<"restaurant" | "rider" | "customer">(
+    "restaurant"
+  );
   const [adminImageError, setAdminImageError] = useState(false);
+  const [deletingCustomerId, setDeletingCustomerId] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
     setAdminImageError(false);
@@ -74,8 +92,18 @@ const Admin = () => {
         }
       );
 
+      const customerResponse = await axios.get(
+        `${adminService}/api/v1/admin/customers`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
       setRestaurant(data.restaurants);
       setRiders(response.data.riders);
+      setCustomers(customerResponse.data.customers);
     } catch (error) {
       console.log(error);
     } finally {
@@ -114,21 +142,51 @@ const Admin = () => {
     );
   };
 
+  const deleteCustomer = async (customerId: string) => {
+    const shouldDelete = window.confirm(
+      "Delete this customer and all related orders, cart items, and addresses?"
+    );
+
+    if (!shouldDelete) return;
+
+    try {
+      setDeletingCustomerId(customerId);
+
+      const { data } = await axios.delete(
+        `${adminService}/api/v1/admin/customers/${customerId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      setCustomers((prev) => prev.filter((item) => item._id !== customerId));
+      toast.success(data.message || "Customer deleted successfully");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to delete customer");
+    } finally {
+      setDeletingCustomerId(null);
+    }
+  };
+
   if (loading) {
     return (
-      <div className="flex h-[60vh] items-center justify-center">
-        <p className="text-gray-500">Loading admin panel...</p>
-      </div>
+      <LoadingState
+        eyebrow="Admin Console"
+        title="Opening verification center"
+        copy="We are gathering restaurants, riders, customer records, and review status."
+      />
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f4ee] px-4 py-6 sm:px-6">
+    <div className="role-page px-4 py-6 sm:px-6">
       <div className="mx-auto max-w-7xl space-y-6">
-        <section className="overflow-hidden rounded-[32px] border border-[#ecdccf] bg-white shadow-[0_18px_50px_rgba(120,74,37,0.08)]">
-          <div className="bg-[radial-gradient(circle_at_top_left,_rgba(255,108,55,0.14),_transparent_34%),linear-gradient(135deg,#fff8f1_0%,#fff_58%)] p-4 sm:p-6">
+        <section className="overflow-hidden rounded-[28px] border-2 border-[var(--text)] bg-white shadow-[8px_8px_0_var(--text)]">
+          <div className="bg-[radial-gradient(circle_at_top_left,_var(--role-glow),_transparent_34%),linear-gradient(135deg,#ffffff_0%,var(--accent-soft)_58%)] p-4 sm:p-6">
             <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
-              <aside className="rounded-[28px] border border-[#edd8ca] bg-white p-5 shadow-[0_16px_40px_rgba(96,61,36,0.08)]">
+              <aside className="rounded-[24px] border-2 border-[var(--text)] bg-white p-5 shadow-[5px_5px_0_var(--accent-3)]">
                 <div className="flex items-center gap-4">
                   {user?.image && !adminImageError ? (
                     <img
@@ -138,13 +196,13 @@ const Admin = () => {
                       onError={() => setAdminImageError(true)}
                     />
                   ) : (
-                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#fff1e8] text-xl font-semibold text-[#e4572e]">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-[var(--text)] bg-[var(--accent)] text-xl font-semibold text-[#08111c] shadow-[4px_4px_0_var(--text)]">
                       {user?.name?.[0] || "A"}
                     </div>
                   )}
 
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#b48668]">
+                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--accent)]">
                       Admin Profile
                     </p>
                     <h2 className="mt-1 truncate text-lg font-semibold text-[#1f1a17]">
@@ -180,21 +238,33 @@ const Admin = () => {
                       {riders.length}
                     </p>
                   </div>
+
+                  <div className="col-span-2 rounded-2xl bg-[#f4f3ff] p-4">
+                    <div className="flex items-center gap-2 text-[#4f46e5]">
+                      <FiUsers size={16} />
+                      <span className="text-xs font-semibold uppercase tracking-[0.16em]">
+                        Customers
+                      </span>
+                    </div>
+                    <p className="mt-3 text-2xl font-semibold text-[#1f1a17]">
+                      {customers.length}
+                    </p>
+                  </div>
                 </div>
 
                 <button
                   onClick={logoutHandler}
-                  className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-[#ead4c5] px-4 py-3 text-sm font-semibold text-[#4f3f34] transition hover:border-[#e4572e] hover:text-[#e4572e]"
+                  className="ghost-button mt-5 inline-flex w-full items-center justify-center gap-2 px-4 py-3 text-sm font-semibold"
                 >
                   <FiLogOut size={16} />
                   Logout
                 </button>
               </aside>
 
-              <div className="rounded-[28px] border border-[#edd8ca] bg-white p-5 shadow-[0_16px_40px_rgba(96,61,36,0.08)]">
+              <div className="rounded-[24px] border-2 border-[var(--text)] bg-white p-5 shadow-[5px_5px_0_var(--accent-2)]">
                 <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <div className="inline-flex items-center gap-2 rounded-full bg-[#fff1e8] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#e4572e]">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-[var(--text)] bg-[var(--accent-soft)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent-deep)]">
                       <FiShield size={14} />
                       Admin Dashboard
                     </div>
@@ -207,12 +277,12 @@ const Admin = () => {
                     </p>
                   </div>
 
-                  <div className="inline-flex w-full rounded-2xl bg-[#f6efe8] p-1 sm:w-auto">
+                  <div className="inline-flex w-full rounded-2xl border-2 border-[var(--text)] bg-white p-1 shadow-[4px_4px_0_var(--accent-3)] sm:w-auto">
                     <button
                       onClick={() => setTab("restaurant")}
                       className={`flex-1 rounded-2xl px-4 py-3 text-sm font-semibold transition sm:flex-none ${
                         tab === "restaurant"
-                          ? "bg-[#e4572e] text-white shadow-[0_10px_25px_rgba(228,87,46,0.25)]"
+                          ? "bg-[var(--accent)] text-[#08111c] shadow-[3px_3px_0_var(--text)]"
                           : "text-[#6d5d52] hover:text-[#1f1a17]"
                       }`}
                     >
@@ -223,11 +293,22 @@ const Admin = () => {
                       onClick={() => setTab("rider")}
                       className={`flex-1 rounded-2xl px-4 py-3 text-sm font-semibold transition sm:flex-none ${
                         tab === "rider"
-                          ? "bg-[#e4572e] text-white shadow-[0_10px_25px_rgba(228,87,46,0.25)]"
+                          ? "bg-[var(--accent)] text-[#08111c] shadow-[3px_3px_0_var(--text)]"
                           : "text-[#6d5d52] hover:text-[#1f1a17]"
                       }`}
                     >
                       Riders
+                    </button>
+
+                    <button
+                      onClick={() => setTab("customer")}
+                      className={`flex-1 rounded-2xl px-4 py-3 text-sm font-semibold transition sm:flex-none ${
+                        tab === "customer"
+                          ? "bg-[var(--accent)] text-[#08111c] shadow-[3px_3px_0_var(--text)]"
+                          : "text-[#6d5d52] hover:text-[#1f1a17]"
+                      }`}
+                    >
+                      Customers
                     </button>
                   </div>
                 </div>
@@ -238,11 +319,18 @@ const Admin = () => {
                     <span className="text-sm font-medium">
                       {tab === "restaurant"
                         ? "All restaurant profiles"
-                        : "All rider profiles"}
+                        : tab === "rider"
+                          ? "All rider profiles"
+                          : "All customer accounts"}
                     </span>
                   </div>
                   <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#8b6c57]">
-                    {tab === "restaurant" ? restaurant.length : riders.length} entries
+                    {tab === "restaurant"
+                      ? restaurant.length
+                      : tab === "rider"
+                        ? riders.length
+                        : customers.length}{" "}
+                    entries
                   </span>
                 </div>
               </div>
@@ -281,6 +369,58 @@ const Admin = () => {
                   rider={r}
                   onStatusChange={handleRiderStatusChange}
                 />
+              ))
+            )}
+          </div>
+        )}
+
+        {tab === "customer" && (
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            {customers.length === 0 ? (
+              <div className="rounded-[28px] border border-dashed border-[#e5c8b4] bg-white p-8 text-center text-[#6d5d52]">
+                No customers found.
+              </div>
+            ) : (
+              customers.map((customer) => (
+                <div
+                  key={customer._id}
+                  className="rounded-[28px] border border-[#ecdccf] bg-white p-5 shadow-[0_14px_36px_rgba(98,62,36,0.07)]"
+                >
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 items-center gap-4">
+                      {customer.image ? (
+                        <img
+                          src={customer.image}
+                          alt={customer.name || "Customer"}
+                          className="h-14 w-14 rounded-2xl object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#fff1e8] text-lg font-semibold text-[#e4572e]">
+                          {customer.name?.[0] || "C"}
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <h2 className="truncate text-lg font-semibold text-[#1f1a17]">
+                          {customer.name || "Customer"}
+                        </h2>
+                        <p className="truncate text-sm text-[#6d5d52]">
+                          {customer.email || "No email available"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => deleteCustomer(customer._id)}
+                      disabled={deletingCustomerId === customer._id}
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 hover:border-red-300 hover:bg-red-100 disabled:opacity-60"
+                    >
+                      <FiTrash2 size={16} />
+                      {deletingCustomerId === customer._id
+                        ? "Deleting..."
+                        : "Delete"}
+                    </button>
+                  </div>
+                </div>
               ))
             )}
           </div>

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import ProtectedRoute from "./components/protectedRote";
@@ -18,40 +18,90 @@ import Orders from "./pages/Orders";
 import OrderPage from "./pages/OrderPage";
 import RiderDashboard from "./pages/RiderDashboard";
 import Admin from "./pages/Admin";
+import { getRoleHomePath } from "./utils/roleRoutes";
+import LoadingState from "./components/LoadingState";
 
 const App = () => {
   const { user, loading } = useAppData();
 
-  let protectedElement = <Home />;
-
   if (loading) {
     return (
-      <h1 className="text-2xl font-bold text-red-500 text-center mt-56">
-        Loading...
-      </h1>
+      <div className="app-shell flex min-h-screen items-center justify-center px-4">
+        <LoadingState
+          title="Preparing your workspace"
+          copy="We are syncing your account, role access, and live FoodFleet data."
+        />
+      </div>
     );
   }
 
-  if (user && user.role === "seller") {
-    protectedElement = <Restaurant />;
-  } else if (user && user.role === "rider") {
-    protectedElement = <RiderDashboard />;
-  } else if (user && user.role === "admin") {
-    protectedElement = <Admin />;
-  }
+  const roleHomePath = getRoleHomePath(user?.role);
 
   return (
-    <>
+    <div className={`app-shell role-${user?.role || "customer"}`}>
       <BrowserRouter>
-        {user?.role !== "admin" &&
-          user?.role !== "seller" &&
-          user?.role !== "rider" && <Navbar />}
+        <Navbar />
         <Routes>
           <Route element={<PublicRoute />}>
             <Route path="/login" element={<Login />} />
           </Route>
           <Route element={<ProtectedRoute />}>
-            <Route path="/" element={protectedElement} />
+            <Route
+              path="/"
+              element={<Navigate to={roleHomePath} replace />}
+            />
+            <Route
+              path="/browse"
+              element={
+                !user?.role || user.role === "customer" ? (
+                  <Home />
+                ) : (
+                  <Navigate to={roleHomePath} replace />
+                )
+              }
+            />
+            <Route
+              path="/partner"
+              element={
+                user?.role === "seller" ? (
+                  <Restaurant />
+                ) : (
+                  <Navigate to={roleHomePath} replace />
+                )
+              }
+            />
+            <Route
+              path="/deliveries"
+              element={
+                user?.role === "rider" ? (
+                  <RiderDashboard />
+                ) : (
+                  <Navigate to={roleHomePath} replace />
+                )
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                user?.role === "admin" ? (
+                  <Admin />
+                ) : (
+                  <Navigate to={roleHomePath} replace />
+                )
+              }
+            />
+            <Route
+              path="/customer"
+              element={<Navigate to={roleHomePath} replace />}
+            />
+            <Route
+              path="/seller"
+              element={<Navigate to={roleHomePath} replace />}
+            />
+            <Route
+              path="/rider"
+              element={<Navigate to={roleHomePath} replace />}
+            />
             <Route
               path="/paymentsuccess/:paymentId"
               element={<PaymentSuccess />}
@@ -68,7 +118,7 @@ const App = () => {
           </Route>
         </Routes>
       </BrowserRouter>
-    </>
+    </div>
   );
 };
 

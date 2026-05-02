@@ -5,6 +5,7 @@ import axios from "axios";
 import { restaurantService } from "../main";
 import RestaurantProfile from "../components/RestaurantProfile";
 import MenuItems from "../components/MenuItems";
+import LoadingState from "../components/LoadingState";
 
 const RestaurantPage = () => {
   const { id } = useParams();
@@ -58,28 +59,48 @@ const RestaurantPage = () => {
 
   if (loading) {
     return (
-      <div className="flex h-[60vh] items-center justify-center">
-        <p className="text-gray-500">Loading restaurant...</p>
-      </div>
+      <LoadingState
+        eyebrow="Restaurant"
+        title="Setting the table"
+        copy="We are loading the profile, live menu, and current availability."
+      />
     );
   }
 
   if (!restaurant) {
     return (
-      <div className="flex h-[60vh] items-center justify-center">
-        <p className="text-gray-500">No Restaurant with this id</p>
+      <div className="page-wrap flex h-[60vh] items-center justify-center">
+        <div className="glass-card px-6 py-10 text-center">
+          <h1 className="text-2xl font-semibold text-[#1f1a17]">
+            Restaurant not found
+          </h1>
+          <p className="section-copy mt-3 text-sm">
+            This restaurant may have been removed or the link may be incorrect.
+          </p>
+        </div>
       </div>
     );
   }
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-6 space-y-6">
+    <div className="page-wrap min-h-screen space-y-6 py-6">
       <RestaurantProfile
         restaurant={restaurant}
         onUpdate={setRestaurant}
         isSeller={false}
       />
 
-      <div className="rounded-xl bg-white shadow-sm p-4">
+      <div className="soft-card fade-up p-5 sm:p-6">
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="pill-label">Menu</p>
+            <h2 className="mt-3 text-2xl font-semibold text-[#1f1a17]">
+              Browse the full menu
+            </h2>
+          </div>
+          <p className="text-sm text-[#6d5d52]">
+            Choose from the latest available dishes and add them straight to your cart.
+          </p>
+        </div>
         <MenuItems
           isSeller={false}
           items={menuItems}

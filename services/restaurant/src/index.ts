@@ -12,8 +12,13 @@ import { startPaymentConsumer } from "./config/payment.consumer.js";
 
 dotenv.config();
 
-await connectRabbitMQ();
-startPaymentConsumer();
+try {
+  await connectRabbitMQ();
+  startPaymentConsumer();
+} catch (error) {
+  console.error(error instanceof Error ? error.message : error);
+  process.exit(1);
+}
 
 const app = express();
 

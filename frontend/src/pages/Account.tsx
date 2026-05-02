@@ -1,75 +1,195 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppData } from "../context/AppContext";
 import toast from "react-hot-toast";
 import { BiLogOut, BiMapPin, BiPackage } from "react-icons/bi";
+import axios from "axios";
+import { restaurantService } from "../main";
+import type { IOrder } from "../types";
+
+const formatOrderDate = (date: Date | string) =>
+  new Intl.DateTimeFormat("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(date));
 
 const Account = () => {
   const { user, setUser, setIsAuth } = useAppData();
   const [imageError, setImageError] = useState(false);
-
+  const [deliveredOrders, setDeliveredOrders] = useState<IOrder[]>([]);
   const firstLetter = user?.name?.charAt(0)?.toUpperCase() ?? "";
-
   const navigate = useNavigate();
 
   useEffect(() => {
     setImageError(false);
   }, [user?.image]);
 
+  useEffect(() => {
+    const fetchDeliveredOrders = async () => {
+      try {
+        const { data } = await axios.get(
+          `${restaurantService}/api/order/myorder`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+
+        setDeliveredOrders(
+          (data.orders || [])
+            .filter((order: IOrder) => order.status === "delivered")
+            .slice(0, 3)
+        );
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    fetchDeliveredOrders();
+  }, []);
+
   const logoutHandler = () => {
     localStorage.setItem("token", "");
     setUser(null);
     setIsAuth(false);
     navigate("/login");
-    toast.success("logout Success");
+    toast.success("Logged out successfully");
   };
+
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-6">
-      <div className="mx-auto max-w-md rounded-lg bg-white shadow-sm">
-        <div className="flex items-center gap-4 border-b p-5">
-          {user?.image && !imageError ? (
-            <img
-              src={user.image}
-              alt={user.name}
-              className="h-14 w-14 rounded-full object-cover"
-              onError={() => setImageError(true)}
-            />
+    <div className="page-wrap py-6">
+      <div className="mx-auto max-w-3xl space-y-6">
+        <section className="hero-panel fade-up p-6 sm:p-8">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-4">
+              {user?.image && !imageError ? (
+                <img
+                  src={user.image}
+                  alt={user.name}
+                  className="h-[72px] w-[72px] rounded-[24px] object-cover"
+                  onError={() => setImageError(true)}
+                />
+              ) : (
+                <div className="flex h-[72px] w-[72px] items-center justify-center rounded-[24px] bg-[#e4572e] text-2xl font-semibold text-white">
+                  {firstLetter}
+                </div>
+              )}
+              <div>
+                <p className="pill-label">My Account</p>
+                <h1 className="mt-3 text-3xl font-semibold text-[#1f1a17]">
+                  {user?.name}
+                </h1>
+                <p className="mt-1 text-sm text-[#6d5d52]">{user?.email}</p>
+              </div>
+            </div>
+            <button
+              onClick={logoutHandler}
+              className="ghost-button px-5 py-3 text-sm font-semibold"
+            >
+              Logout
+            </button>
+          </div>
+        </section>
+
+        <div className="grid gap-4 md:grid-cols-3">
+          <ActionCard
+            icon={<BiPackage className="h-5 w-5 text-[#e4572e]" />}
+            title="Your Orders"
+            copy="Track active deliveries and review past orders."
+            onClick={() => navigate("/orders")}
+          />
+          <ActionCard
+            icon={<BiMapPin className="h-5 w-5 text-[#e4572e]" />}
+            title="Saved Addresses"
+            copy="Manage delivery locations for future orders."
+            onClick={() => navigate("/address")}
+          />
+          <ActionCard
+            icon={<BiLogOut className="h-5 w-5 text-[#e4572e]" />}
+            title="Sign Out"
+            copy="Securely log out of your FoodFleet account."
+            onClick={logoutHandler}
+          />
+        </div>
+
+        <section className="soft-card p-5 sm:p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="pill-label">History</p>
+              <h2 className="mt-3 text-xl font-semibold text-[#1f1a17]">
+                Delivered orders
+              </h2>
+            </div>
+            <button
+              onClick={() => navigate("/orders")}
+              className="ghost-button w-fit px-4 py-2 text-sm font-semibold"
+            >
+              View All
+            </button>
+          </div>
+
+          {deliveredOrders.length === 0 ? (
+            <p className="mt-5 rounded-2xl bg-[#fff8f2] p-4 text-sm leading-6 text-[#6d5d52]">
+              Your delivered orders will show here with the order date and
+              delivery date.
+            </p>
           ) : (
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-500 text-xl font-semibold text-white">
-              {firstLetter}
+            <div className="mt-5 space-y-3">
+              {deliveredOrders.map((order) => (
+                <button
+                  key={order._id}
+                  onClick={() => navigate(`/order/${order._id}`)}
+                  className="w-full rounded-2xl border border-[#f1e6dd] bg-[#fffdfb] p-4 text-left hover:-translate-y-0.5 hover:border-[#e7cbb8]"
+                >
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-[#1f1a17]">
+                        {order.restaurantName}
+                      </p>
+                      <p className="mt-1 text-xs text-[#6d5d52]">
+                        Order #{order._id.slice(-6)} · Rs {order.totalAmount}
+                      </p>
+                    </div>
+                    <span className="w-fit rounded-full bg-[#eef8f1] px-3 py-1 text-xs font-semibold text-[#25553f]">
+                      Delivered {formatOrderDate(order.updatedAt)}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-xs text-[#8a6d59]">
+                    Ordered {formatOrderDate(order.createdAt)}
+                  </p>
+                </button>
+              ))}
             </div>
           )}
-          <div>
-            <h2 className="text-lg font-semibold">{user?.name}</h2>
-            <p className="text-sm text-gray-500">{user?.email}</p>
-          </div>
-        </div>
-        <div className="divide-y">
-          <div
-            className="flex cursor-pointer items-center gap-4 p-5 hover:bg-gray-50"
-            onClick={() => navigate("/orders")}
-          >
-            <BiPackage className="h-5 w-5 text-red-500" />
-            <span className="font-medium">Your Orders</span>
-          </div>
-          <div
-            className="flex cursor-pointer items-center gap-4 p-5 hover:bg-gray-50"
-            onClick={() => navigate("/address")}
-          >
-            <BiMapPin className="h-5 w-5 text-red-500" />
-            <span className="font-medium">Addresses</span>
-          </div>
-          <div
-            className="flex cursor-pointer items-center gap-4 p-5 hover:bg-gray-50"
-            onClick={logoutHandler}
-          >
-            <BiLogOut className="h-5 w-5 text-red-500" />
-            <span className="font-medium">Logout</span>
-          </div>
-        </div>
+        </section>
       </div>
     </div>
   );
 };
+
+const ActionCard = ({
+  icon,
+  title,
+  copy,
+  onClick,
+}: {
+  icon: ReactNode;
+  title: string;
+  copy: string;
+  onClick: () => void;
+}) => (
+  <button
+    className="soft-card flex flex-col items-start gap-3 p-5 text-left hover:-translate-y-1"
+    onClick={onClick}
+  >
+    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#fff1e8]">
+      {icon}
+    </div>
+    <h2 className="text-lg font-semibold text-[#1f1a17]">{title}</h2>
+    <p className="text-sm leading-6 text-[#6d5d52]">{copy}</p>
+  </button>
+);
 
 export default Account;

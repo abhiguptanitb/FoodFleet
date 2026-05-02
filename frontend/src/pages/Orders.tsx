@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useSocket } from "../context/SocketContext";
 import axios from "axios";
 import { restaurantService } from "../main";
+import LoadingState from "../components/LoadingState";
 
 const ACTIVE_STATUSES = [
   "placed",
@@ -13,6 +14,16 @@ const ACTIVE_STATUSES = [
   "rider_assigned",
   "picked_up",
 ];
+
+const statusLabel = (status: string) => status.replaceAll("_", " ");
+const formatOrderDate = (date: Date | string) =>
+  new Intl.DateTimeFormat("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(date));
 
 const Orders = () => {
   const [orders, setOrders] = useState<IOrder[]>([]);
@@ -60,13 +71,24 @@ const Orders = () => {
   }, [socket]);
 
   if (loading) {
-    return <p className="text-center text-gray-500">Loading orders...</p>;
+    return (
+      <LoadingState
+        eyebrow="Orders"
+        title="Collecting your order trail"
+        copy="We are pulling in active deliveries, completed orders, and recent updates."
+      />
+    );
   }
 
   if (orders.length === 0) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <p className="text-gray-500">No orders yet</p>
+      <div className="page-wrap flex min-h-[60vh] items-center justify-center">
+        <div className="glass-card px-6 py-12 text-center">
+          <h1 className="text-2xl font-semibold text-[#1f1a17]">No orders yet</h1>
+          <p className="section-copy mt-3 text-sm">
+            Your placed orders will appear here once you start ordering.
+          </p>
+        </div>
       </div>
     );
   }
@@ -75,15 +97,32 @@ const Orders = () => {
   const completedOrders = orders.filter(
     (o) => !ACTIVE_STATUSES.includes(o.status)
   );
-  return (
-    <div className="mx-auto max-w-4xl px-4 py-6 space-y-6">
-      <h1 className="text-2xl font-bold">My Orders</h1>
 
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Active Orders</h2>
+  return (
+    <div className="page-wrap space-y-6 py-6">
+      <section className="hero-panel fade-up p-5 sm:p-6">
+        <p className="pill-label">Order History</p>
+        <h1 className="mt-4 text-3xl font-semibold text-[#1f1a17]">
+          Track every order in one place
+        </h1>
+        <p className="section-copy mt-3 text-sm">
+          Follow live deliveries, reopen completed orders, and stay updated as
+          statuses change.
+        </p>
+      </section>
+
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold text-[#1f1a17]">Active Orders</h2>
+          <span className="rounded-full bg-[#fff1e8] px-3 py-1 text-xs font-semibold text-[#e4572e]">
+            {activeOrders.length}
+          </span>
+        </div>
 
         {activeOrders.length === 0 ? (
-          <p>No active orders</p>
+          <div className="soft-card p-5 text-sm text-[#6d5d52]">
+            You do not have any active orders right now.
+          </div>
         ) : (
           activeOrders.map((order) => (
             <OrderRow
@@ -95,16 +134,24 @@ const Orders = () => {
         )}
       </section>
 
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Completed Orders</h2>
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold text-[#1f1a17]">Order History</h2>
+          <span className="rounded-full bg-[#fff6ee] px-3 py-1 text-xs font-semibold text-[#8a6d59]">
+            {completedOrders.length}
+          </span>
+        </div>
 
         {completedOrders.length === 0 ? (
-          <p>No Completed orders</p>
+          <div className="soft-card p-5 text-sm text-[#6d5d52]">
+            Delivered and cancelled orders will appear here with their dates.
+          </div>
         ) : (
           completedOrders.map((order) => (
             <OrderRow
               key={order._id}
               order={order}
+              history
               onClick={() => navigate(`/order/${order._id}`)}
             />
           ))
@@ -114,39 +161,59 @@ const Orders = () => {
   );
 };
 
-export default Orders;
-
-// component Order row
 const OrderRow = ({
   order,
+  history = false,
   onClick,
 }: {
   order: IOrder;
+  history?: boolean;
   onClick: () => void;
 }) => {
+  const isDelivered = order.status === "delivered";
+
   return (
     <div
-      className="cursor-pointer rounded-xl bg-white p-4 shadow-sm hover:bg-gray-50"
+      className="soft-card cursor-pointer p-5 hover:-translate-y-0.5"
       onClick={onClick}
     >
-      <div className="flex justify-between items-center">
-        <p className="text-sm font-medium">Order #{order._id.slice(-6)}</p>
-        <span className="text-xs capitalize text-gray-500">{order.status}</span>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-semibold text-[#1f1a17]">
+          Order #{order._id.slice(-6)}
+        </p>
+        <span className="rounded-full bg-[#fff3eb] px-3 py-1 text-xs font-semibold capitalize text-[#e4572e]">
+          {statusLabel(order.status)}
+        </span>
       </div>
 
-      <div className="mt-2 text-sm text-gray-600">
-        {order.items.map((item, i) => (
-          <span key={i}>
-            {item.name} x {item.quauntity}
-            {i < order.items.length - 1 && ", "}
+      <div className="mt-3 flex flex-wrap gap-2 text-xs">
+        <span className="rounded-full bg-[#f8f2ec] px-3 py-1 font-semibold text-[#6d5d52]">
+          Ordered: {formatOrderDate(order.createdAt)}
+        </span>
+        {history && (
+          <span
+            className={`rounded-full px-3 py-1 font-semibold ${
+              isDelivered
+                ? "bg-[#eef8f1] text-[#25553f]"
+                : "bg-[#f5eeee] text-[#8a4b4b]"
+            }`}
+          >
+            {isDelivered ? "Delivered" : "Updated"}:{" "}
+            {formatOrderDate(order.updatedAt)}
           </span>
-        ))}
+        )}
       </div>
 
-      <div className="mt-2 flex justify-between text-sm font-medium">
-        <span>Total</span>
-        <span>₹{order.totalAmount}</span>
+      <p className="mt-3 text-sm leading-6 text-[#6d5d52]">
+        {order.items.map((item) => `${item.name} x ${item.quauntity}`).join(", ")}
+      </p>
+
+      <div className="mt-4 flex justify-between border-t border-[#f1e6dd] pt-3 text-sm">
+        <span className="text-[#6d5d52]">Total</span>
+        <span className="font-semibold text-[#1f1a17]">Rs {order.totalAmount}</span>
       </div>
     </div>
   );
 };
+
+export default Orders;

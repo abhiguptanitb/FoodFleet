@@ -154,7 +154,7 @@ const MenuItems = ({ items, onItemDeleted, isSeller }: MenuItemsProps) => {
 
           return (
             <div
-              className={`relative flex gap-4 rounded-lg bg-white p-4 shadow-sm transition ${
+              className={`group relative flex gap-4 rounded-[24px] border border-[#ecdccf] bg-white p-4 shadow-[0_16px_30px_rgba(84,56,35,0.08)] transition hover:-translate-y-1 hover:shadow-[0_22px_36px_rgba(84,56,35,0.14)] ${
                 !item.isAvailable ? "opacity-70" : ""
               }`}
               key={item._id}
@@ -163,7 +163,7 @@ const MenuItems = ({ items, onItemDeleted, isSeller }: MenuItemsProps) => {
                 <img
                   src={item.image}
                   alt=""
-                  className={`h-20 w-20 rounded object-cover ${
+                  className={`h-24 w-24 rounded-2xl object-cover ${
                     !item.isAvailable ? "grayscale brightness-75" : ""
                   }`}
                 />
@@ -176,19 +176,23 @@ const MenuItems = ({ items, onItemDeleted, isSeller }: MenuItemsProps) => {
 
               <div className="flex flex-1 flex-col justify-between">
                 <div>
-                  <h3 className="font-semibold">{item.name}</h3>
+                  <h3 className="text-base font-semibold text-[#1f1a17]">
+                    {item.name}
+                  </h3>
                   {item.description && (
-                    <p className="text-sm text-gray-500 line-clamp-2">
+                    <p className="line-clamp-2 text-sm leading-6 text-[#6d5d52]">
                       {item.description}
                     </p>
                   )}
                 </div>
 
-                <div className="flex items-center justify-between ">
-                  <p className="font-medium">Rs {item.price}</p>
+                <div className="mt-4 flex items-center justify-between gap-3">
+                  <p className="shrink-0 whitespace-nowrap font-semibold text-[#1f1a17]">
+                    Rs {item.price}
+                  </p>
 
                   {isSeller && (
-                    <div className="flex gap-2">
+                    <div className="flex shrink-0 gap-1">
                       <button
                         onClick={() => openEditModal(item)}
                         className="rounded-lg p-2 text-blue-600 hover:bg-blue-50"
@@ -223,7 +227,7 @@ const MenuItems = ({ items, onItemDeleted, isSeller }: MenuItemsProps) => {
                       className={`flex items-center justify-center rounded-lg p-2 ${
                         !item.isAvailable || isLoading
                           ? "cursor-not-allowed text-gray-400"
-                          : "text-red-500 hover:bg-red-50"
+                          : "rounded-2xl bg-[#fff1e8] px-3 py-2 text-[#e4572e] hover:bg-[#ffe6d6]"
                       }`}
                     >
                       {isLoading ? (
