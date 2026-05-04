@@ -148,13 +148,13 @@ const MenuItems = ({ items, onItemDeleted, isSeller }: MenuItemsProps) => {
 
   return (
     <>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {items.map((item) => {
           const isLoading = loadingItemId === item._id;
 
           return (
             <div
-              className={`group relative flex gap-4 rounded-[24px] border border-[#ecdccf] bg-white p-4 shadow-[0_16px_30px_rgba(84,56,35,0.08)] transition hover:-translate-y-1 hover:shadow-[0_22px_36px_rgba(84,56,35,0.14)] ${
+              className={`group relative flex min-h-[8.75rem] gap-4 rounded-[22px] border-2 border-[color-mix(in_srgb,var(--text)_14%,transparent)] bg-white p-3 shadow-[5px_5px_0_color-mix(in_srgb,var(--accent)_16%,transparent)] transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:shadow-[7px_7px_0_color-mix(in_srgb,var(--accent)_22%,transparent)] sm:p-4 ${
                 !item.isAvailable ? "opacity-70" : ""
               }`}
               key={item._id}
@@ -162,47 +162,51 @@ const MenuItems = ({ items, onItemDeleted, isSeller }: MenuItemsProps) => {
               <div className="relative shrink-0">
                 <img
                   src={item.image}
-                  alt=""
-                  className={`h-24 w-24 rounded-2xl object-cover ${
+                  alt={item.name}
+                  className={`h-24 w-24 rounded-2xl border border-black/5 object-cover sm:h-28 sm:w-28 ${
                     !item.isAvailable ? "grayscale brightness-75" : ""
                   }`}
                 />
                 {!item.isAvailable && (
-                  <span className="absolute inset-0 flex items-center justify-center rounded bg-black/60 text-xs font-semibold text-white">
+                  <span className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/65 px-2 text-center text-[11px] font-semibold leading-4 text-white">
                     Not Available
                   </span>
                 )}
               </div>
 
-              <div className="flex flex-1 flex-col justify-between">
-                <div>
-                  <h3 className="text-base font-semibold text-[#1f1a17]">
+              <div className="flex min-w-0 flex-1 flex-col justify-between">
+                <div className="min-w-0">
+                  <h3 className="line-clamp-1 text-base font-bold text-[var(--text)]">
                     {item.name}
                   </h3>
                   {item.description && (
-                    <p className="line-clamp-2 text-sm leading-6 text-[#6d5d52]">
+                    <p className="mt-1 line-clamp-2 text-sm leading-6 text-[var(--text-soft)]">
                       {item.description}
                     </p>
                   )}
                 </div>
 
-                <div className="mt-4 flex items-center justify-between gap-3">
-                  <p className="shrink-0 whitespace-nowrap font-semibold text-[#1f1a17]">
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                  <p className="shrink-0 whitespace-nowrap text-base font-black text-[var(--text)]">
                     Rs {item.price}
                   </p>
 
                   {isSeller && (
-                    <div className="flex shrink-0 gap-1">
+                    <div className="flex shrink-0 items-center gap-1">
                       <button
+                        type="button"
+                        title="Edit item"
                         onClick={() => openEditModal(item)}
-                        className="rounded-lg p-2 text-blue-600 hover:bg-blue-50"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-transparent text-[var(--accent)] hover:border-[color-mix(in_srgb,var(--accent)_30%,white)] hover:bg-[var(--accent-soft)]"
                       >
                         <FiEdit3 size={18} />
                       </button>
 
                       <button
+                        type="button"
+                        title={item.isAvailable ? "Hide item" : "Show item"}
                         onClick={() => toggleAvailiblity(item._id)}
-                        className="rounded-lg p-2 text-gray-600 hover:bg-gray-100"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-transparent text-[var(--text-soft)] hover:border-[color-mix(in_srgb,var(--text)_18%,transparent)] hover:bg-[#f4f7fb] hover:text-[var(--text)]"
                       >
                         {item.isAvailable ? (
                           <BsEye size={18} />
@@ -212,8 +216,10 @@ const MenuItems = ({ items, onItemDeleted, isSeller }: MenuItemsProps) => {
                       </button>
 
                       <button
+                        type="button"
+                        title="Delete item"
                         onClick={() => handleDelete(item._id)}
-                        className="rounded-lg p-2 text-red-500 hover:bg-red-50"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-transparent text-[#f04438] hover:border-[#ffd6d2] hover:bg-[#fff1f0]"
                       >
                         <BiTrash size={18} />
                       </button>
@@ -222,12 +228,13 @@ const MenuItems = ({ items, onItemDeleted, isSeller }: MenuItemsProps) => {
 
                   {!isSeller && (
                     <button
+                      type="button"
                       disabled={!item.isAvailable || isLoading}
                       onClick={() => addToCart(item.restaurantId, item._id)}
-                      className={`flex items-center justify-center rounded-lg p-2 ${
+                      className={`inline-flex h-10 min-w-10 items-center justify-center rounded-xl ${
                         !item.isAvailable || isLoading
                           ? "cursor-not-allowed text-gray-400"
-                          : "rounded-2xl bg-[#fff1e8] px-3 py-2 text-[#e4572e] hover:bg-[#ffe6d6]"
+                          : "border-2 border-[var(--text)] bg-[var(--accent)] px-3 text-white shadow-[3px_3px_0_var(--text)] hover:-translate-y-0.5"
                       }`}
                     >
                       {isLoading ? (
@@ -245,20 +252,21 @@ const MenuItems = ({ items, onItemDeleted, isSeller }: MenuItemsProps) => {
       </div>
 
       {editingItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4">
-          <div className="w-full max-w-lg rounded-[28px] bg-white p-5 shadow-[0_22px_60px_rgba(0,0,0,0.25)] sm:p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(10,17,40,0.58)] p-3 backdrop-blur-sm sm:p-4">
+          <div className="max-h-[calc(100vh-1.5rem)] w-full max-w-2xl overflow-y-auto rounded-[28px] border-2 border-[var(--text)] bg-white p-5 shadow-[9px_9px_0_var(--text)] sm:p-7">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#e4572e]">
+                <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--accent)]">
                   Edit Item
                 </p>
-                <h2 className="mt-2 text-2xl font-semibold text-[#1f1a17]">
+                <h2 className="mt-2 text-2xl font-black text-[var(--text)] sm:text-3xl">
                   {editingItem.name}
                 </h2>
               </div>
               <button
+                type="button"
                 onClick={closeEditModal}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#ecd6c7] text-[#6a5548] transition hover:border-[#e4572e] hover:text-[#e4572e]"
+                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-[color-mix(in_srgb,var(--text)_16%,transparent)] bg-white text-[var(--text-soft)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
               >
                 <FiX size={18} />
               </button>
@@ -266,43 +274,45 @@ const MenuItems = ({ items, onItemDeleted, isSeller }: MenuItemsProps) => {
 
             <div className="mt-6 space-y-4">
               <div>
-                <label className="mb-2 block text-sm font-medium text-[#4f3f34]">
+                <label className="mb-2 block text-sm font-bold text-[var(--text)]">
                   Item Name
                 </label>
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full rounded-2xl border border-[#e7d3c6] bg-[#fffaf7] px-4 py-3 text-base text-[#1f1a17] outline-none transition focus:border-[#e4572e]"
+                  className="field-input bg-white px-4 py-3 text-base"
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-[#4f3f34]">
+                <label className="mb-2 block text-sm font-bold text-[var(--text)]">
                   Description
                 </label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={4}
-                  className="w-full rounded-2xl border border-[#e7d3c6] bg-[#fffaf7] px-4 py-3 text-sm text-[#3a2d25] outline-none transition focus:border-[#e4572e]"
+                  className="field-input min-h-32 resize-y bg-white px-4 py-3 text-sm"
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-[#4f3f34]">
+                <label className="mb-2 block text-sm font-bold text-[var(--text)]">
                   Price
                 </label>
                 <input
                   type="number"
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
-                  className="w-full rounded-2xl border border-[#e7d3c6] bg-[#fffaf7] px-4 py-3 text-base text-[#1f1a17] outline-none transition focus:border-[#e4572e]"
+                  className="field-input bg-white px-4 py-3 text-base"
                 />
               </div>
 
-              <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[#e7d3c6] bg-[#fffaf7] p-4 text-sm text-gray-600 hover:bg-[#fff4ec]">
-                <BiUpload className="h-5 w-5 text-[#e4572e]" />
-                {image ? image.name : "Upload new item image (optional)"}
+              <label className="flex cursor-pointer items-center gap-3 rounded-2xl border-2 border-dashed border-[color-mix(in_srgb,var(--accent)_38%,white)] bg-[var(--accent-soft)] p-4 text-sm font-semibold text-[var(--text-soft)] hover:border-[var(--accent)] hover:bg-white">
+                <BiUpload className="h-5 w-5 shrink-0 text-[var(--accent)]" />
+                <span className="min-w-0 truncate">
+                  {image ? image.name : "Upload new item image (optional)"}
+                </span>
                 <input
                   type="file"
                   accept="image/*"
@@ -312,17 +322,19 @@ const MenuItems = ({ items, onItemDeleted, isSeller }: MenuItemsProps) => {
               </label>
             </div>
 
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <button
+                type="button"
                 onClick={closeEditModal}
-                className="rounded-2xl border border-[#ecd6c7] px-4 py-3 text-sm font-semibold text-[#6a5548] transition hover:border-[#e4572e] hover:text-[#e4572e]"
+                className="rounded-2xl border-2 border-[color-mix(in_srgb,var(--text)_18%,transparent)] bg-white px-5 py-3 text-sm font-bold text-[var(--text-soft)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={saveItemChanges}
                 disabled={saving}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#e4572e] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#cb4720] disabled:cursor-not-allowed disabled:opacity-60"
+                className="brand-button px-5 py-3 text-sm font-black disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {saving ? "Saving..." : "Save Changes"}
               </button>

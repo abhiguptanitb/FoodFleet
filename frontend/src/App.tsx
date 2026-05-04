@@ -8,6 +8,7 @@ import Navbar from "./components/navbar";
 import Account from "./pages/Account";
 import { useAppData } from "./context/AppContext";
 import Restaurant from "./pages/Restaurant";
+import RestaurantOrderHistory from "./pages/RestaurantOrderHistory";
 import RestaurantPage from "./pages/RestaurantPage";
 import Cart from "./pages/Cart";
 import AddAddressPage from "./pages/Address";
@@ -65,6 +66,16 @@ const App = () => {
               element={
                 user?.role === "seller" ? (
                   <Restaurant />
+                ) : (
+                  <Navigate to={roleHomePath} replace />
+                )
+              }
+            />
+            <Route
+              path="/partner/restaurants/:restaurantId/history"
+              element={
+                user?.role === "seller" ? (
+                  <RestaurantOrderHistory />
                 ) : (
                   <Navigate to={roleHomePath} replace />
                 )

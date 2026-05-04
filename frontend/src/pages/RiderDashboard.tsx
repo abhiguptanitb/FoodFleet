@@ -5,7 +5,14 @@ import axios from "axios";
 import { riderService } from "../main";
 import toast from "react-hot-toast";
 import { BiUpload } from "react-icons/bi";
-import { FiLogOut, FiTrendingUp, FiTruck } from "react-icons/fi";
+import {
+  FiCalendar,
+  FiDollarSign,
+  FiLogOut,
+  FiMapPin,
+  FiTrendingUp,
+  FiTruck,
+} from "react-icons/fi";
 import type { IOrder } from "../types";
 import RiderOrderRequest from "../components/RiderOrderRequest";
 import RiderCurrentOrder from "../components/RiderCurrentOrder";
@@ -30,6 +37,25 @@ interface IRiderStats {
   range: RiderStatsRange;
 }
 
+interface IRiderHistoryOrder {
+  _id: string;
+  pickup: string;
+  drop: string;
+  deliveredAt: string;
+  orderAmount: number;
+  riderEarning: number;
+  distance: number;
+}
+
+const formatMoney = (amount: number) =>
+  `Rs ${Number(amount || 0).toLocaleString("en-IN")}`;
+
+const formatDeliveryDate = (date: string) =>
+  new Intl.DateTimeFormat("en-IN", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(date));
+
 const RiderDashboard = () => {
   const { user, setIsAuth, setUser } = useAppData();
   const { socket } = useSocket();
@@ -46,6 +72,8 @@ const RiderDashboard = () => {
     totalOrdersDelivered: 0,
     range: "7d",
   });
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyOrders, setHistoryOrders] = useState<IRiderHistoryOrder[]>([]);
   useEffect(() => {
     if (!socket) return;
 
@@ -177,9 +205,32 @@ const RiderDashboard = () => {
     }
   };
 
+  const fetchRiderHistory = async (range: RiderStatsRange) => {
+    try {
+      setHistoryLoading(true);
+      const { data } = await axios.get(
+        `${riderService}/api/rider/dashboard/history`,
+        {
+          params: { range, limit: 20 },
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      setHistoryOrders(data.orders || []);
+    } catch (error) {
+      console.log(error);
+      setHistoryOrders([]);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (profile) {
       fetchDashboardStats(statsRange);
+      fetchRiderHistory(statsRange);
     }
   }, [profile, statsRange]);
 
@@ -521,10 +572,10 @@ const RiderDashboard = () => {
                   <FiTrendingUp className="text-[var(--accent)]" size={18} />
                 </div>
                 <p className="mt-4 text-3xl font-semibold text-slate-900">
-                  {statsLoading ? "..." : `Rs ${stats.totalEarnings}`}
+                  {statsLoading ? "..." : formatMoney(stats.totalEarnings)}
                 </p>
                 <p className="mt-2 text-xs text-slate-500">
-                  Rider earnings for the selected period
+                  Base Rs 25 + Rs 12/km, minimum Rs 30 per delivery
                 </p>
               </div>
 
@@ -562,6 +613,117 @@ const RiderDashboard = () => {
           </div>
         )}
 
+        <section className="rounded-[26px] border-2 border-[var(--text)] bg-white p-5 shadow-[7px_7px_0_var(--accent-3)] sm:p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="pill-label">Rider History</p>
+              <h2 className="mt-3 text-2xl font-black text-[var(--text)]">
+                Delivered Orders
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-[var(--text-soft)]">
+                Completed rides for the selected earnings period.
+              </p>
+            </div>
+            <div className="rounded-2xl border-2 border-[var(--text)] bg-[var(--surface-muted)] px-4 py-3 text-sm font-black text-[var(--text)]">
+              {historyLoading ? "Loading..." : `${historyOrders.length} rides`}
+            </div>
+          </div>
+
+          <div className="mt-5 overflow-hidden rounded-2xl border-2 border-[var(--text)]">
+            <div className="hidden grid-cols-[1.15fr_1.45fr_0.85fr_0.7fr_0.7fr] gap-4 border-b-2 border-[var(--text)] bg-[var(--accent-soft)] px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--accent-deep)] lg:grid">
+              <span>Pickup</span>
+              <span>Drop</span>
+              <span>Date & Time</span>
+              <span>Order</span>
+              <span>Earning</span>
+            </div>
+
+            {historyLoading ? (
+              <div className="loading-card loading-card-compact justify-center rounded-none border-0 p-6">
+                <div className="loading-orbit">
+                  <span />
+                  <span />
+                  <span />
+                </div>
+                <p className="font-black text-[var(--text)]">
+                  Loading ride history
+                </p>
+              </div>
+            ) : historyOrders.length === 0 ? (
+              <div className="grid min-h-40 place-items-center bg-[var(--surface-muted)] px-6 py-8 text-center">
+                <div>
+                  <p className="text-lg font-black text-[var(--text)]">
+                    No delivered rides yet
+                  </p>
+                  <p className="mt-2 max-w-md text-sm leading-6 text-[var(--text-soft)]">
+                    Completed deliveries will appear here with pickup, drop,
+                    order amount, and rider earning.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="divide-y-2 divide-[color-mix(in_srgb,var(--text)_10%,transparent)]">
+                {historyOrders.map((ride) => (
+                  <div
+                    key={ride._id}
+                    className="grid gap-3 bg-white px-4 py-4 hover:bg-[var(--surface-muted)] lg:grid-cols-[1.15fr_1.45fr_0.85fr_0.7fr_0.7fr] lg:items-center"
+                  >
+                    <div className="min-w-0">
+                      <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--accent-deep)] lg:hidden">
+                        <FiMapPin />
+                        Pickup
+                      </p>
+                      <p className="mt-1 truncate font-semibold text-[var(--text)] lg:mt-0">
+                        {ride.pickup}
+                      </p>
+                    </div>
+
+                    <div className="min-w-0">
+                      <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--accent-deep)] lg:hidden">
+                        <FiMapPin />
+                        Drop
+                      </p>
+                      <p className="mt-1 line-clamp-2 text-sm leading-6 text-[var(--text-soft)] lg:mt-0">
+                        {ride.drop}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--accent-deep)] lg:hidden">
+                        <FiCalendar />
+                        Delivered
+                      </p>
+                      <p className="mt-1 text-sm font-semibold text-[var(--text)] lg:mt-0">
+                        {formatDeliveryDate(ride.deliveredAt)}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--accent-deep)] lg:hidden">
+                        <FiDollarSign />
+                        Order
+                      </p>
+                      <p className="mt-1 text-sm font-black text-[var(--text)] lg:mt-0">
+                        {formatMoney(ride.orderAmount)}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--accent-deep)] lg:hidden">
+                        <FiTrendingUp />
+                        Earning
+                      </p>
+                      <p className="mt-1 inline-flex rounded-full border-2 border-[var(--text)] bg-[var(--accent-2)] px-3 py-1 text-sm font-black text-[var(--text)] shadow-[3px_3px_0_var(--text)] lg:mt-0">
+                        {formatMoney(ride.riderEarning)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+
         {currentOrder && (
           <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
             <div className="space-y-4">
@@ -570,6 +732,7 @@ const RiderDashboard = () => {
                 onStatusUpdate={() => {
                   fetchCurrentOrder();
                   fetchDashboardStats(statsRange);
+                  fetchRiderHistory(statsRange);
                 }}
               />
             </div>

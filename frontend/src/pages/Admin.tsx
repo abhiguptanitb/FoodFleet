@@ -341,7 +341,7 @@ const Admin = () => {
         {tab === "restaurant" && (
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
             {restaurant.length === 0 ? (
-              <div className="rounded-[28px] border border-dashed border-[#e5c8b4] bg-white p-8 text-center text-[#6d5d52]">
+              <div className="rounded-[28px] border-2 border-dashed border-[color-mix(in_srgb,var(--accent)_36%,white)] bg-white p-8 text-center font-semibold text-[var(--text-soft)] shadow-[5px_5px_0_color-mix(in_srgb,var(--accent)_14%,transparent)]">
                 No restaurants found.
               </div>
             ) : (
@@ -359,7 +359,7 @@ const Admin = () => {
         {tab === "rider" && (
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
             {riders.length === 0 ? (
-              <div className="rounded-[28px] border border-dashed border-[#e5c8b4] bg-white p-8 text-center text-[#6d5d52]">
+              <div className="rounded-[28px] border-2 border-dashed border-[color-mix(in_srgb,var(--accent)_36%,white)] bg-white p-8 text-center font-semibold text-[var(--text-soft)] shadow-[5px_5px_0_color-mix(in_srgb,var(--accent)_14%,transparent)]">
                 No riders found.
               </div>
             ) : (
@@ -377,14 +377,14 @@ const Admin = () => {
         {tab === "customer" && (
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
             {customers.length === 0 ? (
-              <div className="rounded-[28px] border border-dashed border-[#e5c8b4] bg-white p-8 text-center text-[#6d5d52]">
+              <div className="rounded-[28px] border-2 border-dashed border-[color-mix(in_srgb,var(--accent)_36%,white)] bg-white p-8 text-center font-semibold text-[var(--text-soft)] shadow-[5px_5px_0_color-mix(in_srgb,var(--accent)_14%,transparent)]">
                 No customers found.
               </div>
             ) : (
               customers.map((customer) => (
                 <div
                   key={customer._id}
-                  className="rounded-[28px] border border-[#ecdccf] bg-white p-5 shadow-[0_14px_36px_rgba(98,62,36,0.07)]"
+                  className="rounded-[24px] border-2 border-[color-mix(in_srgb,var(--text)_14%,transparent)] bg-white p-4 shadow-[5px_5px_0_color-mix(in_srgb,var(--accent)_16%,transparent)] transition hover:-translate-y-0.5 hover:border-[var(--accent)] sm:p-5"
                 >
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex min-w-0 items-center gap-4">
@@ -392,18 +392,18 @@ const Admin = () => {
                         <img
                           src={customer.image}
                           alt={customer.name || "Customer"}
-                          className="h-14 w-14 rounded-2xl object-cover"
+                          className="h-16 w-16 rounded-2xl border-2 border-[color-mix(in_srgb,var(--text)_12%,transparent)] object-cover"
                         />
                       ) : (
-                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#fff1e8] text-lg font-semibold text-[#e4572e]">
+                        <div className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-[var(--text)] bg-[var(--accent)] text-lg font-black text-[#08111c] shadow-[4px_4px_0_var(--text)]">
                           {customer.name?.[0] || "C"}
                         </div>
                       )}
                       <div className="min-w-0">
-                        <h2 className="truncate text-lg font-semibold text-[#1f1a17]">
+                        <h2 className="truncate text-xl font-black text-[var(--text)]">
                           {customer.name || "Customer"}
                         </h2>
-                        <p className="truncate text-sm text-[#6d5d52]">
+                        <p className="truncate text-sm text-[var(--text-soft)]">
                           {customer.email || "No email available"}
                         </p>
                       </div>
@@ -412,7 +412,7 @@ const Admin = () => {
                     <button
                       onClick={() => deleteCustomer(customer._id)}
                       disabled={deletingCustomerId === customer._id}
-                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 hover:border-red-300 hover:bg-red-100 disabled:opacity-60"
+                      className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border-2 border-red-200 bg-red-50 px-4 py-3 text-sm font-black text-red-700 hover:-translate-y-0.5 hover:border-red-300 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60 sm:min-w-32"
                     >
                       <FiTrash2 size={16} />
                       {deletingCustomerId === customer._id

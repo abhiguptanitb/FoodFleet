@@ -4,6 +4,7 @@ import {
   acceptOrder,
   addRiderProfile,
   fetchRiderDashboardStats,
+  fetchRiderOrderHistory,
   fetchNearbyAvailableOrders,
   fetchMyCurrentOrder,
   fetchMyProfile,
@@ -18,6 +19,7 @@ router.post("/new", isAuth, uploadFile, addRiderProfile);
 
 router.get("/myprofile", isAuth, fetchMyProfile);
 router.get("/dashboard/stats", isAuth, fetchRiderDashboardStats);
+router.get("/dashboard/history", isAuth, fetchRiderOrderHistory);
 router.get("/orders/available", isAuth, fetchNearbyAvailableOrders);
 router.patch("/toggle", isAuth, toggleRiderAvailablity);
 router.post("/accept/:orderId", isAuth, acceptOrder);

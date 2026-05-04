@@ -412,6 +412,7 @@ const Restaurant = () => {
         {selectedRestaurant && (
           <RestaurantOrders
             restaurantId={selectedRestaurant._id}
+            restaurantName={selectedRestaurant.name}
             onOrdersChange={setRestaurantOrders}
           />
         )}
@@ -463,8 +464,9 @@ const Restaurant = () => {
                       </h3>
                     </div>
                     <button
+                      type="button"
                       onClick={() => setTab("add-item")}
-                      className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#1f1a17] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#342a24]"
+                      className="brand-button min-h-11 items-center px-4 py-3 text-sm font-black"
                     >
                       <FiPlusCircle size={16} />
                       Add Item
@@ -485,15 +487,15 @@ const Restaurant = () => {
                 />
               )}
               {tab === "sales" && (
-                <div className="grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
-                  <div className="rounded-3xl border border-[#efdfd2] bg-[#fffaf7] p-5">
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#b48668]">
+                <div className="grid gap-4 xl:grid-cols-[0.85fr_1.15fr]">
+                  <div className="rounded-[26px] border-2 border-[color-mix(in_srgb,var(--text)_14%,transparent)] bg-[linear-gradient(145deg,#ffffff_0%,var(--accent-soft)_100%)] p-5 shadow-[5px_5px_0_color-mix(in_srgb,var(--accent)_16%,transparent)] sm:p-6">
+                    <p className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--accent)]">
                       Sales
                     </p>
-                    <h3 className="mt-3 text-2xl font-semibold text-[#1f1a17]">
+                    <h3 className="mt-3 text-2xl font-black text-[var(--text)] sm:text-3xl">
                       Insights are ready to plug in
                     </h3>
-                    <p className="mt-3 text-sm leading-6 text-[#6d5d52]">
+                    <p className="mt-3 max-w-prose text-sm leading-6 text-[var(--text-soft)]">
                       Use this panel for daily revenue, best sellers, order
                       volume, and payout snapshots.
                     </p>
@@ -505,7 +507,7 @@ const Restaurant = () => {
                         label: "Revenue",
                         value: `Rs ${salesStats.revenue.toFixed(2)}`,
                         detail: "From delivered paid orders",
-                        tone: "text-[#e4572e]",
+                        tone: "text-[var(--accent)]",
                       },
                       {
                         label: "Orders",
@@ -524,15 +526,15 @@ const Restaurant = () => {
                     ].map((item) => (
                       <div
                         key={item.label}
-                        className="rounded-3xl border border-[#efdfd2] bg-white p-5 shadow-[0_14px_28px_rgba(86,57,35,0.06)]"
+                        className="min-h-40 rounded-[24px] border-2 border-[color-mix(in_srgb,var(--text)_14%,transparent)] bg-white p-5 shadow-[5px_5px_0_color-mix(in_srgb,var(--accent)_16%,transparent)] transition hover:-translate-y-0.5 hover:border-[var(--accent)] sm:p-6"
                       >
-                        <p className="text-sm font-semibold text-[#6d5d52]">
+                        <p className="text-sm font-bold text-[var(--text-soft)]">
                           {item.label}
                         </p>
-                        <p className={`mt-4 text-2xl font-semibold ${item.tone}`}>
+                        <p className={`mt-5 break-words text-2xl font-black ${item.tone}`}>
                           {item.value}
                         </p>
-                        <p className="mt-2 text-xs leading-5 text-[#8a7464]">
+                        <p className="mt-2 text-xs leading-5 text-[var(--text-soft)]">
                           {item.detail}
                         </p>
                       </div>
@@ -546,20 +548,21 @@ const Restaurant = () => {
       </div>
 
       {editingRestaurant && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4">
-          <div className="w-full max-w-lg rounded-[28px] bg-white p-5 shadow-[0_22px_60px_rgba(0,0,0,0.25)] sm:p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(10,17,40,0.58)] p-3 backdrop-blur-sm sm:p-4">
+          <div className="max-h-[calc(100vh-1.5rem)] w-full max-w-2xl overflow-y-auto rounded-[28px] border-2 border-[var(--text)] bg-white p-5 shadow-[9px_9px_0_var(--text)] sm:p-7">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#e4572e]">
+                <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--accent)]">
                   Edit Restaurant
                 </p>
-                <h2 className="mt-2 text-2xl font-semibold text-[#1f1a17]">
+                <h2 className="mt-2 text-2xl font-black text-[var(--text)] sm:text-3xl">
                   {editingRestaurant.name}
                 </h2>
               </div>
               <button
+                type="button"
                 onClick={closeEditModal}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#ecd6c7] text-[#6a5548] transition hover:border-[#e4572e] hover:text-[#e4572e]"
+                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-[color-mix(in_srgb,var(--text)_16%,transparent)] bg-white text-[var(--text-soft)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
               >
                 <FiX size={18} />
               </button>
@@ -567,31 +570,33 @@ const Restaurant = () => {
 
             <div className="mt-6 space-y-4">
               <div>
-                <label className="mb-2 block text-sm font-medium text-[#4f3f34]">
+                <label className="mb-2 block text-sm font-bold text-[var(--text)]">
                   Restaurant Name
                 </label>
                 <input
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="w-full rounded-2xl border border-[#e7d3c6] bg-[#fffaf7] px-4 py-3 text-base text-[#1f1a17] outline-none transition focus:border-[#e4572e]"
+                  className="field-input bg-white px-4 py-3 text-base"
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-[#4f3f34]">
+                <label className="mb-2 block text-sm font-bold text-[var(--text)]">
                   Description
                 </label>
                 <textarea
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
                   rows={5}
-                  className="w-full rounded-2xl border border-[#e7d3c6] bg-[#fffaf7] px-4 py-3 text-sm text-[#3a2d25] outline-none transition focus:border-[#e4572e]"
+                  className="field-input min-h-36 resize-y bg-white px-4 py-3 text-sm"
                 />
               </div>
 
-              <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[#e7d3c6] bg-[#fffaf7] p-4 text-sm text-gray-600 hover:bg-[#fff4ec]">
-                <BiUpload className="h-5 w-5 text-[#e4572e]" />
-                {editImage ? editImage.name : "Upload new restaurant image (optional)"}
+              <label className="flex cursor-pointer items-center gap-3 rounded-2xl border-2 border-dashed border-[color-mix(in_srgb,var(--accent)_38%,white)] bg-[var(--accent-soft)] p-4 text-sm font-semibold text-[var(--text-soft)] hover:border-[var(--accent)] hover:bg-white">
+                <BiUpload className="h-5 w-5 shrink-0 text-[var(--accent)]" />
+                <span className="min-w-0 truncate">
+                  {editImage ? editImage.name : "Upload new restaurant image (optional)"}
+                </span>
                 <input
                   type="file"
                   accept="image/*"
@@ -600,26 +605,28 @@ const Restaurant = () => {
                 />
               </label>
 
-              <div className="flex items-start gap-2 rounded-2xl bg-[#faf6f2] p-4 text-sm text-[#6a5b50]">
-                <FiMapPin className="mt-0.5 shrink-0 text-[#e4572e]" />
-                <p>
+              <div className="flex items-start gap-3 rounded-2xl border-2 border-[color-mix(in_srgb,var(--text)_10%,transparent)] bg-[var(--accent-soft)] p-4 text-sm text-[var(--text-soft)]">
+                <FiMapPin className="mt-0.5 shrink-0 text-[var(--accent)]" />
+                <p className="leading-6">
                   {editingRestaurant.autoLocation?.formattedAddress ||
                     "Location unavailable"}
                 </p>
               </div>
             </div>
 
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <button
+                type="button"
                 onClick={closeEditModal}
-                className="rounded-2xl border border-[#ecd6c7] px-4 py-3 text-sm font-semibold text-[#6a5548] transition hover:border-[#e4572e] hover:text-[#e4572e]"
+                className="rounded-2xl border-2 border-[color-mix(in_srgb,var(--text)_18%,transparent)] bg-white px-5 py-3 text-sm font-bold text-[var(--text-soft)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={saveRestaurantChanges}
                 disabled={savingRestaurant}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#e4572e] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#cb4720] disabled:cursor-not-allowed disabled:opacity-60"
+                className="brand-button px-5 py-3 text-sm font-black disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <FiSave size={16} />
                 {savingRestaurant ? "Saving..." : "Save Changes"}

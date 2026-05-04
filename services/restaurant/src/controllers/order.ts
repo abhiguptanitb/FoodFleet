@@ -8,6 +8,37 @@ import Order from "../models/Order.js";
 import Restaurant, { IRestaurant } from "../models/Restaurant.js";
 import { publishEvent } from "../config/order.publisher.js";
 
+const calculateRiderEarning = (distanceKm: number) => {
+  const safeDistance = Number.isFinite(distanceKm) && distanceKm > 0 ? distanceKm : 1;
+  const baseFare = 25;
+  const perKmFare = 12;
+
+  return Math.max(30, Math.ceil(baseFare + Math.ceil(safeDistance) * perKmFare));
+};
+
+const getRangeStartDate = (range: string) => {
+  const now = new Date();
+  const startDate = new Date(now);
+
+  if (range === "today") {
+    startDate.setHours(0, 0, 0, 0);
+  } else if (range === "30d") {
+    startDate.setDate(startDate.getDate() - 30);
+  } else {
+    startDate.setDate(startDate.getDate() - 7);
+  }
+
+  return startDate;
+};
+
+const getOrderRiderEarning = (order: { riderAmount?: number; distance?: number }) => {
+  if (typeof order.riderAmount === "number" && order.riderAmount > 0) {
+    return order.riderAmount;
+  }
+
+  return calculateRiderEarning(order.distance || 0);
+};
+
 export const createOrder = TryCatch(async (req: AuthenticatedRequest, res) => {
   const user = req.user;
   if (!user) {
@@ -124,7 +155,7 @@ export const createOrder = TryCatch(async (req: AuthenticatedRequest, res) => {
 
   const [longitude, latitude] = address.location.coordinates;
 
-  const riderAmount = Math.ceil(distance) * 17;
+  const riderAmount = calculateRiderEarning(distance);
 
   const order = await Order.create({
     userId: user._id.toString(),
@@ -215,6 +246,62 @@ export const fetchRestaurantOrders = TryCatch(
     })
       .sort({ createdAt: -1 })
       .limit(limit);
+
+    return res.json({
+      success: true,
+      count: orders.length,
+      orders,
+    });
+  }
+);
+
+export const fetchRestaurantOrderHistory = TryCatch(
+  async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    const { restaurantId } = req.params;
+
+    if (!user) {
+      return res.status(401).json({
+        message: "Unauthorized",
+      });
+    }
+
+    if (!restaurantId) {
+      return res.status(400).json({
+        message: "Restaurant id is required",
+      });
+    }
+
+    const restaurant = await Restaurant.findById(restaurantId);
+
+    if (!restaurant) {
+      return res.status(404).json({
+        message: "Restaurant not found",
+      });
+    }
+
+    if (restaurant.ownerId !== user._id.toString()) {
+      return res.status(401).json({
+        message: "You are not allowed to view this restaurant history",
+      });
+    }
+
+    const limit = req.query.limit
+      ? Math.min(Math.max(Number(req.query.limit), 1), 500)
+      : 0;
+
+    const query = Order.find({
+      restaurantId,
+      paymentStatus: "paid",
+      status: { $in: ["delivered", "cancelled"] },
+    })
+      .sort({ updatedAt: -1, createdAt: -1 });
+
+    if (limit > 0) {
+      query.limit(limit);
+    }
+
+    const orders = await query;
 
     return res.json({
       success: true,
@@ -544,32 +631,77 @@ export const getRiderDeliveredStats = TryCatch(async (req, res) => {
     });
   }
 
-  const now = new Date();
-  const startDate = new Date(now);
-
-  if (range === "today") {
-    startDate.setHours(0, 0, 0, 0);
-  } else if (range === "30d") {
-    startDate.setDate(startDate.getDate() - 30);
-  } else {
-    startDate.setDate(startDate.getDate() - 7);
-  }
+  const startDate = getRangeStartDate(range);
 
   const orders = await Order.find({
     riderId,
     status: "delivered",
+    paymentStatus: "paid",
     updatedAt: { $gte: startDate },
   });
 
   const totalEarnings = orders.reduce(
-    (sum, order) => sum + (order.riderAmount || 0),
+    (sum, order) => sum + getOrderRiderEarning(order),
     0
   );
 
   res.json({
     range,
-    totalEarnings,
+    totalEarnings: Number(totalEarnings.toFixed(2)),
     totalOrdersDelivered: orders.length,
+  });
+});
+
+export const getRiderDeliveredHistory = TryCatch(async (req, res) => {
+  if (req.headers["x-internal-key"] !== process.env.INTERNAL_SERVICE_KEY) {
+    return res.status(403).json({
+      message: "Forbidden",
+    });
+  }
+
+  const riderIdParam = req.query.riderId;
+  const riderId = Array.isArray(riderIdParam) ? riderIdParam[0] : riderIdParam;
+  const rangeParam = Array.isArray(req.query.range)
+    ? req.query.range[0]
+    : req.query.range;
+  const limitParam = Array.isArray(req.query.limit)
+    ? req.query.limit[0]
+    : req.query.limit;
+  const range = typeof rangeParam === "string" ? rangeParam : "30d";
+  const limit = Math.min(Math.max(Number(limitParam || 20), 1), 100);
+
+  if (typeof riderId !== "string" || !riderId.trim()) {
+    return res.status(400).json({
+      message: "Rider id is required",
+    });
+  }
+
+  const startDate = getRangeStartDate(range);
+
+  const orders = await Order.find({
+    riderId,
+    status: "delivered",
+    paymentStatus: "paid",
+    updatedAt: { $gte: startDate },
+  })
+    .sort({ updatedAt: -1 })
+    .limit(limit)
+    .select(
+      "_id restaurantName deliveryAddress distance riderAmount totalAmount status updatedAt createdAt"
+    );
+
+  res.json({
+    range,
+    orders: orders.map((order) => ({
+      _id: order._id,
+      restaurantName: order.restaurantName,
+      pickup: order.restaurantName,
+      drop: order.deliveryAddress.fromattedAddress,
+      deliveredAt: order.updatedAt,
+      orderAmount: order.totalAmount || 0,
+      riderEarning: getOrderRiderEarning(order),
+      distance: order.distance || 0,
+    })),
   });
 });
 

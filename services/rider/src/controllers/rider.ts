@@ -386,6 +386,50 @@ export const fetchRiderDashboardStats = TryCatch(
   }
 );
 
+export const fetchRiderOrderHistory = TryCatch(
+  async (req: AuthenticatedRequest, res) => {
+    const userId = req.user?._id;
+
+    if (!userId) {
+      return res.status(401).json({
+        message: "Please Login",
+      });
+    }
+
+    const rider = await Rider.findOne(buildUserIdExpr("userId", userId));
+
+    if (!rider) {
+      return res.status(404).json({
+        message: "Rider profile not found",
+      });
+    }
+
+    const rangeParam = Array.isArray(req.query.range)
+      ? req.query.range[0]
+      : req.query.range;
+    const limitParam = Array.isArray(req.query.limit)
+      ? req.query.limit[0]
+      : req.query.limit;
+    const range = typeof rangeParam === "string" ? rangeParam : "30d";
+
+    const { data } = await axios.get(
+      `${process.env.RESTAURANT_SERVICE}/api/order/history/rider`,
+      {
+        params: {
+          riderId: rider._id.toString(),
+          range,
+          limit: limitParam || 20,
+        },
+        headers: {
+          "x-internal-key": process.env.INTERNAL_SERVICE_KEY,
+        },
+      }
+    );
+
+    res.json(data);
+  }
+);
+
 export const updateOrderStatus = TryCatch(
   async (req: AuthenticatedRequest, res) => {
     const userId = req.user?._id;

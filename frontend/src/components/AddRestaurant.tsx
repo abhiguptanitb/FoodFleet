@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 import axios from "axios";
 import { restaurantService } from "../main";
 import { BiUpload } from "react-icons/bi";
+import { FiCheckCircle, FiX } from "react-icons/fi";
 import {
   MapContainer,
   TileLayer,
@@ -13,7 +14,7 @@ import {
 import L from "leaflet";
 import { LuLocateFixed } from "react-icons/lu";
 
-// 🔧 Fix leaflet marker icon issue
+// Fix leaflet marker icon issue.
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
@@ -22,7 +23,6 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
-// 📍 Click-to-select location
 const LocationPicker = ({
   setLocation,
 }: {
@@ -36,7 +36,6 @@ const LocationPicker = ({
   return null;
 };
 
-// 🎯 Locate me button
 const LocateMeButton = ({
   onLocate,
 }: {
@@ -59,12 +58,12 @@ const LocateMeButton = ({
   };
   return (
     <button
+      type="button"
       onClick={locateUser}
-      className="absolute right-3 top-3 z-1000 flex items-center gap-2
-rounded-lg bg-white px-3 py-2 text-sm shadow hover:bg-gray-100"
+      className="absolute right-3 top-3 z-[1000] inline-flex items-center gap-2 rounded-2xl border-2 border-[var(--text)] bg-white px-3 py-2 text-sm font-bold text-[var(--text)] shadow-[4px_4px_0_color-mix(in_srgb,var(--accent)_22%,transparent)] hover:-translate-y-0.5 hover:border-[var(--accent)] sm:px-4"
     >
       <LuLocateFixed size={16} />
-      Use current location
+      <span className="hidden sm:inline">Use current location</span>
     </button>
   );
 };
@@ -86,12 +85,10 @@ const AddRestaurant = ({
   const [image, setImage] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // 📍 Local location state
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
   const [formattedAddress, setFormattedAddress] = useState("");
 
-  // 🌍 Reverse geocoding
   const fetchFormattedAddress = async (lat: number, lng: number) => {
     try {
       const res = await fetch(
@@ -149,33 +146,30 @@ const AddRestaurant = ({
   };
   return (
     <>
-      {/* Backdrop Overlay */}
       {onCancel && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+          className="fixed inset-0 z-40 bg-[rgba(10,17,40,0.58)] backdrop-blur-sm"
           onClick={onCancel}
         />
       )}
 
-      {/* Modal Container */}
       <div
         className={`${
           onCancel
-            ? "fixed inset-0 z-50 flex items-center justify-center p-4"
-            : "min-h-screen bg-gray-50 px-4 py-6"
+            ? "fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4"
+            : "role-page min-h-screen px-4 py-6"
         }`}
       >
-        <div className="w-full max-w-2xl rounded-3xl bg-white p-6 sm:p-8 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between gap-3">
+        <div className="max-h-[calc(100vh-1.5rem)] w-full max-w-4xl space-y-6 overflow-y-auto rounded-[28px] border-2 border-[var(--text)] bg-white p-5 shadow-[9px_9px_0_var(--text)] sm:p-7">
+          <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#e23744]">
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--accent)]">
                 New Restaurant
               </p>
-              <h1 className="mt-2 text-2xl font-semibold text-[#1f1a17]">
+              <h1 className="mt-2 text-2xl font-black text-[var(--text)] sm:text-3xl">
                 {hasExistingRestaurants ? "Add Another Restaurant" : "Add Your Restaurant"}
               </h1>
-              <p className="mt-1 text-sm text-[#6d5d52]">
+              <p className="mt-2 max-w-prose text-sm leading-6 text-[var(--text-soft)]">
                 Fill in the details to create a new restaurant outlet.
               </p>
             </div>
@@ -183,18 +177,16 @@ const AddRestaurant = ({
               <button
                 type="button"
                 onClick={onCancel}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50 transition flex-shrink-0"
+                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-[color-mix(in_srgb,var(--text)_16%,transparent)] bg-white text-[var(--text-soft)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
               >
-                ✕
+                <FiX size={18} />
               </button>
             )}
           </div>
 
-          {/* Form Content */}
           <div className="space-y-5">
-            {/* Restaurant Name */}
             <div>
-              <label className="block text-sm font-semibold text-[#1f1a17] mb-2">
+              <label className="mb-2 block text-sm font-bold text-[var(--text)]">
                 Restaurant Name
               </label>
               <input
@@ -202,13 +194,12 @@ const AddRestaurant = ({
                 placeholder="Enter restaurant name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full rounded-xl border border-[#e8d7c3] px-4 py-3 text-sm outline-none focus:border-[#e23744] focus:ring-1 focus:ring-[#e23744] bg-[#fafaf8]"
+                className="field-input bg-white px-4 py-3 text-sm"
               />
             </div>
 
-            {/* Contact Number */}
             <div>
-              <label className="block text-sm font-semibold text-[#1f1a17] mb-2">
+              <label className="mb-2 block text-sm font-bold text-[var(--text)]">
                 Contact Number
               </label>
               <input
@@ -216,13 +207,12 @@ const AddRestaurant = ({
                 placeholder="Enter contact number"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full rounded-xl border border-[#e8d7c3] px-4 py-3 text-sm outline-none focus:border-[#e23744] focus:ring-1 focus:ring-[#e23744] bg-[#fafaf8]"
+                className="field-input bg-white px-4 py-3 text-sm"
               />
             </div>
 
-            {/* Description */}
             <div>
-              <label className="block text-sm font-semibold text-[#1f1a17] mb-2">
+              <label className="mb-2 block text-sm font-bold text-[var(--text)]">
                 Restaurant Description
               </label>
               <textarea
@@ -230,22 +220,21 @@ const AddRestaurant = ({
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
-                className="w-full rounded-xl border border-[#e8d7c3] px-4 py-3 text-sm outline-none focus:border-[#e23744] focus:ring-1 focus:ring-[#e23744] bg-[#fafaf8] resize-none"
+                className="field-input min-h-28 resize-y bg-white px-4 py-3 text-sm"
               />
             </div>
 
-            {/* Image Upload */}
             <div>
-              <label className="block text-sm font-semibold text-[#1f1a17] mb-2">
+              <label className="mb-2 block text-sm font-bold text-[var(--text)]">
                 Restaurant Image
               </label>
-              <label className="flex cursor-pointer items-center justify-center gap-3 rounded-xl border-2 border-dashed border-[#e8d7c3] p-6 text-sm text-gray-600 hover:bg-[#fff5f0] transition bg-[#fafaf8]">
-                <BiUpload className="h-6 w-6 text-[#e23744]" />
-                <div className="text-left">
-                  <p className="font-semibold text-[#1f1a17]">
+              <label className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-[22px] border-2 border-dashed border-[color-mix(in_srgb,var(--accent)_36%,white)] bg-[var(--accent-soft)] p-5 text-center text-sm text-[var(--text-soft)] hover:-translate-y-0.5 hover:border-[var(--accent)] hover:bg-white sm:flex-row sm:p-6 sm:text-left">
+                <BiUpload className="h-6 w-6 shrink-0 text-[var(--accent)]" />
+                <div className="min-w-0">
+                  <p className="max-w-full truncate font-black text-[var(--text)]">
                     {image ? image.name : "Upload restaurant image"}
                   </p>
-                  <p className="text-xs text-[#8a7464] mt-1">
+                  <p className="mt-1 text-xs leading-5 text-[var(--text-soft)]">
                     Use a clear square or landscape food photo
                   </p>
                 </div>
@@ -258,15 +247,14 @@ const AddRestaurant = ({
               </label>
             </div>
 
-            {/* Map Picker */}
             <div>
-              <label className="block text-sm font-semibold text-[#1f1a17] mb-2">
+              <label className="mb-2 block text-sm font-bold text-[var(--text)]">
                 Restaurant Location
               </label>
-              <p className="text-xs text-[#8a7464] mb-3">
+              <p className="mb-3 text-xs leading-5 text-[var(--text-soft)]">
                 Click on the map to select your restaurant's location
               </p>
-              <div className="relative h-72 w-full overflow-hidden rounded-xl border border-[#e8d7c3]">
+              <div className="relative h-72 w-full overflow-hidden rounded-[22px] border-2 border-[color-mix(in_srgb,var(--text)_14%,transparent)] shadow-[5px_5px_0_color-mix(in_srgb,var(--accent)_14%,transparent)] sm:h-80">
                 <MapContainer
                   center={[latitude || 28.6139, longitude || 77.209]}
                   zoom={13}
@@ -286,15 +274,14 @@ const AddRestaurant = ({
               </div>
             </div>
 
-            {/* Selected Address Display */}
             {formattedAddress && (
-              <div className="flex items-start gap-3 rounded-xl bg-[#f0fdf4] p-4 border border-[#bbf7d0]">
-                <span className="text-lg mt-0.5">📍</span>
+              <div className="flex items-start gap-3 rounded-[22px] border-2 border-[color-mix(in_srgb,var(--success)_26%,white)] bg-[color-mix(in_srgb,var(--success)_8%,white)] p-4">
+                <FiCheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-[var(--success)]" />
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#15803d] mb-1">
+                  <p className="mb-1 text-xs font-bold uppercase tracking-[0.16em] text-[var(--success)]">
                     Selected Location
                   </p>
-                  <p className="text-sm text-[#166534]">
+                  <p className="text-sm leading-6 text-[var(--text-soft)]">
                     {formattedAddress}
                   </p>
                 </div>
@@ -302,19 +289,19 @@ const AddRestaurant = ({
             )}
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row">
             {onCancel && (
               <button
                 type="button"
                 onClick={onCancel}
-                className="flex-1 rounded-xl border border-[#e8d7c3] px-4 py-3 text-sm font-semibold text-[#1f1a17] hover:bg-[#faf9f7] transition"
+                className="flex-1 rounded-2xl border-2 border-[color-mix(in_srgb,var(--text)_18%,transparent)] bg-white px-4 py-3 text-sm font-bold text-[var(--text)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
               >
                 Cancel
               </button>
             )}
             <button
-              className="flex-1 rounded-xl py-3 text-sm font-semibold text-white bg-[#e23744] hover:bg-[#d32f3a] disabled:opacity-50 disabled:cursor-not-allowed transition"
+              type="button"
+              className="brand-button flex-1 px-4 py-3 text-sm font-black disabled:cursor-not-allowed disabled:opacity-50"
               disabled={submitting}
               onClick={handleSubmit}
             >

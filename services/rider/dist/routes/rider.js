@@ -1,11 +1,12 @@
 import express from "express";
 import { isAuth } from "../middlewares/isAuth.js";
-import { acceptOrder, addRiderProfile, fetchRiderDashboardStats, fetchNearbyAvailableOrders, fetchMyCurrentOrder, fetchMyProfile, toggleRiderAvailablity, updateOrderStatus, } from "../controllers/rider.js";
+import { acceptOrder, addRiderProfile, fetchRiderDashboardStats, fetchRiderOrderHistory, fetchNearbyAvailableOrders, fetchMyCurrentOrder, fetchMyProfile, toggleRiderAvailablity, updateOrderStatus, } from "../controllers/rider.js";
 import uploadFile from "../middlewares/multer.js";
 const router = express.Router();
 router.post("/new", isAuth, uploadFile, addRiderProfile);
 router.get("/myprofile", isAuth, fetchMyProfile);
 router.get("/dashboard/stats", isAuth, fetchRiderDashboardStats);
+router.get("/dashboard/history", isAuth, fetchRiderOrderHistory);
 router.get("/orders/available", isAuth, fetchNearbyAvailableOrders);
 router.patch("/toggle", isAuth, toggleRiderAvailablity);
 router.post("/accept/:orderId", isAuth, acceptOrder);

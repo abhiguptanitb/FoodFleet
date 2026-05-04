@@ -61,9 +61,9 @@ const AdminRestaurantCard = ({
 
   return (
     <>
-      <article className="overflow-hidden rounded-[22px] border border-[#ead8cb] bg-white shadow-[0_14px_34px_rgba(88,58,37,0.08)]">
+      <article className="overflow-hidden rounded-[24px] border-2 border-[color-mix(in_srgb,var(--text)_14%,transparent)] bg-white shadow-[5px_5px_0_color-mix(in_srgb,var(--accent)_16%,transparent)] transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:shadow-[7px_7px_0_color-mix(in_srgb,var(--accent)_22%,transparent)]">
         <div className="flex flex-col sm:flex-row">
-          <div className="relative h-36 bg-[#f4e8df] sm:h-36 sm:w-40 sm:shrink-0">
+          <div className="relative h-36 bg-[var(--accent-soft)] sm:h-36 sm:w-40 sm:shrink-0">
             {restaurant.image ? (
               <img
                 src={restaurant.image}
@@ -71,22 +71,22 @@ const AdminRestaurantCard = ({
                 alt={restaurant.name}
               />
             ) : (
-              <div className="flex h-full items-center justify-center text-[#c1a28c]">
+              <div className="flex h-full items-center justify-center text-[var(--accent)]">
                 <FiShoppingBag size={30} />
               </div>
             )}
-            <span className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#6d5d52]">
+            <span className="absolute left-3 top-3 rounded-full border border-[color-mix(in_srgb,var(--text)_12%,transparent)] bg-white/95 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--text)] shadow-sm">
               Restaurant
             </span>
           </div>
 
-          <div className="flex min-w-0 flex-1 flex-col justify-between gap-4 p-4">
+          <div className="flex min-w-0 flex-1 flex-col justify-between gap-5 p-4 sm:p-5">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <h3 className="truncate text-lg font-semibold text-[#1f1a17]">
+                <h3 className="truncate text-xl font-black text-[var(--text)]">
                   {restaurant.name}
                 </h3>
-                <p className="mt-1 truncate text-sm text-[#8a7464]">
+                <p className="mt-1 truncate text-sm text-[var(--text-soft)]">
                   {restaurant.phone || "Contact not available"}
                 </p>
               </div>
@@ -94,7 +94,7 @@ const AdminRestaurantCard = ({
               <button
                 type="button"
                 onClick={() => setDetailsOpen(true)}
-                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border-2 border-[var(--text)] bg-white text-[var(--text)] shadow-[3px_3px_0_var(--accent-2)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border-2 border-[var(--text)] bg-white text-[var(--text)] shadow-[4px_4px_0_var(--accent-2)] hover:-translate-y-0.5 hover:border-[var(--accent)] hover:text-[var(--accent)]"
                 aria-label={`Review ${restaurant.name}`}
               >
                 <FiEdit3 size={17} />
@@ -105,13 +105,13 @@ const AdminRestaurantCard = ({
               <span
                 className={`rounded-full px-3 py-1 text-xs font-semibold ${
                   restaurant.isVerified
-                    ? "bg-green-100 text-green-700"
-                    : "bg-yellow-100 text-yellow-700"
+                    ? "bg-[color-mix(in_srgb,var(--success)_16%,white)] text-[var(--success)]"
+                    : "bg-[var(--accent-soft)] text-[var(--accent-deep)]"
                 }`}
               >
                 {statusLabel}
               </span>
-              <span className="min-w-0 truncate rounded-full bg-[#faf6f2] px-3 py-1 text-xs text-[#8a7464] sm:max-w-[260px]">
+              <span className="min-w-0 truncate rounded-full bg-[color-mix(in_srgb,var(--text)_5%,white)] px-3 py-1 text-xs text-[var(--text-soft)] sm:max-w-[320px]">
                 {restaurant.autoLocation?.formattedAddress ||
                   "Location unavailable"}
               </span>
@@ -121,10 +121,10 @@ const AdminRestaurantCard = ({
       </article>
 
       {detailsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4">
-          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[28px] border-2 border-[var(--text)] bg-white shadow-[8px_8px_0_var(--text)]">
-            <div className="flex items-start gap-4 border-b border-[#ead8cb] bg-[var(--accent-soft)] p-5 sm:p-6">
-              <div className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl border-2 border-[var(--text)] bg-[#f4e8df] shadow-[4px_4px_0_var(--accent-2)] sm:h-24 sm:w-24">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(10,17,40,0.58)] p-3 backdrop-blur-sm sm:p-4">
+          <div className="max-h-[calc(100vh-1.5rem)] w-full max-w-3xl overflow-y-auto rounded-[28px] border-2 border-[var(--text)] bg-white shadow-[9px_9px_0_var(--text)]">
+            <div className="flex items-start gap-4 border-b-2 border-[color-mix(in_srgb,var(--text)_12%,transparent)] bg-[linear-gradient(135deg,var(--accent-soft),#ffffff)] p-5 sm:p-7">
+              <div className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl border-2 border-[var(--text)] bg-[var(--accent-soft)] shadow-[4px_4px_0_var(--accent-2)] sm:h-24 sm:w-24">
                 {restaurant.image ? (
                   <img
                     src={restaurant.image}
@@ -132,66 +132,66 @@ const AdminRestaurantCard = ({
                     alt={restaurant.name}
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-[#c1a28c]">
+                  <div className="flex h-full w-full items-center justify-center text-[var(--accent)]">
                     <FiShoppingBag size={28} />
                   </div>
                 )}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--accent)]">
+                <p className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--accent)]">
                   Restaurant Review
                 </p>
-                <h3 className="mt-2 truncate text-2xl font-semibold text-[#1f1a17]">
+                <h3 className="mt-2 truncate text-2xl font-black text-[var(--text)] sm:text-3xl">
                   {restaurant.name}
                 </h3>
-                <p className="mt-1 text-sm text-[#8a7464]">{statusLabel}</p>
+                <p className="mt-1 text-sm text-[var(--text-soft)]">{statusLabel}</p>
               </div>
               <button
                 type="button"
                 onClick={() => setDetailsOpen(false)}
-                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-[var(--text)] bg-white text-[var(--text)] shadow-[3px_3px_0_var(--accent-2)] hover:text-[var(--accent)]"
+                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-[var(--text)] bg-white text-[var(--text)] shadow-[3px_3px_0_var(--accent-2)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
                 aria-label="Close restaurant details"
               >
                 <FiX size={18} />
               </button>
             </div>
 
-            <div className="space-y-4 p-5 sm:p-6">
+            <div className="space-y-4 p-5 sm:p-7">
               <div className="grid gap-3">
-                <div className="flex items-start gap-3 rounded-2xl bg-[#faf6f2] p-3">
-                  <FiPhone className="mt-0.5 shrink-0 text-[#e4572e]" size={16} />
+                <div className="flex items-start gap-3 rounded-2xl border border-[color-mix(in_srgb,var(--text)_8%,transparent)] bg-[color-mix(in_srgb,var(--text)_4%,white)] p-4">
+                  <FiPhone className="mt-0.5 shrink-0 text-[var(--accent)]" size={16} />
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#a57f65]">
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--text-soft)]">
                       Contact Number
                     </p>
-                    <p className="mt-1 break-words text-sm text-[#3f332c]">
+                    <p className="mt-1 break-words text-sm text-[var(--text)]">
                       {restaurant.phone || "Not available"}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 rounded-2xl bg-[#faf6f2] p-3">
-                  <FiMapPin className="mt-0.5 shrink-0 text-[#e4572e]" size={16} />
+                <div className="flex items-start gap-3 rounded-2xl border border-[color-mix(in_srgb,var(--text)_8%,transparent)] bg-[color-mix(in_srgb,var(--text)_4%,white)] p-4">
+                  <FiMapPin className="mt-0.5 shrink-0 text-[var(--accent)]" size={16} />
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#a57f65]">
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--text-soft)]">
                       Address
                     </p>
-                    <p className="mt-1 break-words text-sm leading-6 text-[#3f332c]">
+                    <p className="mt-1 break-words text-sm leading-6 text-[var(--text)]">
                       {restaurant.autoLocation?.formattedAddress ||
                         "Location unavailable"}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 rounded-2xl bg-[#faf6f2] p-3">
-                  <FiShield className="mt-0.5 shrink-0 text-[#e4572e]" size={16} />
+                <div className="flex items-start gap-3 rounded-2xl border border-[color-mix(in_srgb,var(--text)_8%,transparent)] bg-[color-mix(in_srgb,var(--text)_4%,white)] p-4">
+                  <FiShield className="mt-0.5 shrink-0 text-[var(--accent)]" size={16} />
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#a57f65]">
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--text-soft)]">
                       Current Status
                     </p>
                     <p
-                      className={`mt-1 text-sm font-semibold ${
-                        restaurant.isVerified ? "text-green-700" : "text-amber-700"
+                      className={`mt-1 text-sm font-bold ${
+                        restaurant.isVerified ? "text-[var(--success)]" : "text-[var(--accent-deep)]"
                       }`}
                     >
                       {statusLabel}
@@ -202,11 +202,9 @@ const AdminRestaurantCard = ({
 
               <button
                 disabled={updating}
-                className={`inline-flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold text-white transition ${
-                  restaurant.isVerified
-                    ? "bg-amber-500 hover:bg-amber-600"
-                    : "bg-[#1f9d64] hover:bg-[#168352]"
-                } ${updating ? "cursor-not-allowed opacity-70" : ""}`}
+                className={`inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border-2 border-[var(--text)] bg-[var(--accent)] px-4 py-3 text-sm font-black text-[#08111c] shadow-[4px_4px_0_var(--text)] transition hover:-translate-y-0.5 hover:bg-[var(--accent-deep)] hover:text-white ${
+                  updating ? "cursor-not-allowed opacity-70" : ""
+                }`}
                 onClick={toggleVerification}
               >
                 <FiShield size={16} />
