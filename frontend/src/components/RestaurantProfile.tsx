@@ -107,8 +107,8 @@ const RestaurantProfile = ({ restaurant, isSeller, onUpdate }: props) => {
               </h2>
             )}
 
-            <div className="mt-3 flex items-center gap-2 text-sm text-[#6d5d52]">
-              <BiMapPin className="h-4 w-4 text-[#e4572e]" />
+            <div className="mt-3 flex items-center gap-2 text-sm text-[var(--text-soft)]">
+              <BiMapPin className="h-4 w-4 text-[var(--accent)]" />
               {restaurant.autoLocation.formattedAddress ||
                 "Location unavailable"}
             </div>
@@ -131,13 +131,13 @@ const RestaurantProfile = ({ restaurant, isSeller, onUpdate }: props) => {
             className="field-input min-h-28 text-sm"
           />
         ) : (
-          <p className="max-w-3xl text-sm leading-7 text-[#6d5d52]">
+          <p className="max-w-3xl text-sm leading-7 text-[var(--text-soft)]">
             {restaurant.description ||
               "No description has been added for this restaurant yet."}
           </p>
         )}
 
-        <div className="flex flex-col gap-4 border-t border-[#efdfd2] pt-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-4 border-t border-[#d8e3ef] pt-4 sm:flex-row sm:items-center sm:justify-between">
           <span
             className={`text-sm font-semibold ${
               isOpen ? "text-[#198754]" : "text-[#cc4b37]"
@@ -163,7 +163,7 @@ const RestaurantProfile = ({ restaurant, isSeller, onUpdate }: props) => {
                 onClick={toggleOpenStatus}
                 className={`rounded-2xl px-4 py-3 text-sm font-semibold text-white ${
                   isOpen
-                    ? "bg-[#1f1a17] hover:bg-[#352a24]"
+                    ? "bg-[#1f1a17] hover:bg-[#243145]"
                     : "bg-[#198754] hover:bg-[#146b43]"
                 }`}
               >

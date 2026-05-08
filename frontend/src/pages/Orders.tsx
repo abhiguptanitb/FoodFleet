@@ -114,13 +114,13 @@ const Orders = () => {
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold text-[#1f1a17]">Active Orders</h2>
-          <span className="rounded-full bg-[#fff1e8] px-3 py-1 text-xs font-semibold text-[#e4572e]">
+          <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[var(--accent)]">
             {activeOrders.length}
           </span>
         </div>
 
         {activeOrders.length === 0 ? (
-          <div className="soft-card p-5 text-sm text-[#6d5d52]">
+          <div className="soft-card p-5 text-sm text-[var(--text-soft)]">
             You do not have any active orders right now.
           </div>
         ) : (
@@ -137,13 +137,13 @@ const Orders = () => {
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold text-[#1f1a17]">Order History</h2>
-          <span className="rounded-full bg-[#fff6ee] px-3 py-1 text-xs font-semibold text-[#8a6d59]">
+          <span className="rounded-full bg-[#eef6ff] px-3 py-1 text-xs font-semibold text-[#64748b]">
             {completedOrders.length}
           </span>
         </div>
 
         {completedOrders.length === 0 ? (
-          <div className="soft-card p-5 text-sm text-[#6d5d52]">
+          <div className="soft-card p-5 text-sm text-[var(--text-soft)]">
             Delivered and cancelled orders will appear here with their dates.
           </div>
         ) : (
@@ -181,13 +181,13 @@ const OrderRow = ({
         <p className="text-sm font-semibold text-[#1f1a17]">
           Order #{order._id.slice(-6)}
         </p>
-        <span className="rounded-full bg-[#fff3eb] px-3 py-1 text-xs font-semibold capitalize text-[#e4572e]">
+        <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-semibold capitalize text-[var(--accent)]">
           {statusLabel(order.status)}
         </span>
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2 text-xs">
-        <span className="rounded-full bg-[#f8f2ec] px-3 py-1 font-semibold text-[#6d5d52]">
+        <span className="rounded-full bg-[#eef6ff] px-3 py-1 font-semibold text-[var(--text-soft)]">
           Ordered: {formatOrderDate(order.createdAt)}
         </span>
         {history && (
@@ -204,12 +204,12 @@ const OrderRow = ({
         )}
       </div>
 
-      <p className="mt-3 text-sm leading-6 text-[#6d5d52]">
+      <p className="mt-3 text-sm leading-6 text-[var(--text-soft)]">
         {order.items.map((item) => `${item.name} x ${item.quauntity}`).join(", ")}
       </p>
 
-      <div className="mt-4 flex justify-between border-t border-[#f1e6dd] pt-3 text-sm">
-        <span className="text-[#6d5d52]">Total</span>
+      <div className="mt-4 flex justify-between border-t border-[#d8e3ef] pt-3 text-sm">
+        <span className="text-[var(--text-soft)]">Total</span>
         <span className="font-semibold text-[#1f1a17]">Rs {order.totalAmount}</span>
       </div>
     </div>

@@ -11,12 +11,12 @@ const RestaurantCard = ({ id, image, name, isOpen }: props) => {
   const navigate = useNavigate();
   return (
     <div
-      className={`group fade-up cursor-pointer overflow-hidden rounded-[28px] border border-[#ecdccf] bg-white shadow-[0_18px_36px_rgba(84,56,35,0.08)] transition hover:-translate-y-1 hover:shadow-[0_24px_40px_rgba(84,56,35,0.14)] ${
+      className={`group fade-up cursor-pointer overflow-hidden rounded-[28px] border border-[#d8e3ef] bg-white shadow-[0_18px_36px_rgba(15,23,42,0.08)] transition hover:-translate-y-1 hover:shadow-[0_24px_40px_rgba(37,99,235,0.14)] ${
         !isOpen ? "opacity-80" : ""
       }`}
       onClick={() => navigate(`/restaurant/${id}`)}
     >
-      <div className="relative h-52 w-full overflow-hidden bg-[#f6e7db]">
+      <div className="relative h-52 w-full overflow-hidden bg-[#e0f2fe]">
         <img
           src={image}
           alt=""
@@ -26,7 +26,7 @@ const RestaurantCard = ({ id, image, name, isOpen }: props) => {
         />
 
         <div className="absolute inset-x-0 top-0 flex items-center justify-between p-4">
-          <span className="rounded-full bg-white/92 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#5d4a3f] backdrop-blur">
+          <span className="rounded-full bg-white/92 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#334155] backdrop-blur">
             Food delivery
           </span>
           <span
@@ -46,11 +46,11 @@ const RestaurantCard = ({ id, image, name, isOpen }: props) => {
           <h3 className="truncate text-lg font-semibold text-[#1f1a17]">
             {name}
           </h3>
-          <span className="rounded-full bg-[#fff2e9] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#e4572e]">
+          <span className="rounded-full bg-[#eef2ff] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#2563eb]">
             Fast order
           </span>
         </div>
-        <p className="text-sm leading-6 text-[#6d5d52]">
+        <p className="text-sm leading-6 text-[#506277]">
           {isOpen
             ? "Ordering is live. Tap to explore the menu and place your order."
             : "This restaurant is currently closed. You can still preview the menu."}
@@ -62,11 +62,11 @@ const RestaurantCard = ({ id, image, name, isOpen }: props) => {
         >
           {isOpen ? "Accepting orders right now" : "Currently unavailable"}
         </p>
-        <div className="flex items-center justify-between border-t border-[#f1e6dd] pt-3">
+        <div className="flex items-center justify-between border-t border-[#d8e3ef] pt-3">
           <span className="text-sm font-medium text-[#1f1a17]">
             View restaurant
           </span>
-          <span className="text-sm text-[#e4572e] transition group-hover:translate-x-1">
+          <span className="text-sm text-[#2563eb] transition group-hover:translate-x-1">
             Explore
           </span>
         </div>

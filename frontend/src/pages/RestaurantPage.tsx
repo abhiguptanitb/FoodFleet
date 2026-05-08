@@ -97,7 +97,7 @@ const RestaurantPage = () => {
               Browse the full menu
             </h2>
           </div>
-          <p className="text-sm text-[#6d5d52]">
+          <p className="text-sm text-[var(--text-soft)]">
             Choose from the latest available dishes and add them straight to your cart.
           </p>
         </div>

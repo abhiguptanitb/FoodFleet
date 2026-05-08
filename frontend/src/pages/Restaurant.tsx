@@ -300,13 +300,13 @@ const Restaurant = () => {
                               className="h-full w-full object-cover"
                             />
                           ) : (
-                            <div className="flex h-full items-center justify-center text-[#c1a28c]">
+                            <div className="flex h-full items-center justify-center text-[#94a3b8]">
                               <FiShoppingBag size={28} />
                             </div>
                           )}
 
                           <div className="absolute inset-x-0 top-0 flex items-start justify-between p-3">
-                            <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-[#4f3f34]">
+                            <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-[#334155]">
                               {restaurant.isOpen ? "Open" : "Closed"}
                             </span>
                             {isActive && (
@@ -332,7 +332,7 @@ const Restaurant = () => {
                             <button
                               type="button"
                               onClick={() => openEditModal(restaurant)}
-                              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#ecd6c7] text-[#6a5548] transition hover:border-[#e4572e] hover:text-[#e4572e]"
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#d8e3ef] text-[#64748b] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
                             >
                               <FiEdit3 size={16} />
                             </button>
@@ -344,8 +344,8 @@ const Restaurant = () => {
                             }
                             className="w-full text-left"
                           >
-                            <div className="flex items-start gap-2 rounded-2xl bg-[#faf6f2] p-3 text-sm text-[#6a5b50]">
-                              <FiMapPin className="mt-0.5 shrink-0 text-[#e4572e]" />
+                            <div className="flex items-start gap-2 rounded-2xl bg-[#eef6ff] p-3 text-sm text-[#506277]">
+                              <FiMapPin className="mt-0.5 shrink-0 text-[var(--accent)]" />
                               <p className="line-clamp-3">
                                 {restaurant.autoLocation?.formattedAddress ||
                                   "Location unavailable"}
@@ -354,13 +354,13 @@ const Restaurant = () => {
                           </button>
                         </div>
 
-                        <div className="flex gap-3 border-t border-[#f0e4db] px-4 py-4">
+                        <div className="flex gap-3 border-t border-[#d8e3ef] px-4 py-4">
                           <button
                             onClick={() => setSelectedRestaurantId(restaurant._id)}
                             className={`flex-1 rounded-2xl px-4 py-2.5 text-sm font-semibold transition ${
                               isActive
                                 ? "bg-[#1f1a17] text-white"
-                                : "bg-[#fff5ee] text-[#7a5a47] hover:bg-[#ffede1]"
+                                : "bg-[#eef6ff] text-[#334155] hover:bg-[#dbeafe]"
                             }`}
                           >
                             {isActive ? "Selected" : "Select"}
@@ -397,7 +397,7 @@ const Restaurant = () => {
                     <p className="mt-4 text-base font-semibold text-[#1f1a17]">
                       Add Another Restaurant
                     </p>
-                    <p className="mt-2 text-sm leading-6 text-[#6d5d52]">
+                    <p className="mt-2 text-sm leading-6 text-[var(--text-soft)]">
                       Create a new outlet directly from this row.
                     </p>
                   </button>

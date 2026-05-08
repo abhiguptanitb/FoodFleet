@@ -72,7 +72,7 @@ const Account = () => {
                   onError={() => setImageError(true)}
                 />
               ) : (
-                <div className="flex h-[72px] w-[72px] items-center justify-center rounded-[24px] bg-[#e4572e] text-2xl font-semibold text-white">
+                <div className="flex h-[72px] w-[72px] items-center justify-center rounded-[24px] bg-[var(--accent)] text-2xl font-semibold text-white">
                   {firstLetter}
                 </div>
               )}
@@ -81,7 +81,7 @@ const Account = () => {
                 <h1 className="mt-3 text-3xl font-semibold text-[#1f1a17]">
                   {user?.name}
                 </h1>
-                <p className="mt-1 text-sm text-[#6d5d52]">{user?.email}</p>
+                <p className="mt-1 text-sm text-[var(--text-soft)]">{user?.email}</p>
               </div>
             </div>
             <button
@@ -95,19 +95,19 @@ const Account = () => {
 
         <div className="grid gap-4 md:grid-cols-3">
           <ActionCard
-            icon={<BiPackage className="h-5 w-5 text-[#e4572e]" />}
+            icon={<BiPackage className="h-5 w-5 text-[var(--accent)]" />}
             title="Your Orders"
             copy="Track active deliveries and review past orders."
             onClick={() => navigate("/orders")}
           />
           <ActionCard
-            icon={<BiMapPin className="h-5 w-5 text-[#e4572e]" />}
+            icon={<BiMapPin className="h-5 w-5 text-[var(--accent)]" />}
             title="Saved Addresses"
             copy="Manage delivery locations for future orders."
             onClick={() => navigate("/address")}
           />
           <ActionCard
-            icon={<BiLogOut className="h-5 w-5 text-[#e4572e]" />}
+            icon={<BiLogOut className="h-5 w-5 text-[var(--accent)]" />}
             title="Sign Out"
             copy="Securely log out of your FoodFleet account."
             onClick={logoutHandler}
@@ -131,7 +131,7 @@ const Account = () => {
           </div>
 
           {deliveredOrders.length === 0 ? (
-            <p className="mt-5 rounded-2xl bg-[#fff8f2] p-4 text-sm leading-6 text-[#6d5d52]">
+            <p className="mt-5 rounded-2xl bg-[#eef6ff] p-4 text-sm leading-6 text-[var(--text-soft)]">
               Your delivered orders will show here with the order date and
               delivery date.
             </p>
@@ -141,14 +141,14 @@ const Account = () => {
                 <button
                   key={order._id}
                   onClick={() => navigate(`/order/${order._id}`)}
-                  className="w-full rounded-2xl border border-[#f1e6dd] bg-[#fffdfb] p-4 text-left hover:-translate-y-0.5 hover:border-[#e7cbb8]"
+                  className="w-full rounded-2xl border border-[#d8e3ef] bg-[#f8fbff] p-4 text-left hover:-translate-y-0.5 hover:border-[#93c5fd]"
                 >
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="text-sm font-semibold text-[#1f1a17]">
                         {order.restaurantName}
                       </p>
-                      <p className="mt-1 text-xs text-[#6d5d52]">
+                      <p className="mt-1 text-xs text-[var(--text-soft)]">
                         Order #{order._id.slice(-6)} · Rs {order.totalAmount}
                       </p>
                     </div>
@@ -156,7 +156,7 @@ const Account = () => {
                       Delivered {formatOrderDate(order.updatedAt)}
                     </span>
                   </div>
-                  <p className="mt-3 text-xs text-[#8a6d59]">
+                  <p className="mt-3 text-xs text-[#64748b]">
                     Ordered {formatOrderDate(order.createdAt)}
                   </p>
                 </button>
@@ -184,11 +184,11 @@ const ActionCard = ({
     className="soft-card flex flex-col items-start gap-3 p-5 text-left hover:-translate-y-1"
     onClick={onClick}
   >
-    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#fff1e8]">
+    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--accent-soft)]">
       {icon}
     </div>
     <h2 className="text-lg font-semibold text-[#1f1a17]">{title}</h2>
-    <p className="text-sm leading-6 text-[#6d5d52]">{copy}</p>
+    <p className="text-sm leading-6 text-[var(--text-soft)]">{copy}</p>
   </button>
 );
 

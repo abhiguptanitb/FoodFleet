@@ -23,9 +23,9 @@ interface Props {
 const statusTone = (status: string) => {
   switch (status) {
     case "placed":
-      return "bg-[#fff7d6] text-[#9a6400] border-[#f2c94c]";
+      return "bg-[#e0f2fe] text-[#0369a1] border-[#38bdf8]";
     case "accepted":
-      return "bg-[#fff0e8] text-[#ad4b16] border-[#f2a36f]";
+      return "bg-[#eef2ff] text-[#4338ca] border-[#818cf8]";
     case "preparing":
       return "bg-[var(--accent-soft)] text-[var(--accent-deep)] border-[var(--accent)]";
     case "ready_for_rider":

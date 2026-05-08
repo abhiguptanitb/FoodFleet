@@ -67,7 +67,7 @@ const LocateMeButton = ({
   return (
     <button
       onClick={locateUser}
-      className="absolute right-3 top-3 z-[1000] flex items-center gap-2 rounded-2xl bg-white px-3 py-2 text-sm font-medium text-[#1f1a17] shadow-[0_10px_20px_rgba(84,56,35,0.14)] hover:bg-[#fff8f3]"
+      className="absolute right-3 top-3 z-[1000] flex items-center gap-2 rounded-2xl bg-white px-3 py-2 text-sm font-medium text-[#1f1a17] shadow-[0_10px_20px_rgba(15,23,42,0.14)] hover:bg-[#eef6ff]"
     >
       <LuLocateFixed size={16} />
       Use current location
@@ -213,7 +213,7 @@ const AddAddressPage = () => {
 
       <div className="grid gap-6 lg:grid-cols-[1.08fr_0.92fr]">
         <section className="soft-card overflow-hidden p-4 sm:p-5">
-          <div className="relative h-[420px] overflow-hidden rounded-[24px] border border-[#ead8cb]">
+          <div className="relative h-[420px] overflow-hidden rounded-[24px] border border-[#d8e3ef]">
             <MapContainer
               center={[latitude || 28.6139, longitude || 77.209]}
               zoom={13}
@@ -268,7 +268,7 @@ const AddAddressPage = () => {
           <div className="mt-8 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-[#1f1a17]">Saved Addresses</h3>
-              <span className="rounded-full bg-[#fff1e8] px-3 py-1 text-xs font-semibold text-[#e4572e]">
+              <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[var(--accent)]">
                 {addresses.length}
               </span>
             </div>
@@ -280,27 +280,27 @@ const AddAddressPage = () => {
                 copy="Your delivery locations are being prepared."
               />
             ) : addresses.length === 0 ? (
-              <div className="rounded-2xl bg-[#fff7f1] px-4 py-4 text-sm text-[#8a6d59]">
+              <div className="rounded-2xl bg-[#eef6ff] px-4 py-4 text-sm text-[#64748b]">
                 No saved addresses yet.
               </div>
             ) : (
               addresses.map((addr) => (
                 <div
                   key={addr._id}
-                  className="flex items-start justify-between gap-4 rounded-2xl border border-[#ead8cb] bg-white p-4"
+                  className="flex items-start justify-between gap-4 rounded-2xl border border-[#d8e3ef] bg-white p-4"
                 >
                   <div>
                     <p className="text-sm font-semibold text-[#1f1a17]">
                       {addr.formattedAddress}
                     </p>
-                    <p className="mt-1 text-xs text-[#6d5d52]">
+                    <p className="mt-1 text-xs text-[var(--text-soft)]">
                       Contact: {addr.mobile}
                     </p>
                   </div>
                   <button
                     onClick={() => deleteAddress(addr._id)}
                     disabled={deletingId === addr._id}
-                    className="rounded-2xl p-2 text-[#cc4b37] hover:bg-[#fff0eb] disabled:opacity-50"
+                    className="rounded-2xl p-2 text-[#dc2626] hover:bg-[#fef2f2] disabled:opacity-50"
                   >
                     {deletingId === addr._id ? (
                       <BiLoader size={16} className="animate-spin" />

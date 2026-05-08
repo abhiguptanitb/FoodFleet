@@ -28,7 +28,7 @@ const PaymentSuccess = () => {
 
         {paymentId && (
           <div className="mx-auto mt-5 max-w-md rounded-2xl bg-white px-4 py-4 text-left shadow-[0_12px_24px_rgba(84,56,35,0.08)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8a6d59]">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#64748b]">
               Payment Reference
             </p>
             <p className="mt-2 break-all font-mono text-sm text-[#1f1a17]">

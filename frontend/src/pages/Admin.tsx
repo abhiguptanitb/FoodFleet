@@ -1,10 +1,8 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
   FiGrid,
-  FiLogOut,
   FiShield,
   FiShoppingBag,
   FiTrash2,
@@ -54,8 +52,7 @@ type AdminCustomer = {
 };
 
 const Admin = () => {
-  const { user, setIsAuth, setUser } = useAppData();
-  const navigate = useNavigate();
+  const { user } = useAppData();
   const [restaurant, setRestaurant] = useState<AdminRestaurant[]>([]);
   const [riders, setRiders] = useState<AdminRider[]>([]);
   const [customers, setCustomers] = useState<AdminCustomer[]>([]);
@@ -114,14 +111,6 @@ const Admin = () => {
   useEffect(() => {
     fetchData();
   }, []);
-
-  const logoutHandler = () => {
-    localStorage.setItem("token", "");
-    setUser(null);
-    setIsAuth(false);
-    toast.success("Logged out successfully");
-    navigate("/login");
-  };
 
   const handleRestaurantStatusChange = (
     restaurantId: string,
@@ -208,15 +197,15 @@ const Admin = () => {
                     <h2 className="mt-1 truncate text-lg font-semibold text-[#1f1a17]">
                       {user?.name || "Administrator"}
                     </h2>
-                    <p className="truncate text-sm text-[#6d5d52]">
+                    <p className="truncate text-sm text-[var(--text-soft)]">
                       {user?.email || "No email available"}
                     </p>
                   </div>
                 </div>
 
                 <div className="mt-5 grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl bg-[#fff6ee] p-4">
-                    <div className="flex items-center gap-2 text-[#e4572e]">
+                  <div className="rounded-2xl bg-[#eef2ff] p-4">
+                    <div className="flex items-center gap-2 text-[#2563eb]">
                       <FiShoppingBag size={16} />
                       <span className="text-xs font-semibold uppercase tracking-[0.16em]">
                         Restaurants
@@ -252,13 +241,6 @@ const Admin = () => {
                   </div>
                 </div>
 
-                <button
-                  onClick={logoutHandler}
-                  className="ghost-button mt-5 inline-flex w-full items-center justify-center gap-2 px-4 py-3 text-sm font-semibold"
-                >
-                  <FiLogOut size={16} />
-                  Logout
-                </button>
               </aside>
 
               <div className="rounded-[24px] border-2 border-[var(--text)] bg-white p-5 shadow-[5px_5px_0_var(--accent-2)]">
@@ -271,7 +253,7 @@ const Admin = () => {
                     <h1 className="mt-3 text-3xl font-semibold text-[#1f1a17]">
                       Verification Center
                     </h1>
-                    <p className="mt-2 max-w-2xl text-sm leading-6 text-[#6d5d52]">
+                    <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--text-soft)]">
                       Review restaurants and riders, keep every profile visible,
                       and switch verification status whenever needed.
                     </p>
@@ -283,7 +265,7 @@ const Admin = () => {
                       className={`flex-1 rounded-2xl px-4 py-3 text-sm font-semibold transition sm:flex-none ${
                         tab === "restaurant"
                           ? "bg-[var(--accent)] text-[#08111c] shadow-[3px_3px_0_var(--text)]"
-                          : "text-[#6d5d52] hover:text-[#1f1a17]"
+                          : "text-[var(--text-soft)] hover:text-[#1f1a17]"
                       }`}
                     >
                       Restaurants
@@ -294,7 +276,7 @@ const Admin = () => {
                       className={`flex-1 rounded-2xl px-4 py-3 text-sm font-semibold transition sm:flex-none ${
                         tab === "rider"
                           ? "bg-[var(--accent)] text-[#08111c] shadow-[3px_3px_0_var(--text)]"
-                          : "text-[#6d5d52] hover:text-[#1f1a17]"
+                          : "text-[var(--text-soft)] hover:text-[#1f1a17]"
                       }`}
                     >
                       Riders
@@ -305,7 +287,7 @@ const Admin = () => {
                       className={`flex-1 rounded-2xl px-4 py-3 text-sm font-semibold transition sm:flex-none ${
                         tab === "customer"
                           ? "bg-[var(--accent)] text-[#08111c] shadow-[3px_3px_0_var(--text)]"
-                          : "text-[#6d5d52] hover:text-[#1f1a17]"
+                          : "text-[var(--text-soft)] hover:text-[#1f1a17]"
                       }`}
                     >
                       Customers
@@ -314,8 +296,8 @@ const Admin = () => {
                 </div>
 
                 <div className="mt-6 flex items-center justify-between gap-3 rounded-2xl bg-[#faf6f2] px-4 py-3">
-                  <div className="flex items-center gap-2 text-[#4f3f34]">
-                    <FiGrid size={16} className="text-[#e4572e]" />
+                  <div className="flex items-center gap-2 text-[#334155]">
+                    <FiGrid size={16} className="text-[var(--accent)]" />
                     <span className="text-sm font-medium">
                       {tab === "restaurant"
                         ? "All restaurant profiles"
@@ -324,7 +306,7 @@ const Admin = () => {
                           : "All customer accounts"}
                     </span>
                   </div>
-                  <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#8b6c57]">
+                  <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#64748b]">
                     {tab === "restaurant"
                       ? restaurant.length
                       : tab === "rider"

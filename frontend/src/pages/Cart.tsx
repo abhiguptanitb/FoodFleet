@@ -106,7 +106,7 @@ const Cart = () => {
           Review your order
         </h1>
         <p className="mt-2 text-lg font-medium text-[#1f1a17]">{restaurant.name}</p>
-        <p className="mt-1 text-sm text-[#6d5d52]">
+        <p className="mt-1 text-sm text-[var(--text-soft)]">
           {restaurant.autoLocation.formattedAddress}
         </p>
       </div>
@@ -129,12 +129,12 @@ const Cart = () => {
 
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-[#1f1a17]">{item.name}</h3>
-                <p className="mt-1 text-sm text-[#6d5d52]">Rs {item.price}</p>
+                <p className="mt-1 text-sm text-[var(--text-soft)]">Rs {item.price}</p>
               </div>
 
               <div className="flex items-center gap-3">
                 <button
-                  className="rounded-full border border-[#ead8cb] p-2 hover:bg-[#fff5ef] disabled:opacity-50"
+                  className="rounded-full border border-[#d8e3ef] p-2 hover:bg-[#eef6ff] disabled:opacity-50"
                   disabled={isLoading}
                   onClick={() => decreaseQty(item._id)}
                 >
@@ -148,7 +148,7 @@ const Cart = () => {
                   {cartItem.quauntity}
                 </span>
                 <button
-                  className="rounded-full border border-[#ead8cb] p-2 hover:bg-[#fff5ef] disabled:opacity-50"
+                  className="rounded-full border border-[#d8e3ef] p-2 hover:bg-[#eef6ff] disabled:opacity-50"
                   disabled={isLoading}
                   onClick={() => increaseQty(item._id)}
                 >
@@ -169,32 +169,32 @@ const Cart = () => {
       </div>
 
       <div className="soft-card space-y-4 p-5">
-        <div className="flex justify-between text-sm text-[#6d5d52]">
+        <div className="flex justify-between text-sm text-[var(--text-soft)]">
           <span>Total Items</span>
           <span className="font-semibold text-[#1f1a17]">{quauntity}</span>
         </div>
-        <div className="flex justify-between text-sm text-[#6d5d52]">
+        <div className="flex justify-between text-sm text-[var(--text-soft)]">
           <span>Subtotal</span>
           <span className="font-semibold text-[#1f1a17]">Rs {subTotal}</span>
         </div>
-        <div className="flex justify-between text-sm text-[#6d5d52]">
+        <div className="flex justify-between text-sm text-[var(--text-soft)]">
           <span>Delivery Fee</span>
           <span className="font-semibold text-[#1f1a17]">
             {deliveryFee === 0 ? "Free" : `Rs ${deliveryFee}`}
           </span>
         </div>
-        <div className="flex justify-between text-sm text-[#6d5d52]">
+        <div className="flex justify-between text-sm text-[var(--text-soft)]">
           <span>Platform Fee</span>
           <span className="font-semibold text-[#1f1a17]">Rs {platfromFee}</span>
         </div>
 
         {subTotal < 250 && (
-          <p className="rounded-2xl bg-[#fff7f1] px-4 py-3 text-xs text-[#8a6d59]">
+          <p className="rounded-2xl bg-[#eef6ff] px-4 py-3 text-xs text-[#64748b]">
             Add items worth Rs {250 - subTotal} more to unlock free delivery.
           </p>
         )}
 
-        <div className="flex justify-between border-t border-[#f1e6dd] pt-3 text-base font-semibold text-[#1f1a17]">
+        <div className="flex justify-between border-t border-[#d8e3ef] pt-3 text-base font-semibold text-[#1f1a17]">
           <span>Grand Total</span>
           <span>Rs {grandTotal}</span>
         </div>

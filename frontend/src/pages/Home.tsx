@@ -73,7 +73,7 @@ const Home = () => {
               order from places that can reach your selected location.
             </p>
           </div>
-          <div className="shrink-0 rounded-2xl border-2 border-[var(--text)] bg-white px-4 py-2 text-sm text-[#6d5d52] shadow-[4px_4px_0_var(--accent-2)]">
+          <div className="shrink-0 rounded-2xl border-2 border-[var(--text)] bg-white px-4 py-2 text-sm text-[var(--text-soft)] shadow-[4px_4px_0_var(--accent-2)]">
             <span className="font-semibold text-[#1f1a17]">{restaurants.length}</span>{" "}
             restaurant{restaurants.length === 1 ? "" : "s"} available
           </div>

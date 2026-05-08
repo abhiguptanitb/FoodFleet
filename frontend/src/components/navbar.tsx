@@ -164,7 +164,7 @@ const Navbar = () => {
 
   return (
     <>
-      <div className="neon-nav sticky top-0 z-40">
+      <div className={`neon-nav sticky top-0 z-40 ${isLoginPage ? "login-nav" : ""}`}>
         <div className="page-wrap">
           <div className="flex flex-wrap items-center justify-between gap-3 py-3">
             <Link
@@ -288,7 +288,7 @@ const Navbar = () => {
 
       {locationModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4">
-          <div className="w-full max-w-3xl rounded-[32px] border border-white/70 bg-[#fffdfb] p-5 shadow-[0_26px_70px_rgba(0,0,0,0.25)] sm:p-6">
+          <div className="w-full max-w-3xl rounded-[32px] border border-white/70 bg-[#f8fbff] p-5 shadow-[0_26px_70px_rgba(0,0,0,0.25)] sm:p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="pill-label">Location</p>

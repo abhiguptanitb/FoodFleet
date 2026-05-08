@@ -10,11 +10,11 @@
   --border: rgba(10, 17, 40, 0.18);
   --text: #0a1128;
   --text-soft: #4f5d68;
-  --accent: #ff3d57;
-  --accent-2: #ccff00;
-  --accent-3: #00d5ff;
-  --accent-deep: #d91f3e;
-  --accent-soft: #fff0f3;
+  --accent: #2563eb;
+  --accent-2: #22d3ee;
+  --accent-3: #8b5cf6;
+  --accent-deep: #1d4ed8;
+  --accent-soft: #eef2ff;
   --success: #04b86a;
   --shadow: 0 18px 0 rgba(10, 17, 40, 0.11), 0 28px 70px rgba(10, 17, 40, 0.12);
   --hard-shadow: 8px 8px 0 rgba(10, 17, 40, 0.92);
@@ -32,8 +32,8 @@ body {
     linear-gradient(var(--grid-line) 1px, transparent 1px),
     linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
     radial-gradient(circle at 12% 8%, var(--role-glow), transparent 28%),
-    radial-gradient(circle at 88% 10%, rgba(204, 255, 0, 0.18), transparent 24%),
-    radial-gradient(circle at 50% 95%, rgba(0, 213, 255, 0.12), transparent 26%),
+    radial-gradient(circle at 88% 10%, rgba(34, 211, 238, 0.18), transparent 24%),
+    radial-gradient(circle at 50% 95%, rgba(139, 92, 246, 0.12), transparent 26%),
     linear-gradient(180deg, #ffffff 0%, var(--bg) 100%);
   background-size:
     34px 34px,
@@ -74,17 +74,17 @@ a:active {
 
 .app-shell {
   min-height: 100vh;
-  --accent: #ff3d57;
-  --accent-2: #ccff00;
-  --accent-3: #00d5ff;
-  --accent-deep: #d91f3e;
-  --accent-soft: #fff0f3;
-  --role-glow: rgba(255, 61, 87, 0.16);
+  --accent: #2563eb;
+  --accent-2: #22d3ee;
+  --accent-3: #8b5cf6;
+  --accent-deep: #1d4ed8;
+  --accent-soft: #eef2ff;
+  --role-glow: rgba(37, 99, 235, 0.16);
 }
 
 .role-seller {
   --accent: #7c3cff;
-  --accent-2: #ffcb13;
+  --accent-2: #22d3ee;
   --accent-3: #ff4fb8;
   --accent-deep: #5122c7;
   --accent-soft: #f4edff;
@@ -94,7 +94,7 @@ a:active {
 .role-rider {
   --accent: #00a6ff;
   --accent-2: #00ff9d;
-  --accent-3: #ffe45c;
+  --accent-3: #a78bfa;
   --accent-deep: #006ee6;
   --accent-soft: #e9f8ff;
   --role-glow: rgba(0, 166, 255, 0.2);
@@ -107,6 +107,110 @@ a:active {
   --accent-deep: #07934b;
   --accent-soft: #eafff3;
   --role-glow: rgba(27, 227, 123, 0.18);
+}
+
+.login-page,
+.login-nav {
+  --bg: #f4fbff;
+  --bg-soft: #e9f7f8;
+  --surface: rgba(255, 255, 255, 0.84);
+  --surface-strong: rgba(255, 255, 255, 0.94);
+  --surface-muted: #ecfeff;
+  --border: rgba(8, 28, 52, 0.16);
+  --text: #081c34;
+  --text-soft: #506277;
+  --accent: #0f766e;
+  --accent-2: #7dd3fc;
+  --accent-3: #38bdf8;
+  --accent-deep: #115e59;
+  --accent-soft: #e6fffb;
+  --shadow: 0 24px 80px rgba(8, 28, 52, 0.14);
+  --hard-shadow: 8px 8px 0 rgba(8, 28, 52, 0.9);
+  --role-glow: rgba(15, 118, 110, 0.16);
+}
+
+.login-nav {
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.94), rgba(232, 252, 255, 0.9));
+  border-bottom-color: rgba(8, 28, 52, 0.88);
+  box-shadow: 0 12px 36px rgba(8, 28, 52, 0.08);
+}
+
+.login-nav .brand-mark {
+  box-shadow: 5px 5px 0 #081c34;
+}
+
+.login-nav .role-badge {
+  background: linear-gradient(135deg, #ffffff, #e6fffb);
+  color: #0f766e;
+  box-shadow: 3px 3px 0 rgba(56, 189, 248, 0.28);
+}
+
+.login-page {
+  width: 100%;
+  background:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+    radial-gradient(circle at 18% 18%, rgba(56, 189, 248, 0.18), transparent 27%),
+    radial-gradient(circle at 86% 12%, rgba(125, 211, 252, 0.2), transparent 22%),
+    radial-gradient(circle at 50% 92%, rgba(15, 118, 110, 0.12), transparent 30%),
+    linear-gradient(135deg, #f8fdff 0%, #edf9fb 47%, #f5f3ff 100%);
+  background-size: 34px 34px, 34px 34px, auto, auto, auto, auto;
+}
+
+.login-page .hero-panel {
+  border-color: rgba(8, 28, 52, 0.9);
+  background:
+    linear-gradient(135deg, rgba(15, 118, 110, 0.12), transparent 38%),
+    radial-gradient(circle at 88% 15%, rgba(125, 211, 252, 0.2), transparent 26%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(234, 252, 255, 0.88));
+}
+
+.login-page .hero-panel::before {
+  content: "";
+  position: absolute;
+  inset: 1rem 1rem auto auto;
+  width: 9rem;
+  height: 9rem;
+  border: 2px solid rgba(8, 28, 52, 0.08);
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.18), rgba(183, 242, 58, 0.2));
+  pointer-events: none;
+}
+
+.login-page .hero-panel::after {
+  width: 112px;
+  height: 12px;
+  background: linear-gradient(90deg, #0f766e, #38bdf8, #b7f23a);
+}
+
+.login-page .glass-card {
+  border-color: rgba(8, 28, 52, 0.9);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(247, 253, 255, 0.86)),
+    rgba(255, 255, 255, 0.82);
+  box-shadow: 0 24px 80px rgba(8, 28, 52, 0.14);
+}
+
+.login-page .soft-card {
+  border-color: rgba(8, 28, 52, 0.14);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 253, 255, 0.92));
+  box-shadow: 5px 5px 0 rgba(56, 189, 248, 0.16);
+}
+
+.login-page .pill-label {
+  border-color: rgba(15, 118, 110, 0.32);
+  background: linear-gradient(135deg, #e6fffb, #ffffff);
+  color: #0f766e;
+}
+
+.login-page .login-role-option {
+  box-shadow: 0 14px 34px rgba(8, 28, 52, 0.06);
+}
+
+.login-page .login-role-option:hover {
+  background: #f8fdff;
 }
 
 .role-page {
@@ -245,7 +349,9 @@ a:active {
 
 .brand-mark {
   border: 2px solid var(--text);
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  background:
+    radial-gradient(circle at 26% 20%, #ffffff 0 12%, transparent 13%),
+    linear-gradient(135deg, var(--accent), var(--accent-2));
   box-shadow: 5px 5px 0 var(--text);
 }
 

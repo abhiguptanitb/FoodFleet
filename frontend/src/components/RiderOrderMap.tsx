@@ -24,7 +24,7 @@ const makeDotIcon = (color: string, label: string) =>
   });
 
 const riderIcon = makeDotIcon("#00a6ff", "R");
-const deliveryIcon = makeDotIcon("#ff3d57", "D");
+const deliveryIcon = makeDotIcon("#2563eb", "D");
 
 interface Props {
   order: IOrder;

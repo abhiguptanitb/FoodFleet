@@ -135,7 +135,7 @@ const Checkout = () => {
           }
         },
         theme: {
-          color: "#E4572E",
+          color: "#2563EB",
         },
       };
 
@@ -189,7 +189,7 @@ const Checkout = () => {
           Confirm delivery and payment
         </h1>
         <p className="mt-2 text-lg font-medium text-[#1f1a17]">{restaurant.name}</p>
-        <p className="mt-1 text-sm text-[#6d5d52]">
+        <p className="mt-1 text-sm text-[var(--text-soft)]">
           {restaurant.autoLocation.formattedAddress}
         </p>
       </section>
@@ -200,7 +200,7 @@ const Checkout = () => {
             <h2 className="text-xl font-semibold text-[#1f1a17]">
               Delivery Address
             </h2>
-            <p className="mt-2 text-sm text-[#6d5d52]">
+            <p className="mt-2 text-sm text-[var(--text-soft)]">
               Pick the address where you want this order delivered.
             </p>
 
@@ -212,7 +212,7 @@ const Checkout = () => {
                   copy="We are checking the saved locations for this order."
                 />
               ) : addresses.length === 0 ? (
-                <p className="rounded-2xl bg-[#fff7f1] px-4 py-4 text-sm text-[#8a6d59]">
+                <p className="rounded-2xl bg-[#eef6ff] px-4 py-4 text-sm text-[#64748b]">
                   No saved address found. Please add one before placing the order.
                 </p>
               ) : (
@@ -221,8 +221,8 @@ const Checkout = () => {
                     key={add._id}
                     className={`flex cursor-pointer gap-3 rounded-2xl border p-4 transition ${
                       selectedAddressId === add._id
-                        ? "border-[#e4572e] bg-[#fff3eb]"
-                        : "border-[#ead8cb] bg-white hover:bg-[#fffaf6]"
+                        ? "border-[var(--accent)] bg-[var(--accent-soft)]"
+                        : "border-[#d8e3ef] bg-white hover:bg-[#eef6ff]"
                     }`}
                   >
                     <input
@@ -234,7 +234,7 @@ const Checkout = () => {
                       <p className="text-sm font-semibold text-[#1f1a17]">
                         {add.formattedAddress}
                       </p>
-                      <p className="mt-1 text-xs text-[#6d5d52]">
+                      <p className="mt-1 text-xs text-[var(--text-soft)]">
                         Contact: {add.mobile}
                       </p>
                     </div>
@@ -246,7 +246,7 @@ const Checkout = () => {
 
           <section className="soft-card p-5">
             <h2 className="text-xl font-semibold text-[#1f1a17]">Payment Method</h2>
-            <p className="mt-2 text-sm text-[#6d5d52]">
+            <p className="mt-2 text-sm text-[var(--text-soft)]">
               Choose the payment option you want to use for this order.
             </p>
 
@@ -291,7 +291,7 @@ const Checkout = () => {
                   className="flex items-start justify-between gap-4 text-sm"
                   key={cartItem._id}
                 >
-                  <span className="text-[#6d5d52]">
+                  <span className="text-[var(--text-soft)]">
                     {item.name} x {cartItem.quauntity}
                   </span>
                   <span className="font-semibold text-[#1f1a17]">
@@ -302,29 +302,29 @@ const Checkout = () => {
             })}
           </div>
 
-          <div className="mt-5 space-y-3 border-t border-[#f1e6dd] pt-4">
-            <div className="flex justify-between text-sm text-[#6d5d52]">
+          <div className="mt-5 space-y-3 border-t border-[#d8e3ef] pt-4">
+            <div className="flex justify-between text-sm text-[var(--text-soft)]">
               <span>Items ({quauntity})</span>
               <span className="font-semibold text-[#1f1a17]">Rs {subTotal}</span>
             </div>
-            <div className="flex justify-between text-sm text-[#6d5d52]">
+            <div className="flex justify-between text-sm text-[var(--text-soft)]">
               <span>Delivery Fee</span>
               <span className="font-semibold text-[#1f1a17]">
                 {deliveryFee === 0 ? "Free" : `Rs ${deliveryFee}`}
               </span>
             </div>
-            <div className="flex justify-between text-sm text-[#6d5d52]">
+            <div className="flex justify-between text-sm text-[var(--text-soft)]">
               <span>Platform Fee</span>
               <span className="font-semibold text-[#1f1a17]">Rs {platformFee}</span>
             </div>
 
             {subTotal < 250 && (
-              <p className="rounded-2xl bg-[#fff7f1] px-4 py-3 text-xs text-[#8a6d59]">
+              <p className="rounded-2xl bg-[#eef6ff] px-4 py-3 text-xs text-[#64748b]">
                 Add items worth Rs {250 - subTotal} more to unlock free delivery.
               </p>
             )}
 
-            <div className="flex justify-between border-t border-[#f1e6dd] pt-3 text-base font-semibold text-[#1f1a17]">
+            <div className="flex justify-between border-t border-[#d8e3ef] pt-3 text-base font-semibold text-[#1f1a17]">
               <span>Grand Total</span>
               <span>Rs {grandTotal}</span>
             </div>

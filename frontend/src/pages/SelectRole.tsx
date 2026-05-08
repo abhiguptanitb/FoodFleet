@@ -19,8 +19,8 @@ const SelectRole = () => {
   }[] = [
     {
       key: "customer",
-      accent: "bg-[#ff3d57]",
-      shadow: "shadow-[5px_5px_0_#ccff00]",
+      accent: "bg-[#2563eb]",
+      shadow: "shadow-[5px_5px_0_#22d3ee]",
       copy: "Order from nearby kitchens and track every delivery.",
     },
     {
@@ -32,7 +32,7 @@ const SelectRole = () => {
     {
       key: "seller",
       accent: "bg-[#7c3cff]",
-      shadow: "shadow-[5px_5px_0_#ffcb13]",
+      shadow: "shadow-[5px_5px_0_#22d3ee]",
       copy: "Run restaurants, menus, orders, and sales from one place.",
     },
   ];

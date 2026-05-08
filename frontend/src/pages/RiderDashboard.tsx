@@ -8,7 +8,6 @@ import { BiUpload } from "react-icons/bi";
 import {
   FiCalendar,
   FiDollarSign,
-  FiLogOut,
   FiMapPin,
   FiTrendingUp,
   FiTruck,
@@ -375,19 +374,19 @@ const RiderDashboard = () => {
             <div className="mt-8 grid gap-4 sm:grid-cols-3">
               <div className="soft-card p-5">
                 <p className="text-lg font-semibold text-[#1f1a17]">Identity</p>
-                <p className="mt-2 text-sm text-[#6d5d52]">
+                <p className="mt-2 text-sm text-[var(--text-soft)]">
                   Submit your Aadhaar and driving licence details.
                 </p>
               </div>
               <div className="soft-card p-5">
                 <p className="text-lg font-semibold text-[#1f1a17]">Location</p>
-                <p className="mt-2 text-sm text-[#6d5d52]">
+                <p className="mt-2 text-sm text-[var(--text-soft)]">
                   Use your current coordinates for nearby order matching.
                 </p>
               </div>
               <div className="soft-card p-5">
                 <p className="text-lg font-semibold text-[#1f1a17]">Approval</p>
-                <p className="mt-2 text-sm text-[#6d5d52]">
+                <p className="mt-2 text-sm text-[var(--text-soft)]">
                   Once verified, you can go online and accept deliveries.
                 </p>
               </div>
@@ -436,8 +435,8 @@ const RiderDashboard = () => {
                 className="field-input"
               />
 
-              <label className="flex cursor-pointer items-center gap-3 rounded-[20px] border border-[#e7d3c6] bg-white px-4 py-4 text-sm text-[#6d5d52] shadow-[0_12px_24px_rgba(80,51,31,0.06)] hover:bg-[#fff8f3]">
-                <BiUpload className="h-5 w-5 text-[#e4572e]" />
+              <label className="flex cursor-pointer items-center gap-3 rounded-[20px] border border-[#d8e3ef] bg-white px-4 py-4 text-sm text-[var(--text-soft)] shadow-[0_12px_24px_rgba(15,23,42,0.06)] hover:bg-[#eef6ff]">
+                <BiUpload className="h-5 w-5 text-[var(--accent)]" />
                 <span className="truncate">
                   {image ? image.name : "Upload your rider photo"}
                 </span>
@@ -449,7 +448,7 @@ const RiderDashboard = () => {
                 />
               </label>
 
-              <div className="rounded-2xl bg-[#fff7f1] px-4 py-4 text-xs leading-6 text-[#8a6d59]">
+              <div className="rounded-2xl bg-[#eef6ff] px-4 py-4 text-xs leading-6 text-[#64748b]">
                 Your current location will be requested when you submit this form
                 so we can register you for nearby delivery requests.
               </div>
@@ -526,13 +525,6 @@ const RiderDashboard = () => {
                   </button>
                 )}
 
-                <button
-                  onClick={logoutHandler}
-                  className="ghost-button inline-flex items-center justify-center gap-2 px-5 py-3 text-sm font-semibold"
-                >
-                  <FiLogOut size={16} />
-                  Logout
-                </button>
               </div>
             </div>
 
