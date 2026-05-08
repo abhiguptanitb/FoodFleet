@@ -13,7 +13,7 @@ import { adminService } from "../main";
 import AdminRestaurantCard from "../components/AdminRestaurantCard";
 import RiderAdmin from "../components/RiderAdmin";
 import { useAppData } from "../context/AppContext";
-import LoadingState from "../components/LoadingState";
+import { SkeletonState } from "../components/LoadingState";
 
 type AdminRestaurant = {
   _id: string;
@@ -160,13 +160,7 @@ const Admin = () => {
   };
 
   if (loading) {
-    return (
-      <LoadingState
-        eyebrow="Admin Console"
-        title="Opening verification center"
-        copy="We are gathering restaurants, riders, customer records, and review status."
-      />
-    );
+    return <SkeletonState type="admin-list" title="Admin review lists" />;
   }
 
   return (
@@ -203,11 +197,11 @@ const Admin = () => {
                   </div>
                 </div>
 
-                <div className="mt-5 grid grid-cols-2 gap-3">
+                <div className="stat-panel-collapsible mt-5 grid grid-cols-2 gap-3">
                   <div className="rounded-2xl bg-[#eef2ff] p-4">
                     <div className="flex items-center gap-2 text-[#2563eb]">
                       <FiShoppingBag size={16} />
-                      <span className="text-xs font-semibold uppercase tracking-[0.16em]">
+                    <span className="text-xs font-semibold uppercase tracking-[0.12em]">
                         Restaurants
                       </span>
                     </div>
@@ -219,7 +213,7 @@ const Admin = () => {
                   <div className="rounded-2xl bg-[#f5faf7] p-4">
                     <div className="flex items-center gap-2 text-[#1f9d64]">
                       <FiTruck size={16} />
-                      <span className="text-xs font-semibold uppercase tracking-[0.16em]">
+                    <span className="text-xs font-semibold uppercase tracking-[0.12em]">
                         Riders
                       </span>
                     </div>
@@ -231,7 +225,7 @@ const Admin = () => {
                   <div className="col-span-2 rounded-2xl bg-[#f4f3ff] p-4">
                     <div className="flex items-center gap-2 text-[#4f46e5]">
                       <FiUsers size={16} />
-                      <span className="text-xs font-semibold uppercase tracking-[0.16em]">
+                    <span className="text-xs font-semibold uppercase tracking-[0.12em]">
                         Customers
                       </span>
                     </div>
@@ -259,7 +253,7 @@ const Admin = () => {
                     </p>
                   </div>
 
-                  <div className="inline-flex w-full rounded-2xl border-2 border-[var(--text)] bg-white p-1 shadow-[4px_4px_0_var(--accent-3)] sm:w-auto">
+                  <div className="mobile-tabs sm:w-auto">
                     <button
                       onClick={() => setTab("restaurant")}
                       className={`flex-1 rounded-2xl px-4 py-3 text-sm font-semibold transition sm:flex-none ${
@@ -295,7 +289,7 @@ const Admin = () => {
                   </div>
                 </div>
 
-                <div className="mt-6 flex items-center justify-between gap-3 rounded-2xl bg-[#faf6f2] px-4 py-3">
+                <div className="mt-6 flex items-center justify-between gap-3 rounded-2xl bg-[var(--surface-muted)] px-4 py-3">
                   <div className="flex items-center gap-2 text-[#334155]">
                     <FiGrid size={16} className="text-[var(--accent)]" />
                     <span className="text-sm font-medium">
@@ -323,7 +317,7 @@ const Admin = () => {
         {tab === "restaurant" && (
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
             {restaurant.length === 0 ? (
-              <div className="rounded-[28px] border-2 border-dashed border-[color-mix(in_srgb,var(--accent)_36%,white)] bg-white p-8 text-center font-semibold text-[var(--text-soft)] shadow-[5px_5px_0_color-mix(in_srgb,var(--accent)_14%,transparent)]">
+              <div className="empty-state font-semibold">
                 No restaurants found.
               </div>
             ) : (
@@ -341,7 +335,7 @@ const Admin = () => {
         {tab === "rider" && (
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
             {riders.length === 0 ? (
-              <div className="rounded-[28px] border-2 border-dashed border-[color-mix(in_srgb,var(--accent)_36%,white)] bg-white p-8 text-center font-semibold text-[var(--text-soft)] shadow-[5px_5px_0_color-mix(in_srgb,var(--accent)_14%,transparent)]">
+              <div className="empty-state font-semibold">
                 No riders found.
               </div>
             ) : (
@@ -359,14 +353,14 @@ const Admin = () => {
         {tab === "customer" && (
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
             {customers.length === 0 ? (
-              <div className="rounded-[28px] border-2 border-dashed border-[color-mix(in_srgb,var(--accent)_36%,white)] bg-white p-8 text-center font-semibold text-[var(--text-soft)] shadow-[5px_5px_0_color-mix(in_srgb,var(--accent)_14%,transparent)]">
+              <div className="empty-state font-semibold">
                 No customers found.
               </div>
             ) : (
               customers.map((customer) => (
                 <div
                   key={customer._id}
-                  className="rounded-[24px] border-2 border-[color-mix(in_srgb,var(--text)_14%,transparent)] bg-white p-4 shadow-[5px_5px_0_color-mix(in_srgb,var(--accent)_16%,transparent)] transition hover:-translate-y-0.5 hover:border-[var(--accent)] sm:p-5"
+                  className="ui-card compact-mobile-row p-4 transition hover:-translate-y-0.5 hover:border-[var(--accent)] sm:p-5"
                 >
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex min-w-0 items-center gap-4">
@@ -394,7 +388,7 @@ const Admin = () => {
                     <button
                       onClick={() => deleteCustomer(customer._id)}
                       disabled={deletingCustomerId === customer._id}
-                      className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border-2 border-red-200 bg-red-50 px-4 py-3 text-sm font-black text-red-700 hover:-translate-y-0.5 hover:border-red-300 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60 sm:min-w-32"
+                      className="action-button action-button-danger min-h-12 px-4 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-60 sm:min-w-32"
                     >
                       <FiTrash2 size={16} />
                       {deletingCustomerId === customer._id

@@ -16,10 +16,16 @@
   --accent-deep: #1d4ed8;
   --accent-soft: #eef2ff;
   --success: #04b86a;
+  --warning: #f59e0b;
+  --danger: #ef4444;
   --shadow: 0 18px 0 rgba(10, 17, 40, 0.11), 0 28px 70px rgba(10, 17, 40, 0.12);
   --hard-shadow: 8px 8px 0 rgba(10, 17, 40, 0.92);
   --grid-line: rgba(10, 17, 40, 0.055);
   --role-glow: rgba(255, 61, 87, 0.16);
+  --card-radius: 22px;
+  --modal-radius: 24px;
+  --control-radius: 16px;
+  --row-radius: 18px;
 }
 
 html {
@@ -259,6 +265,32 @@ a:active {
   border-radius: 24px;
 }
 
+.ui-card {
+  border: 2px solid color-mix(in srgb, var(--text) 14%, transparent);
+  background: var(--surface-strong);
+  box-shadow: 5px 5px 0 color-mix(in srgb, var(--accent) 16%, transparent);
+  border-radius: var(--card-radius);
+}
+
+.ui-card-strong {
+  border-color: var(--text);
+  box-shadow: 7px 7px 0 color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.ui-modal {
+  max-height: calc(100vh - 1.5rem);
+  overflow-y: auto;
+  border: 2px solid var(--text);
+  border-radius: var(--modal-radius);
+  background: var(--surface-strong);
+  box-shadow: 9px 9px 0 var(--text), 0 28px 70px rgba(10, 17, 40, 0.22);
+}
+
+.ui-overlay {
+  background: rgba(10, 17, 40, 0.58);
+  backdrop-filter: blur(8px);
+}
+
 .soft-card {
   border: 2px solid color-mix(in srgb, var(--text) 14%, transparent);
   background: var(--surface-strong);
@@ -315,6 +347,38 @@ a:active {
   box-shadow: none;
 }
 
+.action-button {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  border: 2px solid var(--text);
+  border-radius: var(--control-radius);
+  background: #ffffff;
+  color: var(--text);
+  box-shadow: 4px 4px 0 color-mix(in srgb, var(--accent) 24%, transparent);
+  font-weight: 800;
+}
+
+.action-button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.action-button-primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-3));
+  color: #ffffff;
+  box-shadow: 5px 5px 0 var(--text);
+}
+
+.action-button-danger {
+  border-color: color-mix(in srgb, var(--danger) 34%, white);
+  background: color-mix(in srgb, var(--danger) 8%, white);
+  color: #b42318;
+}
+
 .ghost-button {
   border: 2px solid var(--text);
   background: rgba(255, 255, 255, 0.8);
@@ -331,6 +395,129 @@ a:active {
   padding: 0.95rem 1rem;
   outline: none;
   box-shadow: 3px 3px 0 color-mix(in srgb, var(--accent-3) 20%, transparent);
+}
+
+.field-input,
+.ui-field {
+  min-height: 3rem;
+}
+
+.ui-row {
+  border: 2px solid color-mix(in srgb, var(--text) 12%, transparent);
+  border-radius: var(--row-radius);
+  background: #ffffff;
+  box-shadow: 4px 4px 0 color-mix(in srgb, var(--accent) 13%, transparent);
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 5%, white);
+  color: var(--text-soft);
+  padding: 0.32rem 0.72rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.status-badge-success {
+  background: color-mix(in srgb, var(--success) 14%, white);
+  color: var(--success);
+}
+
+.status-badge-warning {
+  background: color-mix(in srgb, var(--warning) 15%, white);
+  color: #a15c00;
+}
+
+.status-badge-danger {
+  background: color-mix(in srgb, var(--danger) 11%, white);
+  color: #b42318;
+}
+
+.empty-state {
+  display: grid;
+  min-height: 10rem;
+  place-items: center;
+  border: 2px dashed color-mix(in srgb, var(--accent) 36%, white);
+  border-radius: var(--card-radius);
+  background: var(--surface-muted);
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-soft);
+  box-shadow: 5px 5px 0 color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.mobile-action-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 30;
+  margin-inline: -1rem;
+  border-top: 2px solid var(--text);
+  background: rgba(255, 255, 255, 0.92);
+  padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
+  backdrop-filter: blur(18px);
+}
+
+.nav-panel {
+  border-top: 2px solid color-mix(in srgb, var(--text) 12%, transparent);
+}
+
+.skeleton-line,
+.skeleton-block,
+.skeleton-chip {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--text) 7%, white), color-mix(in srgb, var(--accent) 10%, white), color-mix(in srgb, var(--text) 7%, white));
+}
+
+.skeleton-line::after,
+.skeleton-block::after,
+.skeleton-chip::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 18%, rgba(255, 255, 255, 0.78) 38%, transparent 58%);
+  transform: translateX(-100%);
+  animation: loadingSweep 1.65s ease-in-out infinite;
+}
+
+.skeleton-line {
+  height: 0.8rem;
+  border-radius: 999px;
+}
+
+.skeleton-chip {
+  height: 1.6rem;
+  width: 5.5rem;
+  border-radius: 999px;
+}
+
+.skeleton-block {
+  border-radius: 18px;
+}
+
+.mobile-tabs {
+  display: inline-grid;
+  width: 100%;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 0.25rem;
+  overflow-x: auto;
+  border: 2px solid var(--text);
+  border-radius: 18px;
+  background: #ffffff;
+  padding: 0.25rem;
+  box-shadow: 4px 4px 0 color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.mobile-tabs button {
+  min-width: max-content;
 }
 
 .field-input:focus {
@@ -365,6 +552,11 @@ a:active {
 .nav-action:hover {
   border-color: var(--accent);
   color: var(--accent);
+}
+
+.nav-search-panel {
+  display: grid;
+  gap: 0.65rem;
 }
 
 .role-badge {
@@ -540,6 +732,49 @@ a:active {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@media (max-width: 640px) {
+  :root {
+    --card-radius: 18px;
+    --modal-radius: 20px;
+    --row-radius: 14px;
+  }
+
+  .page-wrap {
+    width: min(100% - 1rem, 1200px);
+  }
+
+  .hero-panel,
+  .glass-card {
+    border-radius: 20px;
+    box-shadow: 5px 5px 0 color-mix(in srgb, var(--accent) 18%, transparent), 0 18px 44px rgba(10, 17, 40, 0.08);
+  }
+
+  .soft-card,
+  .ui-card {
+    border-radius: 18px;
+    box-shadow: 3px 3px 0 color-mix(in srgb, var(--accent) 14%, transparent);
+  }
+
+  .section-title {
+    font-size: 1.55rem;
+  }
+
+  .stat-panel-collapsible {
+    max-height: 9.5rem;
+    overflow: hidden;
+  }
+
+  .compact-mobile-row {
+    gap: 0.7rem;
+    padding: 0.8rem;
+  }
+
+  .compact-mobile-row img {
+    height: 4.5rem;
+    width: 4.5rem;
   }
 }
 

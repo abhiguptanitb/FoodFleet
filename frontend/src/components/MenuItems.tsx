@@ -148,13 +148,27 @@ const MenuItems = ({ items, onItemDeleted, isSeller }: MenuItemsProps) => {
 
   return (
     <>
+      {items.length === 0 && (
+        <div className="empty-state">
+          <div>
+            <p className="text-lg font-black text-[var(--text)]">
+              No menu items yet
+            </p>
+            <p className="mt-2 max-w-md text-sm leading-6 text-[var(--text-soft)]">
+              {isSeller
+                ? "Add your first dish to start building this restaurant menu."
+                : "This restaurant has not published menu items yet."}
+            </p>
+          </div>
+        </div>
+      )}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {items.map((item) => {
           const isLoading = loadingItemId === item._id;
 
           return (
             <div
-              className={`group relative flex min-h-[8.75rem] gap-4 rounded-[22px] border-2 border-[color-mix(in_srgb,var(--text)_14%,transparent)] bg-white p-3 shadow-[5px_5px_0_color-mix(in_srgb,var(--accent)_16%,transparent)] transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:shadow-[7px_7px_0_color-mix(in_srgb,var(--accent)_22%,transparent)] sm:p-4 ${
+              className={`ui-card compact-mobile-row group relative flex min-h-[8.75rem] gap-4 p-3 transition hover:-translate-y-0.5 hover:border-[var(--accent)] sm:p-4 ${
                 !item.isAvailable ? "opacity-70" : ""
               }`}
               key={item._id}

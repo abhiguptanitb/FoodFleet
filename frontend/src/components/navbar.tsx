@@ -13,7 +13,7 @@ import {
 import L from "leaflet";
 import toast from "react-hot-toast";
 import { LuLocateFixed } from "react-icons/lu";
-import { FiLogOut } from "react-icons/fi";
+import { FiLogOut, FiMenu, FiUser, FiX } from "react-icons/fi";
 import { getRoleHomePath } from "../utils/roleRoutes";
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -102,6 +102,7 @@ const Navbar = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [locationModalOpen, setLocationModalOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedPoint, setSelectedPoint] = useState<{
     latitude: number;
     longitude: number;
@@ -127,6 +128,10 @@ const Navbar = () => {
       });
     }
   }, [location]);
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [currLocation.pathname]);
 
   const handleUseCurrentLocation = async () => {
     try {
@@ -166,25 +171,25 @@ const Navbar = () => {
     <>
       <div className={`neon-nav sticky top-0 z-40 ${isLoginPage ? "login-nav" : ""}`}>
         <div className="page-wrap">
-          <div className="flex flex-wrap items-center justify-between gap-3 py-3">
+          <div className="flex items-center justify-between gap-3 py-3">
             <Link
               to={homePath}
-              className="flex items-center gap-3 text-2xl font-black text-[var(--text)]"
+              className="flex min-w-0 items-center gap-3 text-2xl font-black text-[var(--text)]"
             >
               <span className="brand-mark flex h-11 w-11 items-center justify-center rounded-2xl text-lg text-white">
                 F
               </span>
-              FoodFleet
+              <span className="truncate">FoodFleet</span>
             </Link>
 
-            <div className="order-2 mr-auto flex min-w-0 sm:order-none sm:mr-0">
+            <div className="hidden min-w-0 md:flex">
               <span className="role-badge max-w-[150px] truncate sm:max-w-none">
                 {roleLabel}
               </span>
             </div>
 
             {isHomePage && isCustomer && (
-              <div className="order-3 flex w-full flex-col gap-2 lg:order-2 lg:w-auto lg:flex-1 lg:flex-row lg:items-center lg:px-4">
+              <div className="hidden min-w-0 flex-1 gap-2 px-2 lg:flex lg:items-center lg:px-4">
                 <button
                   type="button"
                   onClick={() => setLocationModalOpen(true)}
@@ -215,7 +220,7 @@ const Navbar = () => {
             )}
 
             {!isLoginPage && (
-              <div className="order-2 flex items-center gap-3 lg:order-3">
+              <div className="hidden items-center gap-3 md:flex">
                 {isAuth && isCustomer && (
                   <Link
                     to={"/cart"}
@@ -282,13 +287,77 @@ const Navbar = () => {
                 )}
               </div>
             )}
+
+            {!isLoginPage && (
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen((open) => !open)}
+                className="nav-action flex h-11 w-11 items-center justify-center rounded-2xl md:hidden"
+                aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+                aria-expanded={mobileMenuOpen}
+              >
+                {mobileMenuOpen ? <FiX className="h-5 w-5" /> : <FiMenu className="h-5 w-5" />}
+              </button>
+            )}
           </div>
+
+          {!isLoginPage && mobileMenuOpen && (
+            <div className="nav-panel space-y-3 pb-3 pt-3 md:hidden">
+              <div className="flex items-center justify-between gap-3">
+                <span className="role-badge max-w-[220px] truncate">
+                  {roleLabel}
+                </span>
+                {isAuth && (
+                  <button
+                    type="button"
+                    onClick={logoutHandler}
+                    className="nav-action flex h-11 w-11 items-center justify-center rounded-2xl"
+                    aria-label="Logout"
+                  >
+                    <FiLogOut className="h-5 w-5" />
+                  </button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                {isAuth && isCustomer && (
+                  <Link
+                    to="/cart"
+                    className="nav-action relative flex min-h-12 items-center justify-center gap-2 rounded-2xl px-3 text-sm font-black"
+                  >
+                    <CgShoppingCart className="h-5 w-5" />
+                    Cart
+                    <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full border border-[var(--text)] bg-[var(--accent)] text-[11px] font-semibold text-white">
+                      {quauntity}
+                    </span>
+                  </Link>
+                )}
+
+                {isAuth ? (
+                  <Link
+                    to={isCustomer ? "/account" : homePath}
+                    className="nav-action flex min-h-12 items-center justify-center gap-2 rounded-2xl px-3 text-sm font-black"
+                  >
+                    <FiUser className="h-5 w-5" />
+                    {isCustomer ? "Account" : "Dashboard"}
+                  </Link>
+                ) : (
+                  <Link
+                    to="/Login"
+                    className="brand-button col-span-2 min-h-12 px-4 text-sm font-semibold"
+                  >
+                    Sign In
+                  </Link>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {locationModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4">
-          <div className="w-full max-w-3xl rounded-[32px] border border-white/70 bg-[#f8fbff] p-5 shadow-[0_26px_70px_rgba(0,0,0,0.25)] sm:p-6">
+        <div className="ui-overlay fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="ui-modal w-full max-w-3xl p-5 sm:p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="pill-label">Location</p>
@@ -302,7 +371,7 @@ const Navbar = () => {
               <button
                 type="button"
                 onClick={() => setLocationModalOpen(false)}
-                className="ghost-button rounded-full px-3 py-1 text-sm text-slate-500 hover:bg-slate-100"
+                className="action-button h-10 min-h-10 px-3 py-1 text-sm"
               >
                 Close
               </button>
@@ -323,13 +392,13 @@ const Navbar = () => {
                 type="button"
                 onClick={handleConfirmManualLocation}
                 disabled={loadingLocation || !selectedPoint}
-                className="ghost-button px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                className="action-button px-4 py-3 text-sm disabled:opacity-60"
               >
                 Save Pinned Location
               </button>
             </div>
 
-            <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200">
+            <div className="mt-4 overflow-hidden rounded-2xl border-2 border-[color-mix(in_srgb,var(--text)_14%,transparent)]">
               <MapContainer
                 center={[
                   selectedPoint?.latitude || location?.latitude || 28.6139,
@@ -364,8 +433,8 @@ const Navbar = () => {
               </MapContainer>
             </div>
 
-            <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
-              <p className="font-medium text-slate-900">Selected place</p>
+            <div className="ui-row mt-4 p-4 text-sm text-[var(--text-soft)]">
+              <p className="font-medium text-[var(--text)]">Selected place</p>
               <p className="mt-1">{location?.formattedAddress || city}</p>
               {selectedPoint && (
                 <p className="mt-2 text-xs text-slate-500">

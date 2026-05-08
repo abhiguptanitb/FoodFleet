@@ -19,7 +19,7 @@ import {
 } from "react-icons/fi";
 import { BiUpload } from "react-icons/bi";
 import toast from "react-hot-toast";
-import LoadingState from "../components/LoadingState";
+import { SkeletonState } from "../components/LoadingState";
 
 type SellerTab = "menu" | "add-item" | "sales";
 
@@ -254,13 +254,7 @@ const Restaurant = () => {
   };
 
   if (loading) {
-    return (
-      <LoadingState
-        eyebrow="Partner Workspace"
-        title="Loading your outlets"
-        copy="We are preparing restaurant profiles, menus, sales, and live orders."
-      />
-    );
+    return <SkeletonState type="orders" title="Partner workspace" />;
   }
 
   return (
@@ -274,7 +268,7 @@ const Restaurant = () => {
                   <p className="text-sm font-semibold text-[#1f1a17]">
                     Your Restaurants
                   </p>
-                  <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#a27558]">
+                  <span className="status-badge bg-white">
                     {restaurants.length} total
                   </span>
                 </div>
@@ -286,13 +280,13 @@ const Restaurant = () => {
                     return (
                       <div
                         key={restaurant._id}
-                        className={`w-[284px] shrink-0 overflow-hidden rounded-[28px] border bg-white transition ${
+                        className={`ui-card w-[284px] shrink-0 overflow-hidden p-0 transition ${
                           isActive
                             ? "border-[var(--accent)] shadow-[6px_6px_0_var(--text)]"
-                            : "border-[#11182733] shadow-[4px_4px_0_rgba(17,24,39,0.1)]"
+                            : ""
                         }`}
                       >
-                        <div className="relative h-40 overflow-hidden bg-[#f4e8df]">
+                        <div className="relative h-40 overflow-hidden bg-[var(--surface-muted)]">
                           {restaurant.image ? (
                             <img
                               src={restaurant.image}
@@ -306,11 +300,11 @@ const Restaurant = () => {
                           )}
 
                           <div className="absolute inset-x-0 top-0 flex items-start justify-between p-3">
-                            <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-[#334155]">
+                            <span className={`status-badge bg-white/90 ${restaurant.isOpen ? "status-badge-success" : "status-badge-warning"}`}>
                               {restaurant.isOpen ? "Open" : "Closed"}
                             </span>
                             {isActive && (
-                              <span className="rounded-full border border-[var(--text)] bg-[var(--accent)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
+                              <span className="status-badge border-[var(--text)] bg-[var(--accent)] text-white">
                                 Active
                               </span>
                             )}
@@ -389,7 +383,7 @@ const Restaurant = () => {
                     onClick={() =>
                       setShowAddRestaurant((currentValue) => !currentValue)
                     }
-                    className="flex w-[250px] shrink-0 flex-col items-center justify-center rounded-[28px] border-2 border-dashed border-[var(--text)] bg-white px-6 py-8 text-center shadow-[5px_5px_0_var(--accent-2)] transition hover:border-[var(--accent)] hover:bg-[var(--accent-soft)]"
+                    className="ui-card flex w-[250px] shrink-0 flex-col items-center justify-center border-dashed px-6 py-8 text-center transition hover:border-[var(--accent)] hover:bg-[var(--accent-soft)]"
                   >
                     <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--accent)] text-white">
                       <FiPlus size={24} />
@@ -429,7 +423,7 @@ const Restaurant = () => {
                 </h2>
               </div>
 
-              <div className="inline-grid grid-cols-3 rounded-2xl border-2 border-[var(--text)] bg-white p-1 shadow-[4px_4px_0_var(--accent-2)]">
+              <div className="mobile-tabs sm:w-auto">
               {[
                 { key: "menu", label: "Menu", icon: FiGrid },
                 { key: "add-item", label: "Add", icon: FiPlusCircle },
@@ -478,6 +472,16 @@ const Restaurant = () => {
                     onItemDeleted={() => fetchMenuItems(selectedRestaurant._id)}
                     isSeller={true}
                   />
+                  <div className="mobile-action-bar sm:hidden">
+                    <button
+                      type="button"
+                      onClick={() => setTab("add-item")}
+                      className="action-button action-button-primary w-full px-4 py-3 text-sm"
+                    >
+                      <FiPlusCircle size={16} />
+                      Add Item
+                    </button>
+                  </div>
                 </div>
               )}
               {tab === "add-item" && (

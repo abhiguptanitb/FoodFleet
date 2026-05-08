@@ -7,8 +7,10 @@ import toast from "react-hot-toast";
 import { BiUpload } from "react-icons/bi";
 import {
   FiCalendar,
+  FiCreditCard,
   FiDollarSign,
   FiMapPin,
+  FiShield,
   FiTrendingUp,
   FiTruck,
 } from "react-icons/fi";
@@ -16,7 +18,7 @@ import type { IOrder } from "../types";
 import RiderOrderRequest from "../components/RiderOrderRequest";
 import RiderCurrentOrder from "../components/RiderCurrentOrder";
 import RiderOrderMap from "../components/RiderOrderMap";
-import LoadingState from "../components/LoadingState";
+import { SkeletonState } from "../components/LoadingState";
 
 interface IRider {
   _id: string;
@@ -340,13 +342,7 @@ const RiderDashboard = () => {
   }
 
   if (loading) {
-    return (
-      <LoadingState
-        eyebrow="Delivery Workspace"
-        title="Checking rider readiness"
-        copy="We are loading your profile, availability, current order, and earnings snapshot."
-      />
-    );
+    return <SkeletonState type="rider-history" count={5} title="Rider dashboard" />;
   }
 
   if (!profile)
@@ -478,7 +474,7 @@ const RiderDashboard = () => {
     <div className="role-page space-y-4 px-4 py-4 sm:px-6">
       <div className="mx-auto max-w-6xl space-y-4">
         <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-[26px] border-2 border-[var(--text)] bg-white p-5 shadow-[7px_7px_0_var(--text)] sm:p-6">
+          <div className="ui-card ui-card-strong p-5 sm:p-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-4">
                 <img
@@ -494,10 +490,10 @@ const RiderDashboard = () => {
                     {profile.phoneNumber}
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
-                    <span className="rounded-full border border-[var(--text)] bg-[var(--accent-2)] px-3 py-1 text-xs font-semibold text-[#07111f]">
+                    <span className={`status-badge ${profile.isVerified ? "status-badge-success" : "status-badge-warning"}`}>
                       {profile.isVerified ? "Verified" : "Pending"}
                     </span>
-                    <span className="rounded-full border border-[var(--text)] bg-[var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[var(--accent-deep)]">
+                    <span className={`status-badge ${profile.isAvailble ? "status-badge-success" : ""}`}>
                       {profile.isAvailble ? "Online" : "Offline"}
                     </span>
                   </div>
@@ -509,12 +505,12 @@ const RiderDashboard = () => {
                   <button
                     onClick={toggleAvailiblity}
                     disabled={toggling}
-                    className={`rounded-2xl px-5 py-3 text-sm font-semibold text-white ${
+                    className={`action-button action-button-primary px-5 py-3 text-sm ${
                       toggling
                         ? "bg-gray-400"
                         : profile.isAvailble
                         ? "bg-[#111827] hover:bg-[#243145]"
-                        : "bg-[var(--accent)] hover:bg-[var(--accent-deep)]"
+                        : ""
                     }`}
                   >
                     {toggling
@@ -528,14 +524,46 @@ const RiderDashboard = () => {
               </div>
             </div>
 
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <div className="ui-row flex items-start gap-3 p-4">
+                <FiCreditCard
+                  className="mt-0.5 shrink-0 text-[var(--accent)]"
+                  size={17}
+                />
+                <div className="min-w-0">
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-[var(--accent-deep)]">
+                    Aadhaar Number
+                  </p>
+                  <p className="mt-1 break-words text-sm font-semibold text-[var(--text)]">
+                    {profile.aadharNumber || "Not provided"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="ui-row flex items-start gap-3 p-4">
+                <FiShield
+                  className="mt-0.5 shrink-0 text-[var(--accent)]"
+                  size={17}
+                />
+                <div className="min-w-0">
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-[var(--accent-deep)]">
+                    Driving License
+                  </p>
+                  <p className="mt-1 break-words text-sm font-semibold text-[var(--text)]">
+                    {profile.drivingLicenseNumber || "Not provided"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <p className="mt-5 rounded-2xl border border-[var(--accent)] bg-[var(--accent-soft)] px-4 py-3 text-sm leading-7 text-[var(--accent-deep)]">
               Please be within a 500 m radius of any restaurant (which we call a
               hotspot) before going online as a rider to receive orders.
             </p>
           </div>
 
-          <div className="rounded-[26px] border-2 border-[var(--text)] bg-white p-5 shadow-[7px_7px_0_var(--accent-2)] sm:p-6">
-            <div className="flex flex-wrap gap-2">
+          <div className="ui-card ui-card-strong p-5 sm:p-6">
+            <div className="mobile-tabs">
               {[
                 { key: "today", label: "Today" },
                 { key: "7d", label: "Last 7 Days" },
@@ -555,8 +583,8 @@ const RiderDashboard = () => {
               ))}
             </div>
 
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl border-2 border-[var(--text)] bg-gradient-to-br from-[var(--accent-soft)] to-white p-5">
+            <div className="stat-panel-collapsible mt-5 grid gap-4 sm:grid-cols-2">
+              <div className="ui-row p-5">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium text-slate-500">
                     Total Earnings
@@ -571,7 +599,7 @@ const RiderDashboard = () => {
                 </p>
               </div>
 
-              <div className="rounded-2xl border-2 border-[var(--text)] bg-gradient-to-br from-[#e8fff6] to-white p-5">
+              <div className="ui-row p-5">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium text-slate-500">
                     Orders Delivered
@@ -605,7 +633,7 @@ const RiderDashboard = () => {
           </div>
         )}
 
-        <section className="rounded-[26px] border-2 border-[var(--text)] bg-white p-5 shadow-[7px_7px_0_var(--accent-3)] sm:p-6">
+        <section className="ui-card ui-card-strong p-5 sm:p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="pill-label">Rider History</p>
@@ -631,16 +659,7 @@ const RiderDashboard = () => {
             </div>
 
             {historyLoading ? (
-              <div className="loading-card loading-card-compact justify-center rounded-none border-0 p-6">
-                <div className="loading-orbit">
-                  <span />
-                  <span />
-                  <span />
-                </div>
-                <p className="font-black text-[var(--text)]">
-                  Loading ride history
-                </p>
-              </div>
+              <SkeletonState type="rider-history" count={4} />
             ) : historyOrders.length === 0 ? (
               <div className="grid min-h-40 place-items-center bg-[var(--surface-muted)] px-6 py-8 text-center">
                 <div>
@@ -658,7 +677,7 @@ const RiderDashboard = () => {
                 {historyOrders.map((ride) => (
                   <div
                     key={ride._id}
-                    className="grid gap-3 bg-white px-4 py-4 hover:bg-[var(--surface-muted)] lg:grid-cols-[1.15fr_1.45fr_0.85fr_0.7fr_0.7fr] lg:items-center"
+                    className="compact-mobile-row grid gap-3 bg-white px-4 py-4 hover:bg-[var(--surface-muted)] lg:grid-cols-[1.15fr_1.45fr_0.85fr_0.7fr_0.7fr] lg:items-center"
                   >
                     <div className="min-w-0">
                       <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--accent-deep)] lg:hidden">

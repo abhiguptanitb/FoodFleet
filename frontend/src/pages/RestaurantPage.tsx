@@ -5,7 +5,7 @@ import axios from "axios";
 import { restaurantService } from "../main";
 import RestaurantProfile from "../components/RestaurantProfile";
 import MenuItems from "../components/MenuItems";
-import LoadingState from "../components/LoadingState";
+import { SkeletonState } from "../components/LoadingState";
 
 const RestaurantPage = () => {
   const { id } = useParams();
@@ -58,13 +58,7 @@ const RestaurantPage = () => {
   }, [id]);
 
   if (loading) {
-    return (
-      <LoadingState
-        eyebrow="Restaurant"
-        title="Setting the table"
-        copy="We are loading the profile, live menu, and current availability."
-      />
-    );
+    return <SkeletonState type="menu" title="Restaurant menu" />;
   }
 
   if (!restaurant) {

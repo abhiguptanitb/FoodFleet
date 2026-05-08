@@ -11,7 +11,7 @@ const RestaurantCard = ({ id, image, name, isOpen }: props) => {
   const navigate = useNavigate();
   return (
     <div
-      className={`group fade-up cursor-pointer overflow-hidden rounded-[28px] border border-[#d8e3ef] bg-white shadow-[0_18px_36px_rgba(15,23,42,0.08)] transition hover:-translate-y-1 hover:shadow-[0_24px_40px_rgba(37,99,235,0.14)] ${
+      className={`ui-card group fade-up cursor-pointer overflow-hidden p-0 transition hover:-translate-y-1 hover:border-[var(--accent)] ${
         !isOpen ? "opacity-80" : ""
       }`}
       onClick={() => navigate(`/restaurant/${id}`)}
@@ -30,10 +30,10 @@ const RestaurantCard = ({ id, image, name, isOpen }: props) => {
             Food delivery
           </span>
           <span
-            className={`rounded-full px-3 py-1 text-xs font-semibold ${
+            className={`status-badge ${
               isOpen
-                ? "bg-[#eaf8f1] text-[#198754]"
-                : "bg-black/70 text-white"
+                ? "status-badge-success"
+                : "status-badge-danger"
             }`}
           >
             {isOpen ? "Open Now" : "Closed"}
@@ -46,7 +46,7 @@ const RestaurantCard = ({ id, image, name, isOpen }: props) => {
           <h3 className="truncate text-lg font-semibold text-[#1f1a17]">
             {name}
           </h3>
-          <span className="rounded-full bg-[#eef2ff] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#2563eb]">
+          <span className="status-badge">
             Fast order
           </span>
         </div>

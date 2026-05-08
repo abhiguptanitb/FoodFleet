@@ -67,7 +67,7 @@ const RiderAdmin = ({
 
   return (
     <>
-      <article className="overflow-hidden rounded-[24px] border-2 border-[color-mix(in_srgb,var(--text)_14%,transparent)] bg-white shadow-[5px_5px_0_color-mix(in_srgb,var(--accent)_16%,transparent)] transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:shadow-[7px_7px_0_color-mix(in_srgb,var(--accent)_22%,transparent)]">
+      <article className="ui-card overflow-hidden p-0 transition hover:-translate-y-0.5 hover:border-[var(--accent)]">
         <div className="flex flex-col sm:flex-row">
           <div className="relative h-36 bg-[var(--accent-soft)] sm:h-36 sm:w-40 sm:shrink-0">
             {rider.picture ? (
@@ -109,15 +109,15 @@ const RiderAdmin = ({
 
             <div className="flex flex-wrap items-center gap-2">
               <span
-                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                className={`status-badge ${
                   rider.isVerified
-                    ? "bg-[color-mix(in_srgb,var(--success)_16%,white)] text-[var(--success)]"
-                    : "bg-[var(--accent-soft)] text-[var(--accent-deep)]"
+                    ? "status-badge-success"
+                    : "status-badge-warning"
                 }`}
               >
                 {statusLabel}
               </span>
-              <span className="min-w-0 truncate rounded-full bg-[color-mix(in_srgb,var(--text)_5%,white)] px-3 py-1 text-xs text-[var(--text-soft)] sm:max-w-[320px]">
+              <span className="status-badge min-w-0 truncate sm:max-w-[320px]">
                 {riderContact}
               </span>
             </div>
@@ -126,8 +126,8 @@ const RiderAdmin = ({
       </article>
 
       {detailsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(10,17,40,0.58)] p-3 backdrop-blur-sm sm:p-4">
-          <div className="max-h-[calc(100vh-1.5rem)] w-full max-w-3xl overflow-y-auto rounded-[28px] border-2 border-[var(--text)] bg-white shadow-[9px_9px_0_var(--text)]">
+        <div className="ui-overlay fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
+          <div className="ui-modal w-full max-w-3xl">
             <div className="flex items-start gap-4 border-b-2 border-[color-mix(in_srgb,var(--text)_12%,transparent)] bg-[linear-gradient(135deg,var(--accent-soft),#ffffff)] p-5 sm:p-7">
               <div className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl border-2 border-[var(--text)] bg-[var(--accent-soft)] shadow-[4px_4px_0_var(--accent-2)] sm:h-24 sm:w-24">
                 {rider.picture ? (

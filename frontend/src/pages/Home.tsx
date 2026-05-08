@@ -5,7 +5,7 @@ import type { IRestaurant } from "../types";
 import axios from "axios";
 import { restaurantService } from "../main";
 import RestaurantCard from "../components/RestaurantCard";
-import LoadingState from "../components/LoadingState";
+import { SkeletonState } from "../components/LoadingState";
 
 const Home = () => {
   const { location } = useAppData();
@@ -51,13 +51,7 @@ const Home = () => {
   }, [location, search]);
 
   if (loading || !location) {
-    return (
-      <LoadingState
-        eyebrow="Nearby Picks"
-        title="Finding kitchens around you"
-        copy="We are matching your delivery area with restaurants that can reach you now."
-      />
-    );
+    return <SkeletonState type="restaurants" title="Nearby restaurants" />;
   }
   return (
     <div className="page-wrap space-y-6 py-6">
@@ -95,7 +89,7 @@ const Home = () => {
           })}
         </div>
       ) : (
-        <div className="glass-card px-6 py-14 text-center">
+        <div className="empty-state">
           <h2 className="text-2xl font-semibold text-[#1f1a17]">
             No restaurants matched this search
           </h2>

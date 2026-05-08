@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 import { restaurantService } from "../main";
 import OrderCard from "./OrderCard";
-import LoadingState from "./LoadingState";
+import { SkeletonState } from "./LoadingState";
 import {
   FiClock,
   FiExternalLink,
@@ -113,13 +113,7 @@ const RestaurantOrders = ({
   }, [socket, restaurantId]);
 
   if (loading) {
-    return (
-      <LoadingState
-        compact
-        title="Refreshing restaurant orders"
-        copy="Live active orders and restaurant history are being synced."
-      />
-    );
+    return <SkeletonState type="orders" count={4} title="Restaurant orders" />;
   }
 
   const activeOrders = orders.filter((order) =>
@@ -145,7 +139,7 @@ const RestaurantOrders = ({
             </p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[520px]">
+          <div className="stat-panel-collapsible grid gap-3 sm:grid-cols-3 lg:min-w-[520px]">
             <div className="rounded-2xl border-2 border-[var(--text)] bg-white p-4 shadow-[4px_4px_0_var(--text)]">
               <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--accent-deep)]">
                 <FiClock />
