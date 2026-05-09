@@ -302,6 +302,64 @@ export const fetchMyCurrentOrder = TryCatch(
   }
 );
 
+export const updateRiderProfile = TryCatch(
+  async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+
+    if (!user) {
+      return res.status(401).json({
+        message: "Unauthorized",
+      });
+    }
+
+    const rider = await Rider.findOne(buildUserIdExpr("userId", user._id));
+
+    if (!rider) {
+      return res.status(404).json({
+        message: "Rider profile not found",
+      });
+    }
+
+    const { phoneNumber, aadharNumber, drivingLicenseNumber } = req.body;
+
+    if (phoneNumber) rider.phoneNumber = phoneNumber;
+    if (aadharNumber) rider.aadharNumber = aadharNumber;
+    if (drivingLicenseNumber) rider.drivingLicenseNumber = drivingLicenseNumber;
+
+    const file = req.file;
+    if (file) {
+      const fileBuffer = getBuffer(file);
+
+      if (!fileBuffer?.content) {
+        return res.status(500).json({
+          message: "Failed to generate image buffer",
+        });
+      }
+
+      const { data: uploadResult } = await axios.post(
+        `${process.env.UTILS_SERVICE}/api/upload`,
+        {
+          buffer: fileBuffer.content,
+        }
+      );
+
+      rider.picture = uploadResult.url;
+    }
+
+    rider.isVerified = false;
+    rider.verificationStatus = "pending";
+    rider.verificationNotes = "Updated documents submitted for review";
+    rider.rejectReason = "";
+
+    await rider.save();
+
+    res.json({
+      message: "Rider profile updated and sent for review",
+      rider,
+    });
+  }
+);
+
 export const fetchNearbyAvailableOrders = TryCatch(
   async (req: AuthenticatedRequest, res) => {
     const riderUserId = req.user?._id;

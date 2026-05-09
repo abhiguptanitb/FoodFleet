@@ -9,6 +9,7 @@ import {
   fetchMyCurrentOrder,
   fetchMyProfile,
   toggleRiderAvailablity,
+  updateRiderProfile,
   updateOrderStatus,
 } from "../controllers/rider.js";
 import uploadFile from "../middlewares/multer.js";
@@ -18,6 +19,7 @@ const router = express.Router();
 router.post("/new", isAuth, uploadFile, addRiderProfile);
 
 router.get("/myprofile", isAuth, fetchMyProfile);
+router.put("/myprofile", isAuth, uploadFile, updateRiderProfile);
 router.get("/dashboard/stats", isAuth, fetchRiderDashboardStats);
 router.get("/dashboard/history", isAuth, fetchRiderOrderHistory);
 router.get("/orders/available", isAuth, fetchNearbyAvailableOrders);

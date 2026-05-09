@@ -47,6 +47,11 @@ export interface IRestaurant {
     formattedAddress: string;
   };
   isOpen: boolean;
+  cuisine?: string;
+  rating?: number;
+  deliveryTimeMinutes?: number;
+  priceRange?: "budget" | "mid" | "premium";
+  distanceKm?: number;
   createdAt: Date;
 }
 
@@ -58,6 +63,15 @@ export interface IMenuItem {
   image?: string;
   price: number;
   isAvailable: boolean;
+  category?: string;
+  variants?: {
+    name: string;
+    priceDelta?: number;
+  }[];
+  addOns?: {
+    name: string;
+    price?: number;
+  }[];
   createdAt: Date;
   updatedAt: Date;
 }

@@ -1,6 +1,7 @@
 import axios from "axios";
 import getBuffer from "../config/datauri.js";
 import TryCatch from "../middlewares/trycatch.js";
+import FavoriteRestaurant from "../models/FavoriteRestaurant.js";
 import Restaurant from "../models/Restaurant.js";
 import jwt from "jsonwebtoken";
 const getUserIdCandidates = (userId) => {
@@ -42,7 +43,7 @@ export const addRestraunt = TryCatch(async (req, res) => {
             message: "Unauthorized",
         });
     }
-    const { name, description, latitude, longitude, formattedAddress, phone } = req.body;
+    const { name, description, latitude, longitude, formattedAddress, phone, cuisine, deliveryTimeMinutes, priceRange, rating, } = req.body;
     const [normalizedOwnerId] = getUserIdCandidates(user._id);
     if (!name || !latitude || !longitude || !normalizedOwnerId) {
         return res.status(400).json({
@@ -64,7 +65,7 @@ export const addRestraunt = TryCatch(async (req, res) => {
     const { data: uploadResult } = await axios.post(`${process.env.UTILS_SERVICE}/api/upload`, {
         buffer: fileBuffer.content,
     });
-    const restaurant = await Restaurant.create({
+    const restaurantPayload = {
         name,
         description,
         phone,
@@ -76,7 +77,22 @@ export const addRestraunt = TryCatch(async (req, res) => {
             formattedAddress,
         },
         isVerified: false,
-    });
+        verificationStatus: "pending",
+        cuisine: cuisine || "Mixed",
+        priceRange: ["budget", "mid", "premium"].includes(priceRange)
+            ? priceRange
+            : "mid",
+    };
+    if (deliveryTimeMinutes) {
+        restaurantPayload.deliveryTimeMinutes = Number(deliveryTimeMinutes);
+    }
+    if (rating && !Number.isNaN(Number(rating))) {
+        const parsedRating = Number(rating);
+        if (parsedRating >= 0 && parsedRating <= 5) {
+            restaurantPayload.rating = parsedRating;
+        }
+    }
+    const restaurant = await Restaurant.create(restaurantPayload);
     return res.status(201).json({
         message: "Restaurant created successfully",
         restaurant,
@@ -163,7 +179,7 @@ export const updateRestaurant = TryCatch(async (req, res) => {
             message: "Please Login",
         });
     }
-    const { name, description } = req.body;
+    const { name, description, cuisine, deliveryTimeMinutes, priceRange, phone, rating, } = req.body;
     const restaurantId = req.body.restaurantId || req.user.restaurantId;
     const restaurant = await Restaurant.findOne({
         _id: restaurantId,
@@ -176,6 +192,22 @@ export const updateRestaurant = TryCatch(async (req, res) => {
     }
     restaurant.name = name;
     restaurant.description = description;
+    if (phone) {
+        restaurant.phone = Number(phone);
+    }
+    restaurant.cuisine = cuisine || restaurant.cuisine;
+    if (deliveryTimeMinutes) {
+        restaurant.deliveryTimeMinutes = Number(deliveryTimeMinutes);
+    }
+    if (rating && !Number.isNaN(Number(rating))) {
+        const parsedRating = Number(rating);
+        if (parsedRating >= 0 && parsedRating <= 5) {
+            restaurant.rating = parsedRating;
+        }
+    }
+    restaurant.priceRange = ["budget", "mid", "premium"].includes(priceRange)
+        ? priceRange
+        : restaurant.priceRange;
     const file = req.file;
     if (file) {
         const fileBuffer = getBuffer(file);
@@ -196,7 +228,7 @@ export const updateRestaurant = TryCatch(async (req, res) => {
     });
 });
 export const getNearbyRestaurant = TryCatch(async (req, res) => {
-    const { latitude, longitude, radius = 5000, search = "" } = req.query;
+    const { latitude, longitude, radius = 5000, search = "", cuisine, openNow, minRating, maxDeliveryTime, priceRange, } = req.query;
     if (!latitude || !longitude) {
         return res.status(400).json({
             message: "Latitude and longitude are required",
@@ -207,6 +239,21 @@ export const getNearbyRestaurant = TryCatch(async (req, res) => {
     };
     if (search && typeof search === "string") {
         query.name = { $regex: search, $options: "i" };
+    }
+    if (typeof cuisine === "string" && cuisine && cuisine !== "all") {
+        query.cuisine = cuisine;
+    }
+    if (openNow === "true") {
+        query.isOpen = true;
+    }
+    if (typeof minRating === "string" && minRating !== "all") {
+        query.rating = { $gte: Number(minRating) };
+    }
+    if (typeof maxDeliveryTime === "string" && maxDeliveryTime !== "all") {
+        query.deliveryTimeMinutes = { $lte: Number(maxDeliveryTime) };
+    }
+    if (typeof priceRange === "string" && priceRange !== "all") {
+        query.priceRange = priceRange;
     }
     const restaurants = await Restaurant.aggregate([
         {
@@ -244,4 +291,40 @@ export const getNearbyRestaurant = TryCatch(async (req, res) => {
 export const fetchSingleRestaurant = TryCatch(async (req, res) => {
     const restaurant = await Restaurant.findById(req.params.id);
     res.json(restaurant);
+});
+export const fetchFavoriteRestaurants = TryCatch(async (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ message: "Please Login" });
+    }
+    const favorites = await FavoriteRestaurant.find({
+        userId: req.user._id.toString(),
+    }).populate("restaurantId");
+    res.json({
+        favorites,
+        restaurantIds: favorites.map((favorite) => favorite.restaurantId._id.toString()),
+    });
+});
+export const saveFavoriteRestaurant = TryCatch(async (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ message: "Please Login" });
+    }
+    const { restaurantId } = req.body;
+    if (!restaurantId) {
+        return res.status(400).json({ message: "Restaurant id is required" });
+    }
+    await FavoriteRestaurant.findOneAndUpdate({ userId: req.user._id.toString(), restaurantId }, { $setOnInsert: { userId: req.user._id.toString(), restaurantId } }, { upsert: true, new: true });
+    res.json({ message: "Restaurant saved" });
+});
+export const removeFavoriteRestaurant = TryCatch(async (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ message: "Please Login" });
+    }
+    const restaurantId = typeof req.params.restaurantId === "string"
+        ? req.params.restaurantId
+        : "";
+    await FavoriteRestaurant.deleteOne({
+        userId: req.user._id.toString(),
+        restaurantId,
+    });
+    res.json({ message: "Restaurant removed from saved list" });
 });

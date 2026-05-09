@@ -8,6 +8,15 @@ import UserOrderMap from "../components/UserOrderMap";
 import LoadingState from "../components/LoadingState";
 
 const statusLabel = (status: string) => status.replaceAll("_", " ");
+const ORDER_STEPS = [
+  { key: "placed", label: "Placed", eta: "0 min" },
+  { key: "accepted", label: "Accepted", eta: "3-5 min" },
+  { key: "preparing", label: "Preparing", eta: "10-20 min" },
+  { key: "ready_for_rider", label: "Ready", eta: "20-25 min" },
+  { key: "rider_assigned", label: "Rider assigned", eta: "25-30 min" },
+  { key: "picked_up", label: "On the way", eta: "30-40 min" },
+  { key: "delivered", label: "Delivered", eta: "Done" },
+];
 
 const OrderPage = () => {
   const { id } = useParams();
@@ -115,6 +124,47 @@ const OrderPage = () => {
 
       <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
         <div className="space-y-6">
+          <section className="soft-card p-5">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-xl font-semibold text-[#1f1a17]">
+                ETA Timeline
+              </h2>
+              <span className="status-badge status-badge-success capitalize">
+                {statusLabel(order.status)}
+              </span>
+            </div>
+            <div className="mt-5 space-y-3">
+              {ORDER_STEPS.map((step, index) => {
+                const currentIndex = ORDER_STEPS.findIndex(
+                  (currentStep) => currentStep.key === order.status
+                );
+                const isDone = index <= currentIndex;
+                return (
+                  <div
+                    key={step.key}
+                    className="grid grid-cols-[auto_1fr_auto] items-center gap-3"
+                  >
+                    <span
+                      className={`h-4 w-4 rounded-full border-2 border-[var(--text)] ${
+                        isDone ? "bg-[var(--accent)]" : "bg-white"
+                      }`}
+                    />
+                    <span
+                      className={`text-sm font-semibold ${
+                        isDone ? "text-[var(--text)]" : "text-[var(--text-soft)]"
+                      }`}
+                    >
+                      {step.label}
+                    </span>
+                    <span className="text-xs font-bold text-[var(--text-soft)]">
+                      {step.eta}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
           <section className="soft-card p-5">
             <h2 className="text-xl font-semibold text-[#1f1a17]">Items</h2>
             <div className="mt-4 space-y-3">

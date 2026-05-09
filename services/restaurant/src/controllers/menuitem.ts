@@ -5,6 +5,20 @@ import TryCatch from "../middlewares/trycatch.js";
 import Restaurant from "../models/Restaurant.js";
 import MenuItems from "../models/MenuItems.js";
 
+const parseJsonArray = (value: unknown) => {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+};
+
 export const addMenuItem = TryCatch(async (req: AuthenticatedRequest, res) => {
   if (!req.user) {
     return res.status(401).json({
@@ -25,7 +39,7 @@ export const addMenuItem = TryCatch(async (req: AuthenticatedRequest, res) => {
     });
   }
 
-  const { name, description, price } = req.body;
+  const { name, description, price, category } = req.body;
 
   if (!name || !price) {
     return res.status(400).json({
@@ -62,6 +76,9 @@ export const addMenuItem = TryCatch(async (req: AuthenticatedRequest, res) => {
     price,
     restaurantId: restaurant._id,
     image: uploadResult.url,
+    category: category || "Popular",
+    variants: parseJsonArray(req.body.variants),
+    addOns: parseJsonArray(req.body.addOns),
   });
 
   res.json({
@@ -115,7 +132,7 @@ export const updateMenuItem = TryCatch(
       });
     }
 
-    const { name, description, price } = req.body;
+    const { name, description, price, category } = req.body;
 
     if (!name || !price) {
       return res.status(400).json({
@@ -126,6 +143,9 @@ export const updateMenuItem = TryCatch(
     item.name = name;
     item.description = description || "";
     item.price = Number(price);
+    item.category = category || item.category || "Popular";
+    item.variants = parseJsonArray(req.body.variants);
+    item.addOns = parseJsonArray(req.body.addOns);
 
     const file = req.file;
 
@@ -153,6 +173,48 @@ export const updateMenuItem = TryCatch(
     res.json({
       message: "Item updated successfully",
       item,
+    });
+  }
+);
+
+export const bulkUpdateMenuAvailability = TryCatch(
+  async (req: AuthenticatedRequest, res) => {
+    if (!req.user) {
+      return res.status(401).json({
+        message: "Please login",
+      });
+    }
+
+    const { restaurantId, itemIds, isAvailable } = req.body;
+
+    if (!restaurantId || !Array.isArray(itemIds) || typeof isAvailable !== "boolean") {
+      return res.status(400).json({
+        message: "Restaurant, item ids, and availability are required",
+      });
+    }
+
+    const restaurant = await Restaurant.findOne({
+      _id: restaurantId,
+      ownerId: req.user._id,
+    });
+
+    if (!restaurant) {
+      return res.status(404).json({
+        message: "NO Restaurant found",
+      });
+    }
+
+    const result = await MenuItems.updateMany(
+      {
+        _id: { $in: itemIds },
+        restaurantId,
+      },
+      { $set: { isAvailable } }
+    );
+
+    res.json({
+      message: `Updated ${result.modifiedCount} items`,
+      modifiedCount: result.modifiedCount,
     });
   }
 );

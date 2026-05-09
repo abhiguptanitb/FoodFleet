@@ -32,6 +32,8 @@ const Restaurant = () => {
   const [tab, setTab] = useState<SellerTab>("menu");
   const [showAddRestaurant, setShowAddRestaurant] = useState(false);
   const [menuItems, setMenuItems] = useState<IMenuItem[]>([]);
+  const [menuSearch, setMenuSearch] = useState("");
+  const [menuCategory, setMenuCategory] = useState("all");
   const [, setRestaurantOrders] = useState<IOrder[]>([]);
   const [togglingRestaurantId, setTogglingRestaurantId] = useState<string | null>(
     null
@@ -42,12 +44,29 @@ const Restaurant = () => {
   );
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editCuisine, setEditCuisine] = useState("");
+  const [editDeliveryTime, setEditDeliveryTime] = useState("");
+  const [editPriceRange, setEditPriceRange] = useState("mid");
+  const [editRating, setEditRating] = useState("4.1");
   const [editImage, setEditImage] = useState<File | null>(null);
   const [salesStats, setSalesStats] = useState({
     revenue: 0,
     totalOrdersDelivered: 0,
     topItem: { name: "No sales yet", quantity: 0 },
   });
+  const [performance, setPerformance] = useState<{
+    chart: { label: string; revenue: number; orders: number }[];
+    topItems: { name: string; quantity: number; revenue: number }[];
+    lowItems: { name: string; quantity: number; revenue: number }[];
+    payout: {
+      grossRevenue: number;
+      platformFees: number;
+      riderPayouts: number;
+      estimatedSellerPayout: number;
+      deliveredOrders: number;
+    };
+  } | null>(null);
 
   const selectedRestaurant =
     restaurants.find((restaurant) => restaurant._id === selectedRestaurantId) ||
@@ -74,6 +93,16 @@ const Restaurant = () => {
           },
         });
       }
+      const performanceResponse = await axios.get(
+        `${restaurantService}/api/order/stats/performance/${restaurantId}`,
+        {
+          params: { range: "30d" },
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      setPerformance(performanceResponse.data);
     } catch (error) {
       console.log("Error fetching sales stats:", error);
       // Keep existing stats on error
@@ -178,10 +207,28 @@ const Restaurant = () => {
     );
   };
 
+  const getMenuCategory = (item: IMenuItem) => item.category || "Popular";
+  const menuCategories = Array.from(new Set(menuItems.map(getMenuCategory)));
+  const visibleMenuItems = menuItems.filter((item) => {
+    const matchesSearch = `${item.name} ${item.description || ""}`
+      .toLowerCase()
+      .includes(menuSearch.toLowerCase());
+    const matchesCategory =
+      menuCategory === "all" || getMenuCategory(item) === menuCategory;
+    return matchesSearch && matchesCategory;
+  });
+
   const openEditModal = (restaurant: IRestaurant) => {
     setEditingRestaurantId(restaurant._id);
     setEditName(restaurant.name);
     setEditDescription(restaurant.description || "");
+    setEditPhone(String(restaurant.phone || ""));
+    setEditCuisine(restaurant.cuisine || "");
+    setEditDeliveryTime(
+      restaurant.deliveryTimeMinutes ? String(restaurant.deliveryTimeMinutes) : ""
+    );
+    setEditPriceRange(restaurant.priceRange || "mid");
+    setEditRating(restaurant.rating ? String(restaurant.rating) : "4.1");
     setEditImage(null);
   };
 
@@ -189,6 +236,11 @@ const Restaurant = () => {
     setEditingRestaurantId(null);
     setEditName("");
     setEditDescription("");
+    setEditPhone("");
+    setEditCuisine("");
+    setEditDeliveryTime("");
+    setEditPriceRange("mid");
+    setEditRating("4.1");
     setEditImage(null);
   };
 
@@ -200,6 +252,11 @@ const Restaurant = () => {
       const formData = new FormData();
       formData.append("name", editName);
       formData.append("description", editDescription);
+      formData.append("phone", editPhone);
+      formData.append("cuisine", editCuisine);
+      formData.append("deliveryTimeMinutes", editDeliveryTime);
+      formData.append("priceRange", editPriceRange);
+      formData.append("rating", editRating);
       formData.append("restaurantId", editingRestaurant._id);
 
       if (editImage) {
@@ -250,6 +307,31 @@ const Restaurant = () => {
       toast.error(error?.response?.data?.message || "Failed to update status");
     } finally {
       setTogglingRestaurantId(null);
+    }
+  };
+
+  const bulkSetAvailability = async (isAvailable: boolean) => {
+    if (!selectedRestaurant) return;
+    try {
+      await axios.put(
+        `${restaurantService}/api/item/bulk/availability`,
+        {
+          restaurantId: selectedRestaurant._id,
+          itemIds: visibleMenuItems.map((item) => item._id),
+          isAvailable,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      toast.success(
+        isAvailable ? "Selected menu items are live" : "Selected menu items hidden"
+      );
+      fetchMenuItems(selectedRestaurant._id);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Bulk update failed");
     }
   };
 
@@ -465,10 +547,61 @@ const Restaurant = () => {
                       <FiPlusCircle size={16} />
                       Add Item
                     </button>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => bulkSetAvailability(true)}
+                        className="action-button px-3 py-2 text-xs"
+                      >
+                        All Live
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => bulkSetAvailability(false)}
+                        className="action-button px-3 py-2 text-xs"
+                      >
+                        Hide All
+                      </button>
+                    </div>
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-[1fr_auto]">
+                    <input
+                      value={menuSearch}
+                      onChange={(event) => setMenuSearch(event.target.value)}
+                      className="field-input py-3 text-sm"
+                      placeholder="Search menu items"
+                    />
+                    <div className="mobile-tabs md:w-auto">
+                      <button
+                        type="button"
+                        onClick={() => setMenuCategory("all")}
+                        className={`rounded-xl px-4 py-2.5 text-sm font-black ${
+                          menuCategory === "all"
+                            ? "bg-[var(--accent)] text-white shadow-[3px_3px_0_var(--text)]"
+                            : "text-[var(--text-soft)]"
+                        }`}
+                      >
+                        All
+                      </button>
+                      {menuCategories.map((currentCategory) => (
+                        <button
+                          key={currentCategory}
+                          type="button"
+                          onClick={() => setMenuCategory(currentCategory)}
+                          className={`rounded-xl px-4 py-2.5 text-sm font-black ${
+                            menuCategory === currentCategory
+                              ? "bg-[var(--accent)] text-white shadow-[3px_3px_0_var(--text)]"
+                              : "text-[var(--text-soft)]"
+                          }`}
+                        >
+                          {currentCategory}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   <MenuItems
-                    items={menuItems}
+                    items={visibleMenuItems}
                     onItemDeleted={() => fetchMenuItems(selectedRestaurant._id)}
                     isSeller={true}
                   />
@@ -544,6 +677,85 @@ const Restaurant = () => {
                       </div>
                     ))}
                   </div>
+                  {performance && (
+                    <div className="space-y-4 xl:col-span-2">
+                      <div className="ui-card p-5">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--accent)]">
+                              30 Day Chart
+                            </p>
+                            <h3 className="mt-2 text-xl font-black text-[var(--text)]">
+                              Sales trend
+                            </h3>
+                          </div>
+                          <span className="status-badge status-badge-success">
+                            Payout Rs {performance.payout.estimatedSellerPayout}
+                          </span>
+                        </div>
+                        <div className="mt-5 flex h-44 items-end gap-2">
+                          {(performance.chart.length
+                            ? performance.chart
+                            : [{ label: "No sales", revenue: 0, orders: 0 }]
+                          ).map((point) => {
+                            const maxRevenue = Math.max(
+                              ...performance.chart.map((item) => item.revenue),
+                              1
+                            );
+                            return (
+                              <div
+                                key={point.label}
+                                className="flex min-w-10 flex-1 flex-col items-center gap-2"
+                              >
+                                <div
+                                  className="w-full rounded-t-xl bg-[var(--accent)] shadow-[3px_3px_0_var(--text)]"
+                                  style={{
+                                    height: `${Math.max(
+                                      12,
+                                      (point.revenue / maxRevenue) * 140
+                                    )}px`,
+                                  }}
+                                  title={`Rs ${point.revenue}`}
+                                />
+                                <span className="max-w-14 truncate text-[10px] font-bold text-[var(--text-soft)]">
+                                  {point.label}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="grid gap-4 lg:grid-cols-3">
+                        <div className="ui-card p-4">
+                          <p className="text-sm font-black text-[var(--text)]">
+                            Payout Summary
+                          </p>
+                          <div className="mt-3 space-y-2 text-sm text-[var(--text-soft)]">
+                            <p>Gross: Rs {performance.payout.grossRevenue}</p>
+                            <p>Platform: Rs {performance.payout.platformFees}</p>
+                            <p>Rider: Rs {performance.payout.riderPayouts}</p>
+                          </div>
+                        </div>
+                        <div className="ui-card p-4">
+                          <p className="text-sm font-black text-[var(--text)]">
+                            Top-performing
+                          </p>
+                          <p className="mt-3 text-sm text-[var(--text-soft)]">
+                            {performance.topItems[0]?.name || "No sales yet"}
+                          </p>
+                        </div>
+                        <div className="ui-card p-4">
+                          <p className="text-sm font-black text-[var(--text)]">
+                            Low-performing
+                          </p>
+                          <p className="mt-3 text-sm text-[var(--text-soft)]">
+                            {performance.lowItems[0]?.name || "No sales yet"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -586,13 +798,79 @@ const Restaurant = () => {
 
               <div>
                 <label className="mb-2 block text-sm font-bold text-[var(--text)]">
+                  Contact Number
+                </label>
+                <input
+                  type="text"
+                  value={editPhone}
+                  onChange={(e) => setEditPhone(e.target.value)}
+                  className="field-input bg-white px-4 py-3 text-base"
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div>
+                  <label className="mb-2 block text-sm font-bold text-[var(--text)]">
+                    Cuisine
+                  </label>
+                  <input
+                    type="text"
+                    value={editCuisine}
+                    onChange={(e) => setEditCuisine(e.target.value)}
+                    className="field-input bg-white px-4 py-3 text-base"
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-bold text-[var(--text)]">
+                    Delivery Time
+                  </label>
+                  <input
+                    type="number"
+                    value={editDeliveryTime}
+                    onChange={(e) => setEditDeliveryTime(e.target.value)}
+                    className="field-input bg-white px-4 py-3 text-base"
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-bold text-[var(--text)]">
+                    Price Range
+                  </label>
+                  <select
+                    value={editPriceRange}
+                    onChange={(e) => setEditPriceRange(e.target.value)}
+                    className="field-input bg-white px-4 py-3 text-base"
+                  >
+                    <option value="budget">Budget</option>
+                    <option value="mid">Mid range</option>
+                    <option value="premium">Premium</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-bold text-[var(--text)]">
+                  Rating
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="5"
+                  value={editRating}
+                  onChange={(e) => setEditRating(e.target.value)}
+                  className="field-input bg-white px-4 py-3 text-base"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-bold text-[var(--text)]">
                   Description
                 </label>
                 <textarea
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
-                  rows={5}
-                  className="field-input min-h-36 resize-y bg-white px-4 py-3 text-sm"
+                  rows={4}
+                  className="field-input min-h-32 resize-y bg-white px-4 py-3 text-sm"
                 />
               </div>
 

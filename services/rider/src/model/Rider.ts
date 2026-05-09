@@ -7,6 +7,9 @@ export interface IRider extends Document {
   aadharNumber: string;
   drivingLicenseNumber: string;
   isVerified: boolean;
+  verificationStatus: "pending" | "verified" | "rejected";
+  verificationNotes?: string;
+  rejectReason?: string;
   location: {
     type: "Point";
     coordinates: [number, number];
@@ -46,6 +49,14 @@ const schema = new Schema<IRider>(
       type: Boolean,
       default: false,
     },
+    verificationStatus: {
+      type: String,
+      enum: ["pending", "verified", "rejected"],
+      default: "pending",
+      index: true,
+    },
+    verificationNotes: String,
+    rejectReason: String,
 
     location: {
       type: {

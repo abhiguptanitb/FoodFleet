@@ -28,6 +28,7 @@ interface IRider {
   picture: string;
   isVerified: boolean;
   isAvailble: boolean;
+  lastActiveAt?: string;
 }
 
 type RiderStatsRange = "today" | "7d" | "30d";
@@ -56,6 +57,17 @@ const formatDeliveryDate = (date: string) =>
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(date));
+
+const getOnlineDuration = (lastActiveAt?: string) => {
+  if (!lastActiveAt) return "Not tracked yet";
+  const diffMs = Date.now() - new Date(lastActiveAt).getTime();
+  if (diffMs < 0) return "Just now";
+  const minutes = Math.floor(diffMs / 60000);
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  if (hours === 0) return `${remainingMinutes} min`;
+  return `${hours}h ${remainingMinutes}m`;
+};
 
 const RiderDashboard = () => {
   const { user, setIsAuth, setUser } = useAppData();
@@ -290,6 +302,7 @@ const RiderDashboard = () => {
   const [drivingLicenseNumber, setDrivingLicenseNumber] = useState("");
   const [image, setImage] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [editingProfile, setEditingProfile] = useState(false);
 
   const handleSubmit = async () => {
     if (!navigator.geolocation) {
@@ -331,6 +344,43 @@ const RiderDashboard = () => {
         setSubmitting(false);
       }
     });
+  };
+
+  const updateProfile = async () => {
+    const formData = new FormData();
+    formData.append("phoneNumber", phoneNumber || profile?.phoneNumber || "");
+    formData.append("aadharNumber", aadharNumber || profile?.aadharNumber || "");
+    formData.append(
+      "drivingLicenseNumber",
+      drivingLicenseNumber || profile?.drivingLicenseNumber || ""
+    );
+    if (image) {
+      formData.append("file", image);
+    }
+
+    try {
+      setSubmitting(true);
+      const { data } = await axios.put(
+        `${riderService}/api/rider/myprofile`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      toast.success(data.message);
+      setEditingProfile(false);
+      setPhoneNumber("");
+      setaadharNumber("");
+      setDrivingLicenseNumber("");
+      setImage(null);
+      fetchProfile();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to update profile");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (user?.role !== "rider") {
@@ -496,6 +546,11 @@ const RiderDashboard = () => {
                     <span className={`status-badge ${profile.isAvailble ? "status-badge-success" : ""}`}>
                       {profile.isAvailble ? "Online" : "Offline"}
                     </span>
+                    {profile.isAvailble && (
+                      <span className="status-badge">
+                        Online {getOnlineDuration(profile.lastActiveAt)}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -520,6 +575,18 @@ const RiderDashboard = () => {
                       : "Go Online"}
                   </button>
                 )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPhoneNumber(profile.phoneNumber);
+                    setaadharNumber(profile.aadharNumber);
+                    setDrivingLicenseNumber(profile.drivingLicenseNumber);
+                    setEditingProfile(true);
+                  }}
+                  className="action-button px-4 py-3 text-sm"
+                >
+                  Edit Documents
+                </button>
 
               </div>
             </div>
@@ -556,10 +623,14 @@ const RiderDashboard = () => {
               </div>
             </div>
 
-            <p className="mt-5 rounded-2xl border border-[var(--accent)] bg-[var(--accent-soft)] px-4 py-3 text-sm leading-7 text-[var(--accent-deep)]">
-              Please be within a 500 m radius of any restaurant (which we call a
-              hotspot) before going online as a rider to receive orders.
-            </p>
+            <div className="mt-3 ui-row p-4 text-sm text-[var(--text-soft)]">
+              <p className="font-black text-[var(--text)]">Hotspot readiness</p>
+              <p className="mt-1 leading-6">
+                When you tap Go Online, FoodFleet uses your current location and
+                only sends orders from restaurants inside the 500 m hotspot
+                radius.
+              </p>
+            </div>
           </div>
 
           <div className="ui-card ui-card-strong p-5 sm:p-6">
@@ -727,6 +798,9 @@ const RiderDashboard = () => {
                       <p className="mt-1 inline-flex rounded-full border-2 border-[var(--text)] bg-[var(--accent-2)] px-3 py-1 text-sm font-black text-[var(--text)] shadow-[3px_3px_0_var(--text)] lg:mt-0">
                         {formatMoney(ride.riderEarning)}
                       </p>
+                      <p className="mt-1 text-xs leading-5 text-[var(--text-soft)]">
+                        {ride.distance.toFixed(1)} km · base Rs 25 + Rs 12/km
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -753,6 +827,68 @@ const RiderDashboard = () => {
           </div>
         )}
       </div>
+      {editingProfile && (
+        <div className="ui-overlay fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="ui-modal w-full max-w-xl p-5 sm:p-6">
+            <p className="pill-label">Rider Profile</p>
+            <h2 className="mt-4 text-2xl font-black text-[var(--text)]">
+              Update documents
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-[var(--text-soft)]">
+              Updating documents sends your rider profile back to pending review.
+            </p>
+            <div className="mt-5 space-y-4">
+              <input
+                className="field-input"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                placeholder="Phone number"
+              />
+              <input
+                className="field-input"
+                value={aadharNumber}
+                onChange={(e) => setaadharNumber(e.target.value)}
+                placeholder="Aadhaar number"
+              />
+              <input
+                className="field-input"
+                value={drivingLicenseNumber}
+                onChange={(e) => setDrivingLicenseNumber(e.target.value)}
+                placeholder="Driving license number"
+              />
+              <label className="ui-row flex cursor-pointer items-center gap-3 p-4 text-sm text-[var(--text-soft)]">
+                <BiUpload className="h-5 w-5 text-[var(--accent)]" />
+                <span className="truncate">
+                  {image ? image.name : "Upload new rider photo (optional)"}
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={(e) => setImage(e.target.files?.[0] || null)}
+                />
+              </label>
+            </div>
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setEditingProfile(false)}
+                className="action-button px-4 py-3 text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={updateProfile}
+                disabled={submitting}
+                className="action-button action-button-primary px-4 py-3 text-sm disabled:opacity-60"
+              >
+                {submitting ? "Saving..." : "Submit for Review"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

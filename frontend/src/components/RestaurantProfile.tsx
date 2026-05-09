@@ -107,10 +107,17 @@ const RestaurantProfile = ({ restaurant, isSeller, onUpdate }: props) => {
               </h2>
             )}
 
-            <div className="mt-3 flex items-center gap-2 text-sm text-[var(--text-soft)]">
-              <BiMapPin className="h-4 w-4 text-[var(--accent)]" />
-              {restaurant.autoLocation.formattedAddress ||
-                "Location unavailable"}
+            <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-[var(--text-soft)]">
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-[#eaf7f0] px-3 py-1 text-xs font-semibold text-[#166534]">
+                  {restaurant.rating?.toFixed(1) ?? "4.1"} ★
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <BiMapPin className="h-4 w-4 text-[var(--accent)]" />
+                {restaurant.autoLocation.formattedAddress ||
+                  "Location unavailable"}
+              </div>
             </div>
           </div>
 

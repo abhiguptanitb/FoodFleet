@@ -82,6 +82,10 @@ const AddRestaurant = ({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [phone, setPhone] = useState("");
+  const [cuisine, setCuisine] = useState("");
+  const [deliveryTimeMinutes, setDeliveryTimeMinutes] = useState("");
+  const [priceRange, setPriceRange] = useState("mid");
+  const [rating, setRating] = useState("");
   const [image, setImage] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -113,6 +117,11 @@ const AddRestaurant = ({
       return;
     }
 
+    if (rating && (Number.isNaN(Number(rating)) || Number(rating) < 0 || Number(rating) > 5)) {
+      toast.error("Rating must be a number between 0 and 5");
+      return;
+    }
+
     if (!formattedAddress) {
       toast.error("Please ensure address is loaded");
       return;
@@ -127,6 +136,10 @@ const AddRestaurant = ({
     formData.append("formattedAddress", formattedAddress);
     formData.append("file", image);
     formData.append("phone", phone);
+    formData.append("cuisine", cuisine || "Mixed");
+    formData.append("deliveryTimeMinutes", deliveryTimeMinutes);
+    formData.append("priceRange", priceRange);
+    formData.append("rating", rating);
 
     try {
       setSubmitting(true);
@@ -207,6 +220,63 @@ const AddRestaurant = ({
                 placeholder="Enter contact number"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
+                className="field-input bg-white px-4 py-3 text-sm"
+              />
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div>
+                <label className="mb-2 block text-sm font-bold text-[var(--text)]">
+                  Cuisine
+                </label>
+                <input
+                  type="text"
+                  placeholder="Pizza, Biryani, Cafe"
+                  value={cuisine}
+                  onChange={(e) => setCuisine(e.target.value)}
+                  className="field-input bg-white px-4 py-3 text-sm"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-bold text-[var(--text)]">
+                  Delivery Time
+                </label>
+                <input
+                  type="number"
+                  placeholder="30"
+                  value={deliveryTimeMinutes}
+                  onChange={(e) => setDeliveryTimeMinutes(e.target.value)}
+                  className="field-input bg-white px-4 py-3 text-sm"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-bold text-[var(--text)]">
+                  Price Range
+                </label>
+                <select
+                  value={priceRange}
+                  onChange={(e) => setPriceRange(e.target.value)}
+                  className="field-input bg-white px-4 py-3 text-sm"
+                >
+                  <option value="budget">Budget</option>
+                  <option value="mid">Mid range</option>
+                  <option value="premium">Premium</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-bold text-[var(--text)]">
+                Rating
+              </label>
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                max="5"
+                placeholder="4.1"
+                value={rating}
+                onChange={(e) => setRating(e.target.value)}
                 className="field-input bg-white px-4 py-3 text-sm"
               />
             </div>

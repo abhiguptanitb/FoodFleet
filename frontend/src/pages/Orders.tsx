@@ -5,6 +5,8 @@ import { useSocket } from "../context/SocketContext";
 import axios from "axios";
 import { restaurantService } from "../main";
 import LoadingState from "../components/LoadingState";
+import toast from "react-hot-toast";
+import { FiRepeat } from "react-icons/fi";
 
 const ACTIVE_STATUSES = [
   "placed",
@@ -30,6 +32,7 @@ const Orders = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { socket } = useSocket();
+  const [reorderingId, setReorderingId] = useState<string | null>(null);
 
   const fetchOrders = async () => {
     try {
@@ -69,6 +72,37 @@ const Orders = () => {
       socket.off("order:rider_assigned", onOrderUpdate);
     };
   }, [socket]);
+
+  const reorder = async (order: IOrder) => {
+    try {
+      setReorderingId(order._id);
+      for (const item of order.items) {
+        for (let count = 0; count < item.quauntity; count += 1) {
+          await axios.post(
+            `${restaurantService}/api/cart/add`,
+            {
+              restaurantId: order.restaurantId,
+              itemId: item.itemId,
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
+          );
+        }
+      }
+      toast.success("Previous order added to cart");
+      navigate("/cart");
+    } catch (error: any) {
+      toast.error(
+        error.response?.data?.message ||
+          "Unable to reorder this order right now"
+      );
+    } finally {
+      setReorderingId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -153,6 +187,8 @@ const Orders = () => {
               order={order}
               history
               onClick={() => navigate(`/order/${order._id}`)}
+              onReorder={() => reorder(order)}
+              reordering={reorderingId === order._id}
             />
           ))
         )}
@@ -165,10 +201,14 @@ const OrderRow = ({
   order,
   history = false,
   onClick,
+  onReorder,
+  reordering = false,
 }: {
   order: IOrder;
   history?: boolean;
   onClick: () => void;
+  onReorder?: () => void;
+  reordering?: boolean;
 }) => {
   const isDelivered = order.status === "delivered";
 
@@ -212,6 +252,21 @@ const OrderRow = ({
         <span className="text-[var(--text-soft)]">Total</span>
         <span className="font-semibold text-[#1f1a17]">Rs {order.totalAmount}</span>
       </div>
+
+      {history && isDelivered && onReorder && (
+        <button
+          type="button"
+          disabled={reordering}
+          onClick={(event) => {
+            event.stopPropagation();
+            onReorder();
+          }}
+          className="action-button mt-4 w-full px-4 py-3 text-sm disabled:opacity-60"
+        >
+          <FiRepeat size={16} />
+          {reordering ? "Adding to cart..." : "Reorder"}
+        </button>
+      )}
     </div>
   );
 };

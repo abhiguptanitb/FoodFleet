@@ -7,6 +7,13 @@ export interface IRestaurant extends Document {
   ownerId: string;
   phone: number;
   isVerified: boolean;
+  verificationStatus: "pending" | "verified" | "rejected";
+  verificationNotes?: string;
+  rejectReason?: string;
+  cuisine?: string;
+  rating: number;
+  deliveryTimeMinutes?: number;
+  priceRange: "budget" | "mid" | "premium";
 
   autoLocation: {
     type: "Point";
@@ -40,6 +47,33 @@ const schema = new Schema<IRestaurant>(
     isVerified: {
       type: Boolean,
       required: true,
+    },
+    verificationStatus: {
+      type: String,
+      enum: ["pending", "verified", "rejected"],
+      default: "pending",
+      index: true,
+    },
+    verificationNotes: String,
+    rejectReason: String,
+    cuisine: {
+      type: String,
+      trim: true,
+      default: "Mixed",
+      index: true,
+    },
+    rating: {
+      type: Number,
+      default: 4.1,
+      min: 0,
+      max: 5,
+    },
+    deliveryTimeMinutes: Number,
+    priceRange: {
+      type: String,
+      enum: ["budget", "mid", "premium"],
+      default: "mid",
+      index: true,
     },
 
     autoLocation: {

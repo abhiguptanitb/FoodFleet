@@ -15,6 +15,9 @@ const AddMenuItem = ({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
+  const [category, setCategory] = useState("Popular");
+  const [variants, setVariants] = useState("");
+  const [addOns, setAddOns] = useState("");
   const [image, setImage] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -22,6 +25,9 @@ const AddMenuItem = ({
     setName("");
     setDescription("");
     setPrice("");
+    setCategory("Popular");
+    setVariants("");
+    setAddOns("");
     setImage(null);
   };
 
@@ -36,6 +42,27 @@ const AddMenuItem = ({
     formData.append("name", name);
     formData.append("description", description);
     formData.append("price", price);
+    formData.append("category", category || "Popular");
+    formData.append(
+      "variants",
+      JSON.stringify(
+        variants
+          .split(",")
+          .map((name) => name.trim())
+          .filter(Boolean)
+          .map((name) => ({ name, priceDelta: 0 }))
+      )
+    );
+    formData.append(
+      "addOns",
+      JSON.stringify(
+        addOns
+          .split(",")
+          .map((name) => name.trim())
+          .filter(Boolean)
+          .map((name) => ({ name, price: 0 }))
+      )
+    );
     formData.append("restaurantId", restaurantId);
     formData.append("file", image);
 
@@ -130,6 +157,46 @@ const AddMenuItem = ({
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 className="field-input bg-white py-3 pl-11 pr-4 text-sm"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-bold text-[var(--text)]">
+              Category
+            </label>
+            <input
+              type="text"
+              placeholder="Starters, Mains, Desserts"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="field-input bg-white px-4 py-3 text-sm"
+            />
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-bold text-[var(--text)]">
+                Variants
+              </label>
+              <input
+                type="text"
+                placeholder="Small, Medium, Large"
+                value={variants}
+                onChange={(e) => setVariants(e.target.value)}
+                className="field-input bg-white px-4 py-3 text-sm"
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-bold text-[var(--text)]">
+                Add-ons
+              </label>
+              <input
+                type="text"
+                placeholder="Extra cheese, Toppings"
+                value={addOns}
+                onChange={(e) => setAddOns(e.target.value)}
+                className="field-input bg-white px-4 py-3 text-sm"
               />
             </div>
           </div>

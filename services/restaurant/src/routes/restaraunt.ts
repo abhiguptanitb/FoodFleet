@@ -4,8 +4,11 @@ import {
   addRestraunt,
   fetchMyRestaurant,
   fetchMyRestaurants,
+  fetchFavoriteRestaurants,
   fetchSingleRestaurant,
   getNearbyRestaurant,
+  removeFavoriteRestaurant,
+  saveFavoriteRestaurant,
   updateRestaurant,
   updateStatusRestaurant,
 } from "../controllers/restaraunt.js";
@@ -18,6 +21,9 @@ router.get("/my", isAuth, isSeller, fetchMyRestaurant);
 router.get("/mine", isAuth, isSeller, fetchMyRestaurants);
 router.put("/status", isAuth, isSeller, updateStatusRestaurant);
 router.put("/edit", isAuth, isSeller, uploadFile, updateRestaurant);
+router.get("/favorites/list", isAuth, fetchFavoriteRestaurants);
+router.post("/favorites", isAuth, saveFavoriteRestaurant);
+router.delete("/favorites/:restaurantId", isAuth, removeFavoriteRestaurant);
 router.get("/all", isAuth, getNearbyRestaurant);
 router.get("/:id", isAuth, fetchSingleRestaurant);
 

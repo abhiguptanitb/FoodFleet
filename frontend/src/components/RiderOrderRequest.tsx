@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { riderService } from "../main";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { FiClock, FiNavigation } from "react-icons/fi";
 
 interface Props {
   orderId: string;
@@ -48,25 +49,39 @@ const RiderOrderRequest = ({ orderId, onAccepted }: Props) => {
       setAccepting(false);
     }
   };
+  const progress = (secondsLeft / 10) * 100;
+
   return (
-    <div className="rounded-xl bg-white p-4 shadow-sm border border-green-300 space-y-3">
-      <p className="text-center text-xs font-semibold text-red-600">
-        Accept within {secondsLeft}
-      </p>
+    <div className="ui-card space-y-4 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <p className="pill-label">New Request</p>
+        <span className="status-badge status-badge-warning">
+          <FiClock size={13} />
+          {secondsLeft}s
+        </span>
+      </div>
 
-      <p className="text-center text-xs font-semibold text-green-600">
-        New Delivery Request
-      </p>
+      <div className="h-2 overflow-hidden rounded-full bg-[var(--surface-muted)]">
+        <div
+          className="h-full rounded-full bg-[linear-gradient(90deg,var(--accent),var(--accent-2))] transition-all"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
 
-      <p className="text-xs text-gray-600">
-        Order ID: <b>{orderId.slice(-6)}</b>
-      </p>
+      <div className="ui-row p-3 text-sm">
+        <p className="font-black text-[var(--text)]">Order #{orderId.slice(-6)}</p>
+        <p className="mt-1 text-xs leading-5 text-[var(--text-soft)]">
+          Preview route details after acceptance. This request expires
+          automatically when the countdown ends.
+        </p>
+      </div>
 
       <button
         disabled={accepting}
         onClick={acceptOrder}
-        className="w-full rounded-lg bg-green-600 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50"
+        className="action-button action-button-primary w-full py-3 text-sm disabled:opacity-50"
       >
+        <FiNavigation size={16} />
         {accepting ? "Accepting..." : "Accept order"}
       </button>
     </div>

@@ -64,6 +64,13 @@ const Admin = () => {
   const [deletingCustomerId, setDeletingCustomerId] = useState<string | null>(
     null
   );
+  const [search, setSearch] = useState("");
+  const [verificationFilter, setVerificationFilter] = useState<
+    "all" | "pending" | "verified" | "rejected"
+  >("all");
+  const [sortBy, setSortBy] = useState<"newest" | "name">("newest");
+  const [customerToDelete, setCustomerToDelete] =
+    useState<AdminCustomer | null>(null);
 
   useEffect(() => {
     setAdminImageError(false);
@@ -74,6 +81,7 @@ const Admin = () => {
       const { data } = await axios.get(
         `${adminService}/api/v1/admin/restaurant/pending`,
         {
+          params: { status: verificationFilter },
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
@@ -83,6 +91,7 @@ const Admin = () => {
       const response = await axios.get(
         `${adminService}/api/v1/admin/rider/pending`,
         {
+          params: { status: verificationFilter },
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
@@ -110,7 +119,7 @@ const Admin = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [verificationFilter]);
 
   const handleRestaurantStatusChange = (
     restaurantId: string,
@@ -132,12 +141,6 @@ const Admin = () => {
   };
 
   const deleteCustomer = async (customerId: string) => {
-    const shouldDelete = window.confirm(
-      "Delete this customer and all related orders, cart items, and addresses?"
-    );
-
-    if (!shouldDelete) return;
-
     try {
       setDeletingCustomerId(customerId);
 
@@ -151,6 +154,7 @@ const Admin = () => {
       );
 
       setCustomers((prev) => prev.filter((item) => item._id !== customerId));
+      setCustomerToDelete(null);
       toast.success(data.message || "Customer deleted successfully");
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to delete customer");
@@ -158,6 +162,49 @@ const Admin = () => {
       setDeletingCustomerId(null);
     }
   };
+
+  const filterVerified = <T extends { isVerified?: boolean }>(items: T[]) =>
+    items.filter((item) => {
+      if (verificationFilter === "verified") return item.isVerified;
+      if (verificationFilter === "pending") return !item.isVerified;
+      return true;
+    });
+
+  const sortRecords = <T extends { name?: string; createdAt?: string; user?: { name?: string } }>(
+    items: T[]
+  ) =>
+    [...items].sort((a, b) => {
+      if (sortBy === "name") {
+        const aName = (a.name || a.user?.name || "").toLowerCase();
+        const bName = (b.name || b.user?.name || "").toLowerCase();
+        return aName.localeCompare(bName);
+      }
+      return (
+        new Date(b.createdAt || 0).getTime() -
+        new Date(a.createdAt || 0).getTime()
+      );
+    });
+
+  const searchText = search.toLowerCase();
+  const visibleRestaurants = sortRecords(
+    filterVerified(restaurant).filter((item) =>
+      `${item.name} ${item.phone || ""} ${item.autoLocation?.formattedAddress || ""}`
+        .toLowerCase()
+        .includes(searchText)
+    )
+  );
+  const visibleRiders = sortRecords(
+    filterVerified(riders).filter((item) =>
+      `${item.user?.name || ""} ${item.user?.email || ""} ${item.phoneNumber || item.phone || ""}`
+        .toLowerCase()
+        .includes(searchText)
+    )
+  );
+  const visibleCustomers = sortRecords(
+    customers.filter((item) =>
+      `${item.name || ""} ${item.email || ""}`.toLowerCase().includes(searchText)
+    )
+  );
 
   if (loading) {
     return <SkeletonState type="admin-list" title="Admin review lists" />;
@@ -309,6 +356,36 @@ const Admin = () => {
                     entries
                   </span>
                 </div>
+
+                <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_auto_auto]">
+                  <input
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    className="field-input py-3 text-sm"
+                    placeholder="Search restaurants, riders, or customers"
+                  />
+                  <select
+                    value={verificationFilter}
+                    onChange={(event) =>
+                      setVerificationFilter(event.target.value as typeof verificationFilter)
+                    }
+                    className="field-input py-3 text-sm"
+                    disabled={tab === "customer"}
+                  >
+                    <option value="all">All verification</option>
+                    <option value="pending">Pending</option>
+                    <option value="verified">Verified</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                  <select
+                    value={sortBy}
+                    onChange={(event) => setSortBy(event.target.value as typeof sortBy)}
+                    className="field-input py-3 text-sm"
+                  >
+                    <option value="newest">Newest first</option>
+                    <option value="name">Name A-Z</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
@@ -316,12 +393,12 @@ const Admin = () => {
 
         {tab === "restaurant" && (
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-            {restaurant.length === 0 ? (
+            {visibleRestaurants.length === 0 ? (
               <div className="empty-state font-semibold">
                 No restaurants found.
               </div>
             ) : (
-              restaurant.map((r) => (
+              visibleRestaurants.map((r) => (
                 <AdminRestaurantCard
                   key={r._id}
                   restaurant={r}
@@ -334,12 +411,12 @@ const Admin = () => {
 
         {tab === "rider" && (
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-            {riders.length === 0 ? (
+            {visibleRiders.length === 0 ? (
               <div className="empty-state font-semibold">
                 No riders found.
               </div>
             ) : (
-              riders.map((r) => (
+              visibleRiders.map((r) => (
                 <RiderAdmin
                   key={r._id}
                   rider={r}
@@ -352,12 +429,12 @@ const Admin = () => {
 
         {tab === "customer" && (
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-            {customers.length === 0 ? (
+            {visibleCustomers.length === 0 ? (
               <div className="empty-state font-semibold">
                 No customers found.
               </div>
             ) : (
-              customers.map((customer) => (
+              visibleCustomers.map((customer) => (
                 <div
                   key={customer._id}
                   className="ui-card compact-mobile-row p-4 transition hover:-translate-y-0.5 hover:border-[var(--accent)] sm:p-5"
@@ -386,7 +463,7 @@ const Admin = () => {
                     </div>
 
                     <button
-                      onClick={() => deleteCustomer(customer._id)}
+                      onClick={() => setCustomerToDelete(customer)}
                       disabled={deletingCustomerId === customer._id}
                       className="action-button action-button-danger min-h-12 px-4 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-60 sm:min-w-32"
                     >
@@ -402,6 +479,40 @@ const Admin = () => {
           </div>
         )}
       </div>
+      {customerToDelete && (
+        <div className="ui-overlay fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="ui-modal w-full max-w-lg p-5 sm:p-6">
+            <p className="pill-label">Delete Customer</p>
+            <h2 className="mt-4 text-2xl font-black text-[var(--text)]">
+              Delete {customerToDelete.name || "this customer"}?
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-[var(--text-soft)]">
+              This will remove the customer and related orders, cart items, and
+              addresses. This action cannot be undone.
+            </p>
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setCustomerToDelete(null)}
+                className="action-button px-4 py-3 text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => deleteCustomer(customerToDelete._id)}
+                disabled={deletingCustomerId === customerToDelete._id}
+                className="action-button action-button-danger px-4 py-3 text-sm disabled:opacity-60"
+              >
+                <FiTrash2 size={16} />
+                {deletingCustomerId === customerToDelete._id
+                  ? "Deleting..."
+                  : "Delete Customer"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

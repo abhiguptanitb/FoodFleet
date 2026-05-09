@@ -13,6 +13,8 @@ const RestaurantPage = () => {
   const [restaurant, setRestaurant] = useState<IRestaurant | null>(null);
   const [menuItems, setMenuItems] = useState<IMenuItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [menuSearch, setMenuSearch] = useState("");
+  const [category, setCategory] = useState("all");
 
   const fetchRestaurant = async () => {
     try {
@@ -75,6 +77,17 @@ const RestaurantPage = () => {
       </div>
     );
   }
+
+  const getCategory = (item: IMenuItem) => item.category || "Popular";
+  const categories = Array.from(new Set(menuItems.map(getCategory)));
+  const filteredMenuItems = menuItems.filter((item) => {
+    const matchesSearch = `${item.name} ${item.description || ""}`
+      .toLowerCase()
+      .includes(menuSearch.toLowerCase());
+    const matchesCategory = category === "all" || getCategory(item) === category;
+    return matchesSearch && matchesCategory;
+  });
+
   return (
     <div className="page-wrap min-h-screen space-y-6 py-6">
       <RestaurantProfile
@@ -95,9 +108,44 @@ const RestaurantPage = () => {
             Choose from the latest available dishes and add them straight to your cart.
           </p>
         </div>
+        <div className="mb-5 grid gap-3 md:grid-cols-[1fr_auto]">
+          <input
+            value={menuSearch}
+            onChange={(event) => setMenuSearch(event.target.value)}
+            className="field-input py-3 text-sm"
+            placeholder="Search this menu"
+          />
+          <div className="mobile-tabs md:w-auto">
+            <button
+              type="button"
+              onClick={() => setCategory("all")}
+              className={`rounded-xl px-4 py-2.5 text-sm font-black ${
+                category === "all"
+                  ? "bg-[var(--accent)] text-white shadow-[3px_3px_0_var(--text)]"
+                  : "text-[var(--text-soft)]"
+              }`}
+            >
+              All
+            </button>
+            {categories.map((currentCategory) => (
+              <button
+                key={currentCategory}
+                type="button"
+                onClick={() => setCategory(currentCategory)}
+                className={`rounded-xl px-4 py-2.5 text-sm font-black ${
+                  category === currentCategory
+                    ? "bg-[var(--accent)] text-white shadow-[3px_3px_0_var(--text)]"
+                    : "text-[var(--text-soft)]"
+                }`}
+              >
+                {currentCategory}
+              </button>
+            ))}
+          </div>
+        </div>
         <MenuItems
           isSeller={false}
-          items={menuItems}
+          items={filteredMenuItems}
           onItemDeleted={() => {}}
         />
       </div>

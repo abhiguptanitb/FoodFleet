@@ -15,6 +15,7 @@ import {
   updateOrderStatus,
   updateOrderStatusRider,
   getRestaurantSalesStats,
+  getRestaurantPerformance,
 } from "../controllers/order.js";
 
 const router = express.Router();
@@ -37,6 +38,7 @@ router.get(
 );
 // 📊 Sales Stats endpoint - should be before the single order endpoint
 router.get("/stats/sales/:restaurantId", isAuth, isSeller, getRestaurantSalesStats);
+router.get("/stats/performance/:restaurantId", isAuth, isSeller, getRestaurantPerformance);
 router.put("/:orderId", isAuth, isSeller, updateOrderStatus);
 router.put("/assign/rider", assignRiderToOrder);
 router.get("/current/rider", getCurrentOrderForRider);

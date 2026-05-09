@@ -1,13 +1,31 @@
 import { useNavigate } from "react-router-dom";
+import { FiHeart } from "react-icons/fi";
 
 type props = {
   id: string;
   image: string;
   name: string;
   isOpen: boolean;
+  cuisine?: string;
+  rating?: number;
+  deliveryTime?: number;
+  priceRange?: string;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
 };
 
-const RestaurantCard = ({ id, image, name, isOpen }: props) => {
+const RestaurantCard = ({
+  id,
+  image,
+  name,
+  isOpen,
+  cuisine = "Mixed",
+  rating = 4.1,
+  deliveryTime = 30,
+  priceRange = "mid",
+  isFavorite = false,
+  onToggleFavorite,
+}: props) => {
   const navigate = useNavigate();
   return (
     <div
@@ -27,7 +45,7 @@ const RestaurantCard = ({ id, image, name, isOpen }: props) => {
 
         <div className="absolute inset-x-0 top-0 flex items-center justify-between p-4">
           <span className="rounded-full bg-white/92 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#334155] backdrop-blur">
-            Food delivery
+            {cuisine}
           </span>
           <span
             className={`status-badge ${
@@ -39,6 +57,21 @@ const RestaurantCard = ({ id, image, name, isOpen }: props) => {
             {isOpen ? "Open Now" : "Closed"}
           </span>
         </div>
+        {onToggleFavorite && (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              onToggleFavorite();
+            }}
+            className={`absolute bottom-4 right-4 flex h-11 w-11 items-center justify-center rounded-2xl border-2 border-[var(--text)] bg-white shadow-[4px_4px_0_var(--text)] ${
+              isFavorite ? "text-red-500" : "text-[var(--text)]"
+            }`}
+            aria-label={isFavorite ? "Remove from favorites" : "Save restaurant"}
+          >
+            <FiHeart className={isFavorite ? "fill-current" : ""} size={18} />
+          </button>
+        )}
       </div>
 
       <div className="space-y-3 p-5">
@@ -47,13 +80,11 @@ const RestaurantCard = ({ id, image, name, isOpen }: props) => {
             {name}
           </h3>
           <span className="status-badge">
-            Fast order
+            {rating.toFixed(1)}
           </span>
         </div>
         <p className="text-sm leading-6 text-[#506277]">
-          {isOpen
-            ? "Ordering is live. Tap to explore the menu and place your order."
-            : "This restaurant is currently closed. You can still preview the menu."}
+          {deliveryTime} min delivery · {priceRange.replace("-", " ")} pricing
         </p>
         <p
           className={`text-sm font-semibold ${

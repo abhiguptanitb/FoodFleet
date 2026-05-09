@@ -7,6 +7,15 @@ export interface IMenuItem extends Document {
   image?: string;
   price: number;
   isAvailable: boolean;
+  category: string;
+  variants: {
+    name: string;
+    priceDelta: number;
+  }[];
+  addOns: {
+    name: string;
+    price: number;
+  }[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -33,6 +42,24 @@ const schema = new Schema<IMenuItem>(
       type: Number,
       required: true,
     },
+    category: {
+      type: String,
+      trim: true,
+      default: "Popular",
+      index: true,
+    },
+    variants: [
+      {
+        name: { type: String, trim: true },
+        priceDelta: { type: Number, default: 0 },
+      },
+    ],
+    addOns: [
+      {
+        name: { type: String, trim: true },
+        price: { type: Number, default: 0 },
+      },
+    ],
     image: {
       type: String,
       required: true,

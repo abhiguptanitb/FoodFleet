@@ -1,6 +1,6 @@
 import express from "express";
 import { isAuth, isSeller } from "../middlewares/isAuth.js";
-import { assignRiderToOrder, createOrder, fetchOrderForPayment, fetchRestaurantOrderHistory, fetchRestaurantOrders, fetchSingleOrder, getCurrentOrderForRider, getNearbyReadyOrdersForRider, getRiderDeliveredHistory, getRiderDeliveredStats, getMyOrders, updateOrderStatus, updateOrderStatusRider, getRestaurantSalesStats, } from "../controllers/order.js";
+import { assignRiderToOrder, createOrder, fetchOrderForPayment, fetchRestaurantOrderHistory, fetchRestaurantOrders, fetchSingleOrder, getCurrentOrderForRider, getNearbyReadyOrdersForRider, getRiderDeliveredHistory, getRiderDeliveredStats, getMyOrders, updateOrderStatus, updateOrderStatusRider, getRestaurantSalesStats, getRestaurantPerformance, } from "../controllers/order.js";
 const router = express.Router();
 router.get("/myorder", isAuth, getMyOrders);
 router.get("/:id", isAuth, fetchSingleOrder);
@@ -10,6 +10,7 @@ router.get("/restaurant/:restaurantId/history", isAuth, isSeller, fetchRestauran
 router.get("/restaurant/:restaurantId", isAuth, isSeller, fetchRestaurantOrders);
 // 📊 Sales Stats endpoint - should be before the single order endpoint
 router.get("/stats/sales/:restaurantId", isAuth, isSeller, getRestaurantSalesStats);
+router.get("/stats/performance/:restaurantId", isAuth, isSeller, getRestaurantPerformance);
 router.put("/:orderId", isAuth, isSeller, updateOrderStatus);
 router.put("/assign/rider", assignRiderToOrder);
 router.get("/current/rider", getCurrentOrderForRider);

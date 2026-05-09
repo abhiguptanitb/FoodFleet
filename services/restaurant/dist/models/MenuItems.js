@@ -19,6 +19,24 @@ const schema = new Schema({
         type: Number,
         required: true,
     },
+    category: {
+        type: String,
+        trim: true,
+        default: "Popular",
+        index: true,
+    },
+    variants: [
+        {
+            name: { type: String, trim: true },
+            priceDelta: { type: Number, default: 0 },
+        },
+    ],
+    addOns: [
+        {
+            name: { type: String, trim: true },
+            price: { type: Number, default: 0 },
+        },
+    ],
     image: {
         type: String,
         required: true,

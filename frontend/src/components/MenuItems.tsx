@@ -21,14 +21,23 @@ const MenuItems = ({ items, onItemDeleted, isSeller }: MenuItemsProps) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
+  const [category, setCategory] = useState("Popular");
+  const [variants, setVariants] = useState("");
+  const [addOns, setAddOns] = useState("");
   const [image, setImage] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
+  const { fetchCart, cart } = useAppData();
 
   const openEditModal = (item: IMenuItem) => {
     setEditingItem(item);
     setName(item.name);
     setDescription(item.description || "");
     setPrice(String(item.price));
+    setCategory(item.category || "Popular");
+    setVariants(
+      item.variants?.map((variant) => variant.name).join(", ") || ""
+    );
+    setAddOns(item.addOns?.map((addon) => addon.name).join(", ") || "");
     setImage(null);
   };
 
@@ -37,6 +46,9 @@ const MenuItems = ({ items, onItemDeleted, isSeller }: MenuItemsProps) => {
     setName("");
     setDescription("");
     setPrice("");
+    setCategory("Popular");
+    setVariants("");
+    setAddOns("");
     setImage(null);
   };
 
@@ -51,6 +63,27 @@ const MenuItems = ({ items, onItemDeleted, isSeller }: MenuItemsProps) => {
     formData.append("name", name);
     formData.append("description", description);
     formData.append("price", price);
+    formData.append("category", category);
+    formData.append(
+      "variants",
+      JSON.stringify(
+        variants
+          .split(",")
+          .map((name) => name.trim())
+          .filter(Boolean)
+          .map((name) => ({ name, priceDelta: 0 }))
+      )
+    );
+    formData.append(
+      "addOns",
+      JSON.stringify(
+        addOns
+          .split(",")
+          .map((name) => name.trim())
+          .filter(Boolean)
+          .map((name) => ({ name, price: 0 }))
+      )
+    );
 
     if (image) {
       formData.append("file", image);
@@ -118,8 +151,6 @@ const MenuItems = ({ items, onItemDeleted, isSeller }: MenuItemsProps) => {
     }
   };
 
-  const { fetchCart } = useAppData();
-
   const addToCart = async (restaurantId: string, itemId: string) => {
     try {
       setLoadingItemId(itemId);
@@ -146,6 +177,26 @@ const MenuItems = ({ items, onItemDeleted, isSeller }: MenuItemsProps) => {
     }
   };
 
+  const decreaseFromCart = async (itemId: string) => {
+    try {
+      setLoadingItemId(itemId);
+      await axios.put(
+        `${restaurantService}/api/cart/dec`,
+        { itemId },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      fetchCart();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to update cart");
+    } finally {
+      setLoadingItemId(null);
+    }
+  };
+
   return (
     <>
       {items.length === 0 && (
@@ -165,6 +216,12 @@ const MenuItems = ({ items, onItemDeleted, isSeller }: MenuItemsProps) => {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {items.map((item) => {
           const isLoading = loadingItemId === item._id;
+          const cartItem = cart?.find((entry) => {
+            const currentItem =
+              typeof entry.itemId === "string" ? entry.itemId : entry.itemId._id;
+            return currentItem === item._id;
+          });
+          const quantity = cartItem?.quauntity || 0;
 
           return (
             <div
@@ -241,22 +298,52 @@ const MenuItems = ({ items, onItemDeleted, isSeller }: MenuItemsProps) => {
                   )}
 
                   {!isSeller && (
-                    <button
-                      type="button"
-                      disabled={!item.isAvailable || isLoading}
-                      onClick={() => addToCart(item.restaurantId, item._id)}
-                      className={`inline-flex h-10 min-w-10 items-center justify-center rounded-xl ${
-                        !item.isAvailable || isLoading
-                          ? "cursor-not-allowed text-gray-400"
-                          : "border-2 border-[var(--text)] bg-[var(--accent)] px-3 text-white shadow-[3px_3px_0_var(--text)] hover:-translate-y-0.5"
-                      }`}
-                    >
-                      {isLoading ? (
-                        <VscLoading size={18} className="animate-spin" />
+                    <>
+                      {quantity > 0 ? (
+                        <div className="inline-flex h-10 items-center gap-2 rounded-xl border-2 border-[var(--text)] bg-white px-2 shadow-[3px_3px_0_var(--text)]">
+                          <button
+                            type="button"
+                            disabled={isLoading}
+                            onClick={() => decreaseFromCart(item._id)}
+                            className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--text)] hover:bg-[var(--accent-soft)]"
+                          >
+                            -
+                          </button>
+                          <span className="min-w-5 text-center text-sm font-black">
+                            {isLoading ? (
+                              <VscLoading size={16} className="mx-auto animate-spin" />
+                            ) : (
+                              quantity
+                            )}
+                          </span>
+                          <button
+                            type="button"
+                            disabled={isLoading}
+                            onClick={() => addToCart(item.restaurantId, item._id)}
+                            className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--accent)] hover:bg-[var(--accent-soft)]"
+                          >
+                            +
+                          </button>
+                        </div>
                       ) : (
-                        <BsCartPlus size={18} />
+                        <button
+                          type="button"
+                          disabled={!item.isAvailable || isLoading}
+                          onClick={() => addToCart(item.restaurantId, item._id)}
+                          className={`inline-flex h-10 min-w-10 items-center justify-center rounded-xl ${
+                            !item.isAvailable || isLoading
+                              ? "cursor-not-allowed text-gray-400"
+                              : "border-2 border-[var(--text)] bg-[var(--accent)] px-3 text-white shadow-[3px_3px_0_var(--text)] hover:-translate-y-0.5"
+                          }`}
+                        >
+                          {isLoading ? (
+                            <VscLoading size={18} className="animate-spin" />
+                          ) : (
+                            <BsCartPlus size={18} />
+                          )}
+                        </button>
                       )}
-                    </button>
+                    </>
                   )}
                 </div>
               </div>
@@ -266,13 +353,18 @@ const MenuItems = ({ items, onItemDeleted, isSeller }: MenuItemsProps) => {
       </div>
 
       {editingItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(10,17,40,0.58)] p-3 backdrop-blur-sm sm:p-4">
-          <div className="max-h-[calc(100vh-1.5rem)] w-full max-w-2xl overflow-y-auto rounded-[28px] border-2 border-[var(--text)] bg-white p-5 shadow-[9px_9px_0_var(--text)] sm:p-7">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--accent)]">
-                  Edit Item
-                </p>
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-[rgba(10,17,40,0.72)] backdrop-blur-sm"
+            onClick={closeEditModal}
+          />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
+            <div className="max-h-[calc(100vh-1.5rem)] w-full max-w-2xl overflow-y-auto rounded-[28px] border-2 border-[var(--text)] bg-white p-5 shadow-[9px_9px_0_var(--text)] sm:p-7">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--accent)]">
+                    Edit Item
+                  </p>
                 <h2 className="mt-2 text-2xl font-black text-[var(--text)] sm:text-3xl">
                   {editingItem.name}
                 </h2>
@@ -322,6 +414,45 @@ const MenuItems = ({ items, onItemDeleted, isSeller }: MenuItemsProps) => {
                 />
               </div>
 
+              <div>
+                <label className="mb-2 block text-sm font-bold text-[var(--text)]">
+                  Category
+                </label>
+                <input
+                  type="text"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="field-input bg-white px-4 py-3 text-base"
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-bold text-[var(--text)]">
+                    Variants
+                  </label>
+                  <input
+                    type="text"
+                    value={variants}
+                    onChange={(e) => setVariants(e.target.value)}
+                    className="field-input bg-white px-4 py-3 text-base"
+                    placeholder="Small, Medium, Large"
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-bold text-[var(--text)]">
+                    Add-ons
+                  </label>
+                  <input
+                    type="text"
+                    value={addOns}
+                    onChange={(e) => setAddOns(e.target.value)}
+                    className="field-input bg-white px-4 py-3 text-base"
+                    placeholder="Extra cheese, Toppings"
+                  />
+                </div>
+              </div>
+
               <label className="flex cursor-pointer items-center gap-3 rounded-2xl border-2 border-dashed border-[color-mix(in_srgb,var(--accent)_38%,white)] bg-[var(--accent-soft)] p-4 text-sm font-semibold text-[var(--text-soft)] hover:border-[var(--accent)] hover:bg-white">
                 <BiUpload className="h-5 w-5 shrink-0 text-[var(--accent)]" />
                 <span className="min-w-0 truncate">
@@ -355,6 +486,7 @@ const MenuItems = ({ items, onItemDeleted, isSeller }: MenuItemsProps) => {
             </div>
           </div>
         </div>
+        </>
       )}
     </>
   );

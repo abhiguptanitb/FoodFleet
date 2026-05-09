@@ -35,3 +35,9 @@ export const getAddressCollection = async () => {
 
   return db.collection("addresses");
 };
+
+export const getAdminAuditCollection = async () => {
+  const db = await connectDb();
+
+  return db.collection("adminaudits");
+};

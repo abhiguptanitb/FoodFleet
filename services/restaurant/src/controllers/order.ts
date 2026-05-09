@@ -258,7 +258,10 @@ export const fetchRestaurantOrders = TryCatch(
 export const fetchRestaurantOrderHistory = TryCatch(
   async (req: AuthenticatedRequest, res) => {
     const user = req.user;
-    const { restaurantId } = req.params;
+    const restaurantId =
+      typeof req.params.restaurantId === "string"
+        ? req.params.restaurantId
+        : "";
 
     if (!user) {
       return res.status(401).json({
@@ -895,5 +898,100 @@ export const getRestaurantSalesStats = TryCatch(
         message: "Error calculating sales statistics",
       });
     }
+  }
+);
+
+export const getRestaurantPerformance = TryCatch(
+  async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    const restaurantId =
+      typeof req.params.restaurantId === "string"
+        ? req.params.restaurantId
+        : "";
+    const range = typeof req.query.range === "string" ? req.query.range : "30d";
+
+    if (!user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const restaurant = await Restaurant.findById(restaurantId);
+    if (!restaurant) {
+      return res.status(404).json({ message: "Restaurant not found" });
+    }
+
+    if (restaurant.ownerId !== user._id.toString()) {
+      return res.status(401).json({
+        message: "You are not allowed to view stats for this restaurant",
+      });
+    }
+
+    const startDate = getRangeStartDate(range);
+    const orders = await Order.find({
+      restaurantId,
+      status: "delivered",
+      paymentStatus: "paid",
+      updatedAt: { $gte: startDate },
+    }).sort({ updatedAt: 1 });
+
+    const bucketFormatter = new Intl.DateTimeFormat("en-CA", {
+      month: "short",
+      day: "2-digit",
+    });
+    const salesByDay = new Map<string, { revenue: number; orders: number }>();
+    const itemSales = new Map<string, { quantity: number; revenue: number }>();
+
+    orders.forEach((order) => {
+      const day = bucketFormatter.format(order.updatedAt);
+      const currentDay = salesByDay.get(day) || { revenue: 0, orders: 0 };
+      currentDay.revenue += order.totalAmount || 0;
+      currentDay.orders += 1;
+      salesByDay.set(day, currentDay);
+
+      order.items.forEach((item) => {
+        const currentItem = itemSales.get(item.name) || {
+          quantity: 0,
+          revenue: 0,
+        };
+        currentItem.quantity += item.quauntity;
+        currentItem.revenue += item.price * item.quauntity;
+        itemSales.set(item.name, currentItem);
+      });
+    });
+
+    const itemPerformance = Array.from(itemSales.entries())
+      .map(([name, value]) => ({ name, ...value }))
+      .sort((a, b) => b.revenue - a.revenue);
+
+    const grossRevenue = orders.reduce(
+      (sum, order) => sum + (order.totalAmount || 0),
+      0
+    );
+    const platformFees = orders.reduce(
+      (sum, order) => sum + (order.platfromFee || 0),
+      0
+    );
+    const riderPayouts = orders.reduce(
+      (sum, order) => sum + getOrderRiderEarning(order),
+      0
+    );
+
+    res.json({
+      range,
+      chart: Array.from(salesByDay.entries()).map(([label, value]) => ({
+        label,
+        ...value,
+      })),
+      topItems: itemPerformance.slice(0, 5),
+      lowItems: itemPerformance.slice(-5).reverse(),
+      payout: {
+        grossRevenue: Number(grossRevenue.toFixed(2)),
+        platformFees: Number(platformFees.toFixed(2)),
+        riderPayouts: Number(riderPayouts.toFixed(2)),
+        estimatedSellerPayout: Number(
+          (grossRevenue - platformFees - riderPayouts).toFixed(2)
+        ),
+        deliveredOrders: orders.length,
+      },
+    });
   }
 );
