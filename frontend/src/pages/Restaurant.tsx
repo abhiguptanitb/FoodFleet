@@ -20,6 +20,7 @@ import {
 import { BiUpload } from "react-icons/bi";
 import toast from "react-hot-toast";
 import { SkeletonState } from "../components/LoadingState";
+import { generateAiDescription } from "../utils/aiDescription";
 
 type SellerTab = "menu" | "add-item" | "sales";
 
@@ -39,6 +40,7 @@ const Restaurant = () => {
     null
   );
   const [savingRestaurant, setSavingRestaurant] = useState(false);
+  const [generatingDescription, setGeneratingDescription] = useState(false);
   const [editingRestaurantId, setEditingRestaurantId] = useState<string | null>(
     null
   );
@@ -242,6 +244,35 @@ const Restaurant = () => {
     setEditPriceRange("mid");
     setEditRating("4.1");
     setEditImage(null);
+    setGeneratingDescription(false);
+  };
+
+  const handleGenerateRestaurantDescription = async () => {
+    try {
+      setGeneratingDescription(true);
+      const generatedDescription = await generateAiDescription({
+        type: "restaurant",
+        name: editName,
+        cuisine: editCuisine,
+        category: editPriceRange,
+        keywords: editDeliveryTime ? `${editDeliveryTime} minute delivery` : undefined,
+        currentDescription: editDescription,
+      });
+
+      if (!generatedDescription) {
+        toast.error("AI could not generate a description");
+        return;
+      }
+
+      setEditDescription(generatedDescription);
+      toast.success("Description generated");
+    } catch (error: any) {
+      toast.error(
+        error.response?.data?.message || "Failed to generate description"
+      );
+    } finally {
+      setGeneratingDescription(false);
+    }
   };
 
   const saveRestaurantChanges = async () => {
@@ -863,9 +894,19 @@ const Restaurant = () => {
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-bold text-[var(--text)]">
-                  Description
-                </label>
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <label className="block text-sm font-bold text-[var(--text)]">
+                    Description
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleGenerateRestaurantDescription}
+                    disabled={generatingDescription}
+                    className="inline-flex items-center gap-2 rounded-xl border-2 border-[color-mix(in_srgb,var(--accent)_32%,white)] bg-[var(--accent-soft)] px-3 py-2 text-xs font-black text-[var(--accent)] transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {generatingDescription ? "Generating..." : "Generate description"}
+                  </button>
+                </div>
                 <textarea
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}

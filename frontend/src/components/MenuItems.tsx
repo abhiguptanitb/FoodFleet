@@ -8,6 +8,8 @@ import axios from "axios";
 import { restaurantService } from "../main";
 import toast from "react-hot-toast";
 import { useAppData } from "../context/AppContext";
+import { generateAiDescription } from "../utils/aiDescription";
+import { createPortal } from "react-dom";
 
 interface MenuItemsProps {
   items: IMenuItem[];
@@ -26,6 +28,7 @@ const MenuItems = ({ items, onItemDeleted, isSeller }: MenuItemsProps) => {
   const [addOns, setAddOns] = useState("");
   const [image, setImage] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
+  const [generatingDescription, setGeneratingDescription] = useState(false);
   const { fetchCart, cart } = useAppData();
 
   const openEditModal = (item: IMenuItem) => {
@@ -50,6 +53,34 @@ const MenuItems = ({ items, onItemDeleted, isSeller }: MenuItemsProps) => {
     setVariants("");
     setAddOns("");
     setImage(null);
+    setGeneratingDescription(false);
+  };
+
+  const handleGenerateDescription = async () => {
+    try {
+      setGeneratingDescription(true);
+      const generatedDescription = await generateAiDescription({
+        type: "menu item",
+        name,
+        category,
+        keywords: [variants, addOns].filter(Boolean).join(", "),
+        currentDescription: description,
+      });
+
+      if (!generatedDescription) {
+        toast.error("AI could not generate a description");
+        return;
+      }
+
+      setDescription(generatedDescription);
+      toast.success("Description generated");
+    } catch (error: any) {
+      toast.error(
+        error.response?.data?.message || "Failed to generate description"
+      );
+    } finally {
+      setGeneratingDescription(false);
+    }
   };
 
   const saveItemChanges = async () => {
@@ -196,6 +227,153 @@ const MenuItems = ({ items, onItemDeleted, isSeller }: MenuItemsProps) => {
       setLoadingItemId(null);
     }
   };
+
+  const editModal = editingItem ? (
+    <>
+      <div
+        className="fixed inset-0 z-40 bg-[rgba(10,17,40,0.72)] backdrop-blur-sm"
+        onClick={closeEditModal}
+      />
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
+        <div className="max-h-[calc(100vh-1.5rem)] w-full max-w-2xl overflow-y-auto rounded-[28px] border-2 border-[var(--text)] bg-white p-5 shadow-[9px_9px_0_var(--text)] sm:p-7">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--accent)]">
+                Edit Item
+              </p>
+              <h2 className="mt-2 text-2xl font-black text-[var(--text)] sm:text-3xl">
+                {editingItem.name}
+              </h2>
+            </div>
+            <button
+              type="button"
+              onClick={closeEditModal}
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-[color-mix(in_srgb,var(--text)_16%,transparent)] bg-white text-[var(--text-soft)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+            >
+              <FiX size={18} />
+            </button>
+          </div>
+
+          <div className="mt-6 space-y-4">
+            <div>
+              <label className="mb-2 block text-sm font-bold text-[var(--text)]">
+                Item Name
+              </label>
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="field-input bg-white px-4 py-3 text-base"
+              />
+            </div>
+
+            <div>
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <label className="block text-sm font-bold text-[var(--text)]">
+                  Description
+                </label>
+                <button
+                  type="button"
+                  onClick={handleGenerateDescription}
+                  disabled={generatingDescription}
+                  className="inline-flex items-center gap-2 rounded-xl border-2 border-[color-mix(in_srgb,var(--accent)_32%,white)] bg-[var(--accent-soft)] px-3 py-2 text-xs font-black text-[var(--accent)] transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {generatingDescription ? "Generating..." : "Generate description"}
+                </button>
+              </div>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={4}
+                className="field-input min-h-32 resize-y bg-white px-4 py-3 text-sm"
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-bold text-[var(--text)]">
+                Price
+              </label>
+              <input
+                type="number"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                className="field-input bg-white px-4 py-3 text-base"
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-bold text-[var(--text)]">
+                Category
+              </label>
+              <input
+                type="text"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="field-input bg-white px-4 py-3 text-base"
+              />
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-sm font-bold text-[var(--text)]">
+                  Variants
+                </label>
+                <input
+                  type="text"
+                  value={variants}
+                  onChange={(e) => setVariants(e.target.value)}
+                  className="field-input bg-white px-4 py-3 text-base"
+                  placeholder="Small, Medium, Large"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-bold text-[var(--text)]">
+                  Add-ons
+                </label>
+                <input
+                  type="text"
+                  value={addOns}
+                  onChange={(e) => setAddOns(e.target.value)}
+                  className="field-input bg-white px-4 py-3 text-base"
+                  placeholder="Extra cheese, Toppings"
+                />
+              </div>
+            </div>
+
+            <label className="flex cursor-pointer items-center gap-3 rounded-2xl border-2 border-dashed border-[color-mix(in_srgb,var(--accent)_38%,white)] bg-[var(--accent-soft)] p-4 text-sm font-semibold text-[var(--text-soft)] hover:border-[var(--accent)] hover:bg-white">
+              <BiUpload className="h-5 w-5 shrink-0 text-[var(--accent)]" />
+              <span className="min-w-0 truncate">
+                {image ? image.name : "Upload new item image (optional)"}
+              </span>
+              <input
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={(e) => setImage(e.target.files?.[0] || null)}
+              />
+            </label>
+          </div>
+
+          <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={closeEditModal}
+              className="rounded-2xl border-2 border-[color-mix(in_srgb,var(--text)_18%,transparent)] bg-white px-5 py-3 text-sm font-bold text-[var(--text-soft)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={saveItemChanges}
+              disabled={saving}
+              className="brand-button px-5 py-3 text-sm font-black disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {saving ? "Saving..." : "Save Changes"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  ) : null;
 
   return (
     <>
@@ -352,142 +530,7 @@ const MenuItems = ({ items, onItemDeleted, isSeller }: MenuItemsProps) => {
         })}
       </div>
 
-      {editingItem && (
-        <>
-          <div
-            className="fixed inset-0 z-40 bg-[rgba(10,17,40,0.72)] backdrop-blur-sm"
-            onClick={closeEditModal}
-          />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
-            <div className="max-h-[calc(100vh-1.5rem)] w-full max-w-2xl overflow-y-auto rounded-[28px] border-2 border-[var(--text)] bg-white p-5 shadow-[9px_9px_0_var(--text)] sm:p-7">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--accent)]">
-                    Edit Item
-                  </p>
-                <h2 className="mt-2 text-2xl font-black text-[var(--text)] sm:text-3xl">
-                  {editingItem.name}
-                </h2>
-              </div>
-              <button
-                type="button"
-                onClick={closeEditModal}
-                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-[color-mix(in_srgb,var(--text)_16%,transparent)] bg-white text-[var(--text-soft)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-              >
-                <FiX size={18} />
-              </button>
-            </div>
-
-            <div className="mt-6 space-y-4">
-              <div>
-                <label className="mb-2 block text-sm font-bold text-[var(--text)]">
-                  Item Name
-                </label>
-                <input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="field-input bg-white px-4 py-3 text-base"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-bold text-[var(--text)]">
-                  Description
-                </label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={4}
-                  className="field-input min-h-32 resize-y bg-white px-4 py-3 text-sm"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-bold text-[var(--text)]">
-                  Price
-                </label>
-                <input
-                  type="number"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  className="field-input bg-white px-4 py-3 text-base"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-bold text-[var(--text)]">
-                  Category
-                </label>
-                <input
-                  type="text"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="field-input bg-white px-4 py-3 text-base"
-                />
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="mb-2 block text-sm font-bold text-[var(--text)]">
-                    Variants
-                  </label>
-                  <input
-                    type="text"
-                    value={variants}
-                    onChange={(e) => setVariants(e.target.value)}
-                    className="field-input bg-white px-4 py-3 text-base"
-                    placeholder="Small, Medium, Large"
-                  />
-                </div>
-                <div>
-                  <label className="mb-2 block text-sm font-bold text-[var(--text)]">
-                    Add-ons
-                  </label>
-                  <input
-                    type="text"
-                    value={addOns}
-                    onChange={(e) => setAddOns(e.target.value)}
-                    className="field-input bg-white px-4 py-3 text-base"
-                    placeholder="Extra cheese, Toppings"
-                  />
-                </div>
-              </div>
-
-              <label className="flex cursor-pointer items-center gap-3 rounded-2xl border-2 border-dashed border-[color-mix(in_srgb,var(--accent)_38%,white)] bg-[var(--accent-soft)] p-4 text-sm font-semibold text-[var(--text-soft)] hover:border-[var(--accent)] hover:bg-white">
-                <BiUpload className="h-5 w-5 shrink-0 text-[var(--accent)]" />
-                <span className="min-w-0 truncate">
-                  {image ? image.name : "Upload new item image (optional)"}
-                </span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  hidden
-                  onChange={(e) => setImage(e.target.files?.[0] || null)}
-                />
-              </label>
-            </div>
-
-            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-              <button
-                type="button"
-                onClick={closeEditModal}
-                className="rounded-2xl border-2 border-[color-mix(in_srgb,var(--text)_18%,transparent)] bg-white px-5 py-3 text-sm font-bold text-[var(--text-soft)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={saveItemChanges}
-                disabled={saving}
-                className="brand-button px-5 py-3 text-sm font-black disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {saving ? "Saving..." : "Save Changes"}
-              </button>
-            </div>
-          </div>
-        </div>
-        </>
-      )}
+      {editModal && createPortal(editModal, document.body)}
     </>
   );
 };

@@ -4,6 +4,7 @@ import { restaurantService } from "../main";
 import toast from "react-hot-toast";
 import { BiUpload } from "react-icons/bi";
 import { FiImage, FiPlusCircle, FiTag } from "react-icons/fi";
+import { generateAiDescription } from "../utils/aiDescription";
 
 const AddMenuItem = ({
   restaurantId,
@@ -20,6 +21,7 @@ const AddMenuItem = ({
   const [addOns, setAddOns] = useState("");
   const [image, setImage] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  const [generatingDescription, setGeneratingDescription] = useState(false);
 
   const resetForm = () => {
     setName("");
@@ -85,6 +87,33 @@ const AddMenuItem = ({
     }
   };
 
+  const handleGenerateDescription = async () => {
+    try {
+      setGeneratingDescription(true);
+      const generatedDescription = await generateAiDescription({
+        type: "menu item",
+        name,
+        category,
+        keywords: [variants, addOns].filter(Boolean).join(", "),
+        currentDescription: description,
+      });
+
+      if (!generatedDescription) {
+        toast.error("AI could not generate a description");
+        return;
+      }
+
+      setDescription(generatedDescription);
+      toast.success("Description generated");
+    } catch (error: any) {
+      toast.error(
+        error.response?.data?.message || "Failed to generate description"
+      );
+    } finally {
+      setGeneratingDescription(false);
+    }
+  };
+
   return (
     <div className="mx-auto grid max-w-6xl gap-5 xl:grid-cols-[0.9fr_1.1fr]">
       <div className="rounded-[26px] border-2 border-[color-mix(in_srgb,var(--text)_14%,transparent)] bg-[linear-gradient(145deg,#ffffff_0%,var(--accent-soft)_100%)] p-5 shadow-[5px_5px_0_color-mix(in_srgb,var(--accent)_16%,transparent)] sm:p-6">
@@ -133,9 +162,19 @@ const AddMenuItem = ({
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-bold text-[var(--text)]">
-              Description
-            </label>
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <label className="block text-sm font-bold text-[var(--text)]">
+                Description
+              </label>
+              <button
+                type="button"
+                onClick={handleGenerateDescription}
+                disabled={generatingDescription}
+                className="inline-flex items-center gap-2 rounded-xl border-2 border-[color-mix(in_srgb,var(--accent)_32%,white)] bg-[var(--accent-soft)] px-3 py-2 text-xs font-black text-[var(--accent)] transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {generatingDescription ? "Generating..." : "Generate description"}
+              </button>
+            </div>
             <textarea
               placeholder="Short description, key ingredients, spice level"
               value={description}

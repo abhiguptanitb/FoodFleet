@@ -13,6 +13,7 @@ import {
 } from "react-leaflet";
 import L from "leaflet";
 import { LuLocateFixed } from "react-icons/lu";
+import { generateAiDescription } from "../utils/aiDescription";
 
 // Fix leaflet marker icon issue.
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -88,6 +89,7 @@ const AddRestaurant = ({
   const [rating, setRating] = useState("");
   const [image, setImage] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [generatingDescription, setGeneratingDescription] = useState(false);
 
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
@@ -155,6 +157,36 @@ const AddRestaurant = ({
       toast.error(error.response.data.message);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleGenerateDescription = async () => {
+    try {
+      setGeneratingDescription(true);
+      const generatedDescription = await generateAiDescription({
+        type: "restaurant",
+        name,
+        cuisine,
+        category: priceRange,
+        keywords: deliveryTimeMinutes
+          ? `${deliveryTimeMinutes} minute delivery`
+          : undefined,
+        currentDescription: description,
+      });
+
+      if (!generatedDescription) {
+        toast.error("AI could not generate a description");
+        return;
+      }
+
+      setDescription(generatedDescription);
+      toast.success("Description generated");
+    } catch (error: any) {
+      toast.error(
+        error.response?.data?.message || "Failed to generate description"
+      );
+    } finally {
+      setGeneratingDescription(false);
     }
   };
   return (
@@ -282,9 +314,19 @@ const AddRestaurant = ({
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-bold text-[var(--text)]">
-                Restaurant Description
-              </label>
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <label className="block text-sm font-bold text-[var(--text)]">
+                  Restaurant Description
+                </label>
+                <button
+                  type="button"
+                  onClick={handleGenerateDescription}
+                  disabled={generatingDescription}
+                  className="inline-flex items-center gap-2 rounded-xl border-2 border-[color-mix(in_srgb,var(--accent)_32%,white)] bg-[var(--accent-soft)] px-3 py-2 text-xs font-black text-[var(--accent)] transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {generatingDescription ? "Generating..." : "Generate description"}
+                </button>
+              </div>
               <textarea
                 placeholder="Write a brief description about your restaurant"
                 value={description}
