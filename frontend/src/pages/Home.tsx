@@ -6,6 +6,12 @@ import axios from "axios";
 import { restaurantService } from "../main";
 import RestaurantCard from "../components/RestaurantCard";
 import { SkeletonState } from "../components/LoadingState";
+import toast from "react-hot-toast";
+import { FiSearch, FiX, FiZap } from "react-icons/fi";
+import {
+  generateSmartFoodSearch,
+  type SmartFoodSearchResult,
+} from "../utils/aiDescription";
 
 const CUISINE_OPTIONS = ["Pizza", "Biryani", "Burger", "Chinese", "South Indian"];
 
@@ -38,6 +44,11 @@ const Home = () => {
 
   const [restaurants, setRestaurants] = useState<IRestaurant[]>([]);
   const [loading, setLoading] = useState(true);
+  const [smartQuery, setSmartQuery] = useState("");
+  const [smartSearch, setSmartSearch] = useState<SmartFoodSearchResult | null>(
+    null
+  );
+  const [smartLoading, setSmartLoading] = useState(false);
   const [cuisine, setCuisine] = useState("all");
   const [openNow, setOpenNow] = useState(false);
   const [minRating, setMinRating] = useState("all");
@@ -51,6 +62,8 @@ const Home = () => {
     }
   });
   const [favoritesOnly, setFavoritesOnly] = useState(false);
+
+  const effectiveSearch = smartSearch?.searchText || search;
 
   const fetchRestaurants = async () => {
     if (!location?.latitude || !location?.longitude) {
@@ -66,7 +79,7 @@ const Home = () => {
           params: {
             latitude: location.latitude,
             longitude: location.longitude,
-            search,
+            search: effectiveSearch,
             cuisine,
             openNow,
             minRating,
@@ -89,7 +102,15 @@ const Home = () => {
 
   useEffect(() => {
     fetchRestaurants();
-  }, [location, search, cuisine, openNow, minRating, deliveryTime, priceRange]);
+  }, [
+    location,
+    effectiveSearch,
+    cuisine,
+    openNow,
+    minRating,
+    deliveryTime,
+    priceRange,
+  ]);
 
   useEffect(() => {
     const fetchFavorites = async () => {
@@ -115,10 +136,6 @@ const Home = () => {
     fetchFavorites();
   }, []);
 
-  if (loading || !location) {
-    return <SkeletonState type="restaurants" title="Nearby restaurants" />;
-  }
-
   const filteredRestaurants = restaurants.filter((restaurant) => {
     if (openNow && !restaurant.isOpen) return false;
     if (cuisine !== "all" && getCuisine(restaurant) !== cuisine) return false;
@@ -141,6 +158,51 @@ const Home = () => {
   const cuisineFilters = Array.from(
     new Set(restaurants.map((restaurant) => getCuisine(restaurant)))
   );
+
+  const handleSmartSearch = async () => {
+    const query = smartQuery.trim();
+    if (!query) {
+      toast.error("Tell AI what you feel like eating");
+      return;
+    }
+
+    try {
+      setSmartLoading(true);
+      const result = await generateSmartFoodSearch(query);
+      setSmartSearch(result);
+      setCuisine(
+        result.cuisine !== "all" && cuisineFilters.includes(result.cuisine)
+          ? result.cuisine
+          : "all"
+      );
+      setPriceRange(result.priceRange || "all");
+      setDeliveryTime(result.maxDeliveryTime || "all");
+      setMinRating(result.minRating || "all");
+      setOpenNow(Boolean(result.openNow));
+      toast.success("Smart filters applied");
+    } catch (error: any) {
+      toast.error(
+        error.response?.data?.message || "Failed to run smart food search"
+      );
+    } finally {
+      setSmartLoading(false);
+    }
+  };
+
+  const clearSmartSearch = () => {
+    setSmartSearch(null);
+    setSmartQuery("");
+    setCuisine("all");
+    setOpenNow(false);
+    setMinRating("all");
+    setDeliveryTime("all");
+    setPriceRange("all");
+  };
+
+  if (loading || !location) {
+    return <SkeletonState type="restaurants" title="Nearby restaurants" />;
+  }
+
   const toggleFavorite = (restaurantId: string) => {
     const wasFavorite = favoriteIds.includes(restaurantId);
     setFavoriteIds((current) => {
@@ -182,7 +244,9 @@ const Home = () => {
           <div>
             <p className="pill-label">Nearby Picks</p>
             <h1 className="mt-3 text-2xl font-black text-[var(--text)] sm:text-3xl">
-              {search ? `Results for "${search}"` : "Fresh meals around your area"}
+              {effectiveSearch
+                ? `Results for "${effectiveSearch}"`
+                : "Fresh meals around your area"}
             </h1>
             <p className="section-copy mt-2 max-w-2xl text-sm">
               Browse live restaurant listings, check availability instantly, and
@@ -194,6 +258,83 @@ const Home = () => {
             restaurant{filteredRestaurants.length === 1 ? "" : "s"} shown
           </div>
         </div>
+      </section>
+
+      <section className="ui-card p-4 sm:p-5">
+        <div className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-end">
+          <div>
+            <div className="mb-2 flex items-center gap-2">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl border-2 border-[var(--text)] bg-[var(--accent)] text-white shadow-[3px_3px_0_var(--text)]">
+                <FiZap size={15} />
+              </span>
+              <label className="text-sm font-black text-[var(--text)]">
+                Smart Food Search
+              </label>
+            </div>
+            <div className="relative">
+              <FiSearch className="pointer-events-none absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--accent)]" />
+              <input
+                value={smartQuery}
+                onChange={(event) => setSmartQuery(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    handleSmartSearch();
+                  }
+                }}
+                className="field-input bg-white py-3 pl-12 pr-4 text-sm"
+                style={{ paddingLeft: "3.25rem" }}
+                placeholder="Try: cheap spicy dinner, fast biryani, top rated pizza"
+              />
+            </div>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            {smartSearch && (
+              <button
+                type="button"
+                onClick={clearSmartSearch}
+                className="action-button px-4 py-3 text-sm"
+              >
+                <FiX size={16} />
+                Clear AI
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={handleSmartSearch}
+              disabled={smartLoading}
+              className="brand-button min-h-12 px-5 py-3 text-sm font-black disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <FiZap size={16} />
+              {smartLoading ? "Thinking..." : "Apply AI Search"}
+            </button>
+          </div>
+        </div>
+
+        {smartSearch && (
+          <div className="mt-4 rounded-2xl border-2 border-[color-mix(in_srgb,var(--accent)_24%,white)] bg-[var(--accent-soft)] p-4">
+            <p className="text-sm font-semibold leading-6 text-[var(--text)]">
+              {smartSearch.explanation}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {[
+                smartSearch.cuisine !== "all" && smartSearch.cuisine,
+                smartSearch.priceRange !== "all" && smartSearch.priceRange,
+                smartSearch.maxDeliveryTime !== "all" &&
+                  `under ${smartSearch.maxDeliveryTime} min`,
+                smartSearch.minRating !== "all" &&
+                  `${smartSearch.minRating}+ rating`,
+                smartSearch.openNow && "open now",
+                ...smartSearch.keywords,
+              ]
+                .filter(Boolean)
+                .map((tag) => (
+                  <span key={String(tag)} className="status-badge bg-white">
+                    {String(tag)}
+                  </span>
+                ))}
+            </div>
+          </div>
+        )}
       </section>
 
       <section className="ui-card p-4">

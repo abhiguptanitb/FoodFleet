@@ -16,11 +16,16 @@ import {
   FiSave,
   FiShoppingBag,
   FiX,
+  FiZap,
 } from "react-icons/fi";
 import { BiUpload } from "react-icons/bi";
 import toast from "react-hot-toast";
 import { SkeletonState } from "../components/LoadingState";
-import { generateAiDescription } from "../utils/aiDescription";
+import {
+  generateAiDescription,
+  generateSellerPerformanceInsight,
+  type SellerPerformanceInsight,
+} from "../utils/aiDescription";
 
 type SellerTab = "menu" | "add-item" | "sales";
 
@@ -57,6 +62,10 @@ const Restaurant = () => {
     totalOrdersDelivered: 0,
     topItem: { name: "No sales yet", quantity: 0 },
   });
+  const [aiInsight, setAiInsight] = useState<SellerPerformanceInsight | null>(
+    null
+  );
+  const [generatingInsight, setGeneratingInsight] = useState(false);
   const [performance, setPerformance] = useState<{
     chart: { label: string; revenue: number; orders: number }[];
     topItems: { name: string; quantity: number; revenue: number }[];
@@ -184,6 +193,7 @@ const Restaurant = () => {
     if (!selectedRestaurant?._id) {
       setMenuItems([]);
       setRestaurantOrders([]);
+      setAiInsight(null);
       setSalesStats({
         revenue: 0,
         totalOrdersDelivered: 0,
@@ -194,6 +204,7 @@ const Restaurant = () => {
 
     fetchMenuItems(selectedRestaurant._id);
     fetchSalesStats(selectedRestaurant._id);
+    setAiInsight(null);
     setRestaurantOrders([]);
     localStorage.setItem(
       ACTIVE_RESTAURANT_STORAGE_KEY,
@@ -363,6 +374,32 @@ const Restaurant = () => {
       fetchMenuItems(selectedRestaurant._id);
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Bulk update failed");
+    }
+  };
+
+  const handleGeneratePerformanceInsight = async () => {
+    if (!selectedRestaurant) return;
+
+    try {
+      setGeneratingInsight(true);
+      const insight = await generateSellerPerformanceInsight({
+        restaurantName: selectedRestaurant.name,
+        stats: salesStats,
+        performance,
+        menuItems: menuItems.map((item) => ({
+          name: item.name,
+          category: item.category,
+          price: item.price,
+        })),
+      });
+      setAiInsight(insight);
+      toast.success("AI performance insight ready");
+    } catch (error: any) {
+      toast.error(
+        error.response?.data?.message || "Failed to generate performance insight"
+      );
+    } finally {
+      setGeneratingInsight(false);
     }
   };
 
@@ -658,15 +695,24 @@ const Restaurant = () => {
                 <div className="grid gap-4 xl:grid-cols-[0.85fr_1.15fr]">
                   <div className="rounded-[26px] border-2 border-[color-mix(in_srgb,var(--text)_14%,transparent)] bg-[linear-gradient(145deg,#ffffff_0%,var(--accent-soft)_100%)] p-5 shadow-[5px_5px_0_color-mix(in_srgb,var(--accent)_16%,transparent)] sm:p-6">
                     <p className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--accent)]">
-                      Sales
+                      AI Performance
                     </p>
                     <h3 className="mt-3 text-2xl font-black text-[var(--text)] sm:text-3xl">
-                      Insights are ready to plug in
+                      Seller insight assistant
                     </h3>
                     <p className="mt-3 max-w-prose text-sm leading-6 text-[var(--text-soft)]">
-                      Use this panel for daily revenue, best sellers, order
-                      volume, and payout snapshots.
+                      Generate a focused action plan from your revenue, orders,
+                      top items, low performers, payout, and current menu.
                     </p>
+                    <button
+                      type="button"
+                      onClick={handleGeneratePerformanceInsight}
+                      disabled={generatingInsight}
+                      className="brand-button mt-5 min-h-12 px-5 py-3 text-sm font-black disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <FiZap size={16} />
+                      {generatingInsight ? "Analyzing..." : "Generate AI Insight"}
+                    </button>
                   </div>
 
                   <div className="grid gap-4 sm:grid-cols-3">
@@ -708,6 +754,48 @@ const Restaurant = () => {
                       </div>
                     ))}
                   </div>
+                  {aiInsight && (
+                    <div className="ui-card space-y-5 p-5 xl:col-span-2">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--accent)]">
+                            AI Recommendation
+                          </p>
+                          <h3 className="mt-2 text-xl font-black text-[var(--text)]">
+                            {aiInsight.summary}
+                          </h3>
+                        </div>
+                        <span className="status-badge bg-[var(--accent-soft)]">
+                          {aiInsight.provider === "local"
+                            ? "Local fallback"
+                            : "Gemini AI"}
+                        </span>
+                      </div>
+
+                      <div className="grid gap-4 lg:grid-cols-2">
+                        <div className="rounded-2xl border-2 border-[color-mix(in_srgb,var(--accent)_22%,white)] bg-[var(--accent-soft)] p-4">
+                          <p className="text-sm font-black text-[var(--text)]">
+                            Opportunities
+                          </p>
+                          <div className="mt-3 space-y-2 text-sm leading-6 text-[var(--text-soft)]">
+                            {aiInsight.opportunities.map((item) => (
+                              <p key={item}>{item}</p>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="rounded-2xl border-2 border-[color-mix(in_srgb,var(--text)_12%,transparent)] bg-white p-4">
+                          <p className="text-sm font-black text-[var(--text)]">
+                            Next Actions
+                          </p>
+                          <div className="mt-3 space-y-2 text-sm leading-6 text-[var(--text-soft)]">
+                            {aiInsight.actions.map((item) => (
+                              <p key={item}>{item}</p>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   {performance && (
                     <div className="space-y-4 xl:col-span-2">
                       <div className="ui-card p-5">
