@@ -9,6 +9,7 @@ import {
 import { authService, restaurantService } from "../main";
 import type { AppContextType, ICart, LocationData, User } from "../types";
 import { Toaster } from "react-hot-toast";
+import { getAccessToken, refreshAccessToken } from "../utils/authSession";
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 const LOCATION_STORAGE_KEY = "foodfleet_selected_location";
@@ -101,10 +102,15 @@ export const AppProvider = ({ children }: AppProviderProps) => {
   };
 
   async function fetchUser() {
-    const token = localStorage.getItem("token");
+    let token = getAccessToken();
     if (!token) {
-      setLoading(false);
-      return;
+      const session = await refreshAccessToken();
+      token = session?.token || "";
+
+      if (!token) {
+        setLoading(false);
+        return;
+      }
     }
 
     try {
@@ -117,7 +123,11 @@ export const AppProvider = ({ children }: AppProviderProps) => {
       setUser(data);
       setIsAuth(true);
     } catch (error) {
-      console.log(error);
+      const session = await refreshAccessToken();
+      if (session?.user) {
+        setUser(session.user as User);
+        setIsAuth(true);
+      }
     } finally {
       setLoading(false);
     }
@@ -129,7 +139,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
 
   async function fetchCart() {
     if (!user || user.role !== "customer") return;
-    const token = localStorage.getItem("token");
+    const token = getAccessToken();
     if (!token) return;
 
     try {
@@ -143,7 +153,6 @@ export const AppProvider = ({ children }: AppProviderProps) => {
       setSubTotal(data.subtotal || 0);
       setQuauntity(data.cartLength);
     } catch (error) {
-      console.log(error);
     }
   }
 

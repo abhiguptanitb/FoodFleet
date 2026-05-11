@@ -40,7 +40,7 @@ const Restaurant = () => {
   const [menuItems, setMenuItems] = useState<IMenuItem[]>([]);
   const [menuSearch, setMenuSearch] = useState("");
   const [menuCategory, setMenuCategory] = useState("all");
-  const [, setRestaurantOrders] = useState<IOrder[]>([]);
+  const [restaurantOrders, setRestaurantOrders] = useState<IOrder[]>([]);
   const [togglingRestaurantId, setTogglingRestaurantId] = useState<string | null>(
     null
   );
@@ -211,6 +211,30 @@ const Restaurant = () => {
       selectedRestaurant._id
     );
   }, [selectedRestaurantId]);
+
+  const deliveredOrdersSignature = useMemo(
+    () =>
+      restaurantOrders
+        .filter(
+          (order) =>
+            order.status === "delivered" && order.paymentStatus === "paid"
+        )
+        .map((order) => `${order._id}:${order.updatedAt}:${order.totalAmount}`)
+        .join("|"),
+    [restaurantOrders]
+  );
+
+  useEffect(() => {
+    if (!selectedRestaurant?._id || !deliveredOrdersSignature) return;
+
+    fetchSalesStats(selectedRestaurant._id);
+  }, [selectedRestaurant?._id, deliveredOrdersSignature]);
+
+  useEffect(() => {
+    if (tab !== "sales" || !selectedRestaurant?._id) return;
+
+    fetchSalesStats(selectedRestaurant._id);
+  }, [tab, selectedRestaurant?._id]);
 
   const updateRestaurantInState = (updatedRestaurant: IRestaurant) => {
     setRestaurants((currentRestaurants) =>

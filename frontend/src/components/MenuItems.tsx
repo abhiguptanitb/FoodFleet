@@ -136,7 +136,6 @@ const MenuItems = ({ items, onItemDeleted, isSeller }: MenuItemsProps) => {
       closeEditModal();
       onItemDeleted();
     } catch (error) {
-      console.log(error);
       toast.error("Failed to update item");
     } finally {
       setSaving(false);
@@ -157,7 +156,6 @@ const MenuItems = ({ items, onItemDeleted, isSeller }: MenuItemsProps) => {
       toast.success("Item deleted");
       onItemDeleted();
     } catch (error) {
-      console.log(error);
       toast.error("Failed to delete item");
     }
   };
@@ -177,7 +175,6 @@ const MenuItems = ({ items, onItemDeleted, isSeller }: MenuItemsProps) => {
       toast.success(data.message);
       onItemDeleted();
     } catch (error) {
-      console.log(error);
       toast.error("Failed to update status");
     }
   };

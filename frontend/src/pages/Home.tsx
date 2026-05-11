@@ -94,7 +94,6 @@ const Home = () => {
 
       setRestaurants(data.restaurants ?? []);
     } catch (error) {
-      console.log(error);
     } finally {
       setLoading(false);
     }
@@ -129,7 +128,6 @@ const Home = () => {
           JSON.stringify(data.restaurantIds || [])
         );
       } catch (error) {
-        console.log(error);
       }
     };
 

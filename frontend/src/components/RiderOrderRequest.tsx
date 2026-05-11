@@ -7,9 +7,10 @@ import { FiClock, FiNavigation } from "react-icons/fi";
 interface Props {
   orderId: string;
   onAccepted: () => void;
+  onExpired: () => void;
 }
 
-const RiderOrderRequest = ({ orderId, onAccepted }: Props) => {
+const RiderOrderRequest = ({ orderId, onAccepted, onExpired }: Props) => {
   const [accepting, setAccepting] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(10);
 
@@ -18,7 +19,7 @@ const RiderOrderRequest = ({ orderId, onAccepted }: Props) => {
       setSecondsLeft((prev) => {
         if (prev <= 1) {
           clearInterval(interval);
-          onAccepted();
+          onExpired();
           return 0;
         }
         return prev - 1;
@@ -26,10 +27,11 @@ const RiderOrderRequest = ({ orderId, onAccepted }: Props) => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [onAccepted]);
+  }, [onExpired]);
 
   const acceptOrder = async () => {
     try {
+      setAccepting(true);
       await axios.post(
         `${riderService}/api/rider/accept/${orderId}`,
         {},
@@ -43,8 +45,8 @@ const RiderOrderRequest = ({ orderId, onAccepted }: Props) => {
       toast.success("Order Accepted");
       onAccepted();
     } catch (error: any) {
-      toast.error(error.response.data.message);
-      onAccepted();
+      toast.error(error.response?.data?.message || "Order already taken");
+      onExpired();
     } finally {
       setAccepting(false);
     }

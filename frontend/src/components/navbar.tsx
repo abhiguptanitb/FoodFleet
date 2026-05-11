@@ -15,6 +15,7 @@ import toast from "react-hot-toast";
 import { LuLocateFixed } from "react-icons/lu";
 import { FiLogOut, FiMenu, FiUser, FiX } from "react-icons/fi";
 import { getRoleHomePath } from "../utils/roleRoutes";
+import { logoutSession } from "../utils/authSession";
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -158,8 +159,8 @@ const Navbar = () => {
     }
   };
 
-  const logoutHandler = () => {
-    localStorage.setItem("token", "");
+  const logoutHandler = async () => {
+    await logoutSession();
     localStorage.removeItem("sellerActiveRestaurantId");
     setUser(null);
     setIsAuth(false);

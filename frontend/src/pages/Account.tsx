@@ -6,6 +6,7 @@ import { BiLogOut, BiMapPin, BiPackage } from "react-icons/bi";
 import axios from "axios";
 import { restaurantService } from "../main";
 import type { IOrder } from "../types";
+import { logoutSession } from "../utils/authSession";
 
 const formatOrderDate = (date: Date | string) =>
   new Intl.DateTimeFormat("en-IN", {
@@ -43,15 +44,14 @@ const Account = () => {
             .slice(0, 3)
         );
       } catch (error) {
-        console.log(error);
       }
     };
 
     fetchDeliveredOrders();
   }, []);
 
-  const logoutHandler = () => {
-    localStorage.setItem("token", "");
+  const logoutHandler = async () => {
+    await logoutSession();
     setUser(null);
     setIsAuth(false);
     navigate("/login");

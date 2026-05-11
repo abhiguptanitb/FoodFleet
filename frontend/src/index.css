@@ -402,6 +402,16 @@ a:active {
   min-height: 3rem;
 }
 
+.menu-price-input {
+  padding-left: 3.1rem;
+  padding-right: 1rem;
+}
+
+.menu-price-input::-webkit-outer-spin-button,
+.menu-price-input::-webkit-inner-spin-button {
+  margin: 0;
+}
+
 .ui-row {
   border: 2px solid color-mix(in srgb, var(--text) 12%, transparent);
   border-radius: var(--row-radius);

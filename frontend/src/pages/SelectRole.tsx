@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { authService } from "../main";
 import { getRoleHomePath } from "../utils/roleRoutes";
+import { setAccessToken } from "../utils/authSession";
 
 type Role = "customer" | "rider" | "seller" | null;
 
@@ -43,13 +44,14 @@ const SelectRole = () => {
         `${authService}/api/auth/add/role`,
         { role },
         {
+          withCredentials: true,
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         }
       );
 
-      localStorage.setItem("token", data.token);
+      setAccessToken(data.token);
       setUser(data.user);
       navigate(getRoleHomePath(data.user?.role), { replace: true });
     } catch (error) {

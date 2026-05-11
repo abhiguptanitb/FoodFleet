@@ -9,11 +9,11 @@ import Restaurant, { IRestaurant } from "../models/Restaurant.js";
 import { publishEvent } from "../config/order.publisher.js";
 
 const calculateRiderEarning = (distanceKm: number) => {
-  const safeDistance = Number.isFinite(distanceKm) && distanceKm > 0 ? distanceKm : 1;
+  const safeDistance = Number.isFinite(distanceKm) && distanceKm > 0 ? distanceKm : 0;
   const baseFare = 25;
   const perKmFare = 12;
 
-  return Math.max(30, Math.ceil(baseFare + Math.ceil(safeDistance) * perKmFare));
+  return Math.max(30, Math.ceil(baseFare + safeDistance * perKmFare));
 };
 
 const getRangeStartDate = (range: string) => {
@@ -32,10 +32,6 @@ const getRangeStartDate = (range: string) => {
 };
 
 const getOrderRiderEarning = (order: { riderAmount?: number; distance?: number }) => {
-  if (typeof order.riderAmount === "number" && order.riderAmount > 0) {
-    return order.riderAmount;
-  }
-
   return calculateRiderEarning(order.distance || 0);
 };
 
@@ -470,7 +466,19 @@ export const assignRiderToOrder = TryCatch(async (req, res) => {
 
   const order = await Order.findById(orderId);
 
-  if (order?.riderId !== null) {
+  if (!order) {
+    return res.status(404).json({
+      message: "Order not found",
+    });
+  }
+
+  if (order.paymentStatus !== "paid" || order.status !== "ready_for_rider") {
+    return res.status(400).json({
+      message: "Order is not ready for rider",
+    });
+  }
+
+  if (order.riderId !== null) {
     return res.status(400).json({
       message: "Order Already taken",
     });
@@ -492,7 +500,7 @@ export const assignRiderToOrder = TryCatch(async (req, res) => {
     {
       event: "order:rider_assigned",
       room: `user:${order.userId}`,
-      payload: order,
+      payload: orderUpdated,
     },
     {
       headers: {
@@ -500,12 +508,27 @@ export const assignRiderToOrder = TryCatch(async (req, res) => {
       },
     }
   );
+
   await axios.post(
     `${process.env.REALTIME_SERVICE}/api/v1/internal/emit`,
     {
       event: "order:rider_assigned",
       room: `restaurant:${order.restaurantId}`,
-      payload: order,
+      payload: orderUpdated,
+    },
+    {
+      headers: {
+        "x-internal-key": process.env.INTERNAL_SERVICE_KEY,
+      },
+    }
+  );
+
+  await axios.post(
+    `${process.env.REALTIME_SERVICE}/api/v1/internal/emit`,
+    {
+      event: "order:update",
+      room: `restaurant:${order.restaurantId}`,
+      payload: orderUpdated,
     },
     {
       headers: {
@@ -725,7 +748,7 @@ export const updateOrderStatusRider = TryCatch(async (req, res) => {
     });
   }
 
-  if (order.status === "rider_assigned") {
+  if (order.status === "ready_for_rider" || order.status === "rider_assigned") {
     order.status = "picked_up";
 
     await order.save();

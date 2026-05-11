@@ -57,7 +57,6 @@ const RestaurantOrders = ({
       setOrders(fetchedOrders);
       onOrdersChange?.(fetchedOrders);
     } catch (error) {
-      console.log(error);
     } finally {
       setLoading(false);
     }
@@ -78,7 +77,6 @@ const RestaurantOrders = ({
 
       setHistoryOrders(data.orders || []);
     } catch (error) {
-      console.log(error);
       setHistoryOrders([]);
     } finally {
       setHistoryLoading(false);
@@ -97,10 +95,25 @@ const RestaurantOrders = ({
   useEffect(() => {
     if (!socket) return;
 
-    const onOrderChange = () => {
+    const onOrderChange = (updatedOrder?: IOrder) => {
+      if (updatedOrder?._id) {
+        setOrders((prev) => {
+          const exists = prev.some((order) => order._id === updatedOrder._id);
+          const nextOrders = exists
+            ? prev.map((order) =>
+                order._id === updatedOrder._id ? updatedOrder : order
+              )
+            : [updatedOrder, ...prev];
+
+          onOrdersChange?.(nextOrders);
+          return nextOrders;
+        });
+      }
+
       refreshOrders();
     };
 
+    socket.emit("restaurant:join", restaurantId);
     socket.on("order:new", onOrderChange);
     socket.on("order:rider_assigned", onOrderChange);
     socket.on("order:update", onOrderChange);
@@ -111,6 +124,14 @@ const RestaurantOrders = ({
       socket.off("order:update", onOrderChange);
     };
   }, [socket, restaurantId]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      refreshOrders();
+    }, 5000);
+
+    return () => window.clearInterval(interval);
+  }, [restaurantId]);
 
   if (loading) {
     return <SkeletonState type="orders" count={4} title="Restaurant orders" />;

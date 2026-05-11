@@ -1,10 +1,18 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAppData } from "../context/AppContext";
 import { useSocket } from "../context/SocketContext";
 import axios from "axios";
 import { riderService } from "../main";
 import toast from "react-hot-toast";
 import { BiUpload } from "react-icons/bi";
+import L from "leaflet";
+import {
+  MapContainer,
+  Marker,
+  TileLayer,
+  useMap,
+  useMapEvents,
+} from "react-leaflet";
 import {
   FiCalendar,
   FiCreditCard,
@@ -14,11 +22,21 @@ import {
   FiTrendingUp,
   FiTruck,
 } from "react-icons/fi";
+import { LuLocateFixed } from "react-icons/lu";
 import type { IOrder } from "../types";
 import RiderOrderRequest from "../components/RiderOrderRequest";
 import RiderCurrentOrder from "../components/RiderCurrentOrder";
 import RiderOrderMap from "../components/RiderOrderMap";
 import { SkeletonState } from "../components/LoadingState";
+import { logoutSession } from "../utils/authSession";
+
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl:
+    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+});
 
 interface IRider {
   _id: string;
@@ -29,6 +47,10 @@ interface IRider {
   isVerified: boolean;
   isAvailble: boolean;
   lastActiveAt?: string;
+  location?: {
+    type: "Point";
+    coordinates: [number, number];
+  };
 }
 
 type RiderStatsRange = "today" | "7d" | "30d";
@@ -69,6 +91,46 @@ const getOnlineDuration = (lastActiveAt?: string) => {
   return `${hours}h ${remainingMinutes}m`;
 };
 
+const RiderLocationPicker = ({
+  onPick,
+}: {
+  onPick: (latitude: number, longitude: number) => void;
+}) => {
+  useMapEvents({
+    click(e) {
+      onPick(e.latlng.lat, e.latlng.lng);
+    },
+  });
+
+  return null;
+};
+
+const RecenterRiderMap = ({
+  latitude,
+  longitude,
+}: {
+  latitude: number;
+  longitude: number;
+}) => {
+  const map = useMap();
+
+  useEffect(() => {
+    map.flyTo([latitude, longitude], 14, { animate: true });
+  }, [latitude, longitude, map]);
+
+  return null;
+};
+
+const getRiderPoint = (profile: IRider | null) => {
+  const coordinates = profile?.location?.coordinates;
+  if (!coordinates || coordinates.length < 2) return null;
+
+  return {
+    latitude: coordinates[1],
+    longitude: coordinates[0],
+  };
+};
+
 const RiderDashboard = () => {
   const { user, setIsAuth, setUser } = useAppData();
   const { socket } = useSocket();
@@ -87,16 +149,29 @@ const RiderDashboard = () => {
   });
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyOrders, setHistoryOrders] = useState<IRiderHistoryOrder[]>([]);
+  const [locationModalOpen, setLocationModalOpen] = useState(false);
+  const [selectedRiderPoint, setSelectedRiderPoint] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+  const [savingLocation, setSavingLocation] = useState(false);
+
+  const removeIncomingOrder = useCallback((orderId: string) => {
+    setIncomingOrders((prev) => prev.filter((id) => id !== orderId));
+  }, []);
+
   useEffect(() => {
     if (!socket) return;
 
     const onOrderAvailable = ({ orderId }: { orderId: string }) => {
+      if (!profile?.isVerified || !profile?.isAvailble || currentOrder) return;
+
       setIncomingOrders((prev) =>
         prev.includes(orderId) ? prev : [...prev, orderId]
       );
 
       setTimeout(() => {
-        setIncomingOrders((prev) => prev.filter((id) => id !== orderId));
+        removeIncomingOrder(orderId);
       }, 10000);
     };
 
@@ -105,7 +180,13 @@ const RiderDashboard = () => {
     return () => {
       socket.off("order:available", onOrderAvailable);
     };
-  }, [socket]);
+  }, [
+    socket,
+    profile?.isVerified,
+    profile?.isAvailble,
+    currentOrder,
+    removeIncomingOrder,
+  ]);
 
   const fetchNearbyAvailableOrders = async () => {
     try {
@@ -130,6 +211,13 @@ const RiderDashboard = () => {
       console.log(error);
     }
   };
+
+  useEffect(() => {
+    const riderPoint = getRiderPoint(profile);
+    if (riderPoint) {
+      setSelectedRiderPoint(riderPoint);
+    }
+  }, [profile?._id, profile?.location?.coordinates?.[0], profile?.location?.coordinates?.[1]]);
 
   const fetchProfile = async () => {
     try {
@@ -248,50 +336,103 @@ const RiderDashboard = () => {
   }, [profile, statsRange]);
 
   const toggleAvailiblity = async () => {
-    if (!navigator.geolocation) {
-      toast.error("Location Access Required");
+    const riderPoint = getRiderPoint(profile);
+
+    if (!riderPoint) {
+      toast.error("Set your rider hotspot first");
+      setLocationModalOpen(true);
       return;
     }
 
     setToggling(true);
 
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-      try {
-        await axios.patch(
-          `${riderService}/api/rider/toggle`,
-          {
-            isAvailble: !profile?.isAvailble,
-            latitude: pos.coords.latitude,
-            longitude: pos.coords.longitude,
+    try {
+      await axios.patch(
+        `${riderService}/api/rider/toggle`,
+        {
+          isAvailble: !profile?.isAvailble,
+          latitude: riderPoint.latitude,
+          longitude: riderPoint.longitude,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
-
-        toast.success(
-          profile?.isAvailble ? "You are offline" : "You are online"
-        );
-        const nextIsAvailable = !profile?.isAvailble;
-        await fetchProfile();
-
-        if (nextIsAvailable) {
-          fetchNearbyAvailableOrders();
-        } else {
-          setIncomingOrders([]);
         }
-      } catch (error: any) {
-        toast.error(error.response.data.message);
-      } finally {
-        setToggling(false);
+      );
+
+      toast.success(profile?.isAvailble ? "You are offline" : "You are online");
+      const nextIsAvailable = !profile?.isAvailble;
+      await fetchProfile();
+
+      if (nextIsAvailable) {
+        fetchNearbyAvailableOrders();
+      } else {
+        setIncomingOrders([]);
       }
-    });
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to update status");
+    } finally {
+      setToggling(false);
+    }
   };
 
-  const logoutHandler = () => {
-    localStorage.setItem("token", "");
+  const useCurrentRiderLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setSelectedRiderPoint({
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+        });
+        toast.success("Current location selected");
+      },
+      () => toast.error("Location permission denied")
+    );
+  };
+
+  const saveRiderLocation = async () => {
+    if (!selectedRiderPoint) {
+      toast.error("Please select a rider hotspot");
+      return;
+    }
+
+    try {
+      setSavingLocation(true);
+      await axios.patch(
+        `${riderService}/api/rider/location`,
+        {
+          latitude: selectedRiderPoint.latitude,
+          longitude: selectedRiderPoint.longitude,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      toast.success("Rider hotspot updated");
+      setLocationModalOpen(false);
+      setIncomingOrders([]);
+      await fetchProfile();
+
+      if (profile?.isAvailble && !currentOrder) {
+        fetchNearbyAvailableOrders();
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to update location");
+    } finally {
+      setSavingLocation(false);
+    }
+  };
+
+  const logoutHandler = async () => {
+    await logoutSession();
     setIsAuth(false);
     setUser(null);
     toast.success("Logged out successfully");
@@ -520,6 +661,8 @@ const RiderDashboard = () => {
       </div>
     );
 
+  const riderPoint = getRiderPoint(profile);
+
   return (
     <div className="role-page space-y-4 px-4 py-4 sm:px-6">
       <div className="mx-auto max-w-6xl space-y-4">
@@ -624,12 +767,30 @@ const RiderDashboard = () => {
             </div>
 
             <div className="mt-3 ui-row p-4 text-sm text-[var(--text-soft)]">
-              <p className="font-black text-[var(--text)]">Hotspot readiness</p>
-              <p className="mt-1 leading-6">
-                When you tap Go Online, FoodFleet uses your current location and
-                only sends orders from restaurants inside the 500 m hotspot
-                radius.
-              </p>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="font-black text-[var(--text)]">
+                    Delivery hotspot
+                  </p>
+                  <p className="mt-1 leading-6">
+                    FoodFleet sends ready orders from restaurants inside the 500 m
+                    radius of this pinned rider location.
+                  </p>
+                  <p className="mt-2 text-xs font-semibold text-[var(--text)]">
+                    {riderPoint
+                      ? `${riderPoint.latitude.toFixed(5)}, ${riderPoint.longitude.toFixed(5)}`
+                      : "No rider hotspot selected"}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setLocationModalOpen(true)}
+                  className="action-button shrink-0 px-4 py-3 text-sm"
+                >
+                  <FiMapPin size={16} />
+                  Set Hotspot
+                </button>
+              </div>
             </div>
           </div>
 
@@ -696,9 +857,11 @@ const RiderDashboard = () => {
                 key={id}
                 orderId={id}
                 onAccepted={() => {
+                  removeIncomingOrder(id);
                   fetchProfile();
                   fetchCurrentOrder();
                 }}
+                onExpired={() => removeIncomingOrder(id)}
               />
             ))}
           </div>
@@ -885,6 +1048,97 @@ const RiderDashboard = () => {
               >
                 {submitting ? "Saving..." : "Submit for Review"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {locationModalOpen && (
+        <div className="ui-overlay fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="ui-modal w-full max-w-3xl p-5 sm:p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="pill-label">Rider Hotspot</p>
+                <h2 className="mt-4 text-2xl font-black text-[var(--text)]">
+                  Set delivery location
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-[var(--text-soft)]">
+                  Tap the map to pin where this rider should receive nearby
+                  ready-for-rider orders.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setLocationModalOpen(false)}
+                className="action-button h-10 min-h-10 px-3 py-1 text-sm"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-5 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={useCurrentRiderLocation}
+                className="brand-button px-4 py-3 text-sm font-semibold"
+              >
+                <LuLocateFixed size={16} />
+                Use Current Location
+              </button>
+              <button
+                type="button"
+                onClick={saveRiderLocation}
+                disabled={savingLocation || !selectedRiderPoint}
+                className="action-button px-4 py-3 text-sm disabled:opacity-60"
+              >
+                {savingLocation ? "Saving..." : "Save Hotspot"}
+              </button>
+            </div>
+
+            <div className="mt-5 overflow-hidden rounded-2xl border-2 border-[color-mix(in_srgb,var(--text)_14%,transparent)]">
+              <MapContainer
+                center={[
+                  selectedRiderPoint?.latitude || riderPoint?.latitude || 28.6139,
+                  selectedRiderPoint?.longitude || riderPoint?.longitude || 77.209,
+                ]}
+                zoom={13}
+                className="h-80 w-full"
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <RiderLocationPicker
+                  onPick={(latitude, longitude) =>
+                    setSelectedRiderPoint({ latitude, longitude })
+                  }
+                />
+                {selectedRiderPoint && (
+                  <>
+                    <RecenterRiderMap
+                      latitude={selectedRiderPoint.latitude}
+                      longitude={selectedRiderPoint.longitude}
+                    />
+                    <Marker
+                      position={[
+                        selectedRiderPoint.latitude,
+                        selectedRiderPoint.longitude,
+                      ]}
+                    />
+                  </>
+                )}
+              </MapContainer>
+            </div>
+
+            <div className="ui-row mt-4 p-4 text-sm text-[var(--text-soft)]">
+              <p className="font-black text-[var(--text)]">Selected pin</p>
+              {selectedRiderPoint ? (
+                <p className="mt-1">
+                  {selectedRiderPoint.latitude.toFixed(5)},{" "}
+                  {selectedRiderPoint.longitude.toFixed(5)}
+                </p>
+              ) : (
+                <p className="mt-1">Select a point on the map.</p>
+              )}
             </div>
           </div>
         </div>

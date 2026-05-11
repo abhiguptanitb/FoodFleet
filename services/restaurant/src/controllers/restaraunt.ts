@@ -6,6 +6,8 @@ import FavoriteRestaurant from "../models/FavoriteRestaurant.js";
 import Restaurant from "../models/Restaurant.js";
 import jwt from "jsonwebtoken";
 
+const ACCESS_TOKEN_EXPIRES_IN = "30m";
+
 const getUserIdCandidates = (userId: unknown) => {
   const candidateIds = new Set<string>();
 
@@ -192,7 +194,7 @@ export const fetchMyRestaurant = TryCatch(
         },
         process.env.JWT_SEC as string,
         {
-          expiresIn: "15d",
+          expiresIn: ACCESS_TOKEN_EXPIRES_IN,
         }
       );
 

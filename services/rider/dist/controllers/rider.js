@@ -145,6 +145,47 @@ export const toggleRiderAvailablity = TryCatch(async (req, res) => {
         rider,
     });
 });
+export const updateRiderLocation = TryCatch(async (req, res) => {
+    const user = req.user;
+    if (!user) {
+        return res.status(401).json({
+            message: "Unauthorized",
+        });
+    }
+    if (user.role !== "rider") {
+        return res.status(403).json({
+            message: "Only riders can update rider location",
+        });
+    }
+    const parsedLatitude = Number(req.body.latitude);
+    const parsedLongitude = Number(req.body.longitude);
+    if (Number.isNaN(parsedLatitude) ||
+        Number.isNaN(parsedLongitude) ||
+        parsedLatitude < -90 ||
+        parsedLatitude > 90 ||
+        parsedLongitude < -180 ||
+        parsedLongitude > 180) {
+        return res.status(400).json({
+            message: "Valid latitude and longitude are required",
+        });
+    }
+    const rider = await Rider.findOne(buildUserIdExpr("userId", user._id));
+    if (!rider) {
+        return res.status(404).json({
+            message: "Rider profile not found",
+        });
+    }
+    rider.location = {
+        type: "Point",
+        coordinates: [parsedLongitude, parsedLatitude],
+    };
+    rider.lastActiveAt = new Date();
+    await rider.save();
+    res.json({
+        message: "Rider location updated",
+        rider,
+    });
+});
 export const acceptOrder = TryCatch(async (req, res) => {
     const riderUserId = req.user?._id;
     const { orderId } = req.params;

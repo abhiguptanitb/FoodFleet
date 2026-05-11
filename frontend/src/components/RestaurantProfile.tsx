@@ -5,6 +5,8 @@ import { restaurantService } from "../main";
 import toast from "react-hot-toast";
 import { BiEdit, BiMapPin, BiSave } from "react-icons/bi";
 import { useAppData } from "../context/AppContext";
+import { logoutSession } from "../utils/authSession";
+import { FiClock, FiTrendingUp } from "react-icons/fi";
 
 interface props {
   restaurant: IRestaurant;
@@ -18,6 +20,19 @@ const RestaurantProfile = ({ restaurant, isSeller, onUpdate }: props) => {
   const [description, setDescription] = useState(restaurant.description);
   const [isOpen, setIsOpen] = useState(restaurant.isOpen);
   const [loading, setLoading] = useState(false);
+  const priceLabel =
+    restaurant.priceRange === "premium"
+      ? "Premium pricing"
+      : restaurant.priceRange === "budget"
+        ? "Budget friendly"
+        : "Mid-range pricing";
+  const priceTone =
+    restaurant.priceRange === "premium"
+      ? "from-[#fff7ed] to-[#ffe4e6] text-[#be123c]"
+      : restaurant.priceRange === "budget"
+        ? "from-[#ecfdf5] to-[#dcfce7] text-[#047857]"
+        : "from-[#eff6ff] to-[#eef2ff] text-[#2563eb]";
+  const deliveryTime = restaurant.deliveryTimeMinutes || 30;
 
   const toggleOpenStatus = async () => {
     try {
@@ -34,7 +49,6 @@ const RestaurantProfile = ({ restaurant, isSeller, onUpdate }: props) => {
       toast.success(data.message);
       setIsOpen(data.restaurant.isOpen);
     } catch (error: any) {
-      console.log(error);
       toast.error(error.response.data.message);
     }
   };
@@ -56,7 +70,6 @@ const RestaurantProfile = ({ restaurant, isSeller, onUpdate }: props) => {
       onUpdate(data.restaurant);
       setEditMode(false);
     } catch (error) {
-      console.log(error);
       toast.error("Failed to update");
     } finally {
       setLoading(false);
@@ -75,7 +88,7 @@ const RestaurantProfile = ({ restaurant, isSeller, onUpdate }: props) => {
         },
       }
     );
-    localStorage.setItem("token", "");
+    await logoutSession();
     setIsAuth(false);
     setUser(null);
     toast.success("loggedOut successfully");
@@ -118,6 +131,19 @@ const RestaurantProfile = ({ restaurant, isSeller, onUpdate }: props) => {
                 {restaurant.autoLocation.formattedAddress ||
                   "Location unavailable"}
               </div>
+            </div>
+
+            <div className="mt-4 flex flex-wrap gap-3">
+              <span className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-[color-mix(in_srgb,var(--text)_12%,transparent)] bg-gradient-to-br from-[#eef8ff] to-white px-4 py-2 text-sm font-black text-[#0369a1] shadow-[3px_3px_0_color-mix(in_srgb,var(--accent)_16%,transparent)]">
+                <FiClock size={16} />
+                {deliveryTime} min delivery
+              </span>
+              <span
+                className={`inline-flex min-h-11 items-center gap-2 rounded-2xl border border-[color-mix(in_srgb,var(--text)_12%,transparent)] bg-gradient-to-br px-4 py-2 text-sm font-black shadow-[3px_3px_0_color-mix(in_srgb,var(--accent-3)_18%,transparent)] ${priceTone}`}
+              >
+                <FiTrendingUp size={16} />
+                {priceLabel}
+              </span>
             </div>
           </div>
 

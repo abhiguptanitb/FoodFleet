@@ -4,6 +4,7 @@ import TryCatch from "../middlewares/trycatch.js";
 import FavoriteRestaurant from "../models/FavoriteRestaurant.js";
 import Restaurant from "../models/Restaurant.js";
 import jwt from "jsonwebtoken";
+const ACCESS_TOKEN_EXPIRES_IN = "30m";
 const getUserIdCandidates = (userId) => {
     const candidateIds = new Set();
     if (typeof userId === "string" && userId.trim()) {
@@ -129,7 +130,7 @@ export const fetchMyRestaurant = TryCatch(async (req, res) => {
         const token = jwt.sign({
             user: serializedUser,
         }, process.env.JWT_SEC, {
-            expiresIn: "15d",
+            expiresIn: ACCESS_TOKEN_EXPIRES_IN,
         });
         return res.json({ restaurant, token });
     }

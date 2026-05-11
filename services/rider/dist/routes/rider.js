@@ -1,6 +1,6 @@
 import express from "express";
 import { isAuth } from "../middlewares/isAuth.js";
-import { acceptOrder, addRiderProfile, fetchRiderDashboardStats, fetchRiderOrderHistory, fetchNearbyAvailableOrders, fetchMyCurrentOrder, fetchMyProfile, toggleRiderAvailablity, updateRiderProfile, updateOrderStatus, } from "../controllers/rider.js";
+import { acceptOrder, addRiderProfile, fetchRiderDashboardStats, fetchRiderOrderHistory, fetchNearbyAvailableOrders, fetchMyCurrentOrder, fetchMyProfile, toggleRiderAvailablity, updateRiderLocation, updateRiderProfile, updateOrderStatus, } from "../controllers/rider.js";
 import uploadFile from "../middlewares/multer.js";
 const router = express.Router();
 router.post("/new", isAuth, uploadFile, addRiderProfile);
@@ -9,6 +9,7 @@ router.put("/myprofile", isAuth, uploadFile, updateRiderProfile);
 router.get("/dashboard/stats", isAuth, fetchRiderDashboardStats);
 router.get("/dashboard/history", isAuth, fetchRiderOrderHistory);
 router.get("/orders/available", isAuth, fetchNearbyAvailableOrders);
+router.patch("/location", isAuth, updateRiderLocation);
 router.patch("/toggle", isAuth, toggleRiderAvailablity);
 router.post("/accept/:orderId", isAuth, acceptOrder);
 router.get("/order/current", isAuth, fetchMyCurrentOrder);

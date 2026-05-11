@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { FiHeart } from "react-icons/fi";
+import { FiClock, FiHeart, FiTrendingUp } from "react-icons/fi";
 
 type props = {
   id: string;
@@ -27,6 +27,19 @@ const RestaurantCard = ({
   onToggleFavorite,
 }: props) => {
   const navigate = useNavigate();
+  const priceLabel =
+    priceRange === "premium"
+      ? "Premium"
+      : priceRange === "budget"
+        ? "Budget"
+        : "Mid-range";
+  const priceTone =
+    priceRange === "premium"
+      ? "from-[#fff7ed] to-[#ffe4e6] text-[#be123c]"
+      : priceRange === "budget"
+        ? "from-[#ecfdf5] to-[#dcfce7] text-[#047857]"
+        : "from-[#eff6ff] to-[#eef2ff] text-[#2563eb]";
+
   return (
     <div
       className={`ui-card group fade-up cursor-pointer overflow-hidden p-0 transition hover:-translate-y-1 hover:border-[var(--accent)] ${
@@ -49,9 +62,7 @@ const RestaurantCard = ({
           </span>
           <span
             className={`status-badge ${
-              isOpen
-                ? "status-badge-success"
-                : "status-badge-danger"
+              isOpen ? "status-badge-success" : "status-badge-danger"
             }`}
           >
             {isOpen ? "Open Now" : "Closed"}
@@ -79,13 +90,22 @@ const RestaurantCard = ({
           <h3 className="truncate text-lg font-semibold text-[#1f1a17]">
             {name}
           </h3>
-          <span className="status-badge">
-            {rating.toFixed(1)}
+          <span className="status-badge">{rating.toFixed(1)}</span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <span className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-[color-mix(in_srgb,var(--text)_12%,transparent)] bg-gradient-to-br from-[#eef8ff] to-white px-3 py-2 text-xs font-black text-[#0369a1] shadow-[3px_3px_0_color-mix(in_srgb,var(--accent)_16%,transparent)]">
+            <FiClock className="shrink-0" size={15} />
+            {deliveryTime} min
+          </span>
+          <span
+            className={`inline-flex min-h-11 items-center gap-2 rounded-2xl border border-[color-mix(in_srgb,var(--text)_12%,transparent)] bg-gradient-to-br px-3 py-2 text-xs font-black shadow-[3px_3px_0_color-mix(in_srgb,var(--accent-3)_18%,transparent)] ${priceTone}`}
+          >
+            <FiTrendingUp className="shrink-0" size={15} />
+            {priceLabel}
           </span>
         </div>
-        <p className="text-sm leading-6 text-[#506277]">
-          {deliveryTime} min delivery · {priceRange.replace("-", " ")} pricing
-        </p>
+
         <p
           className={`text-sm font-semibold ${
             isOpen ? "text-[#198754]" : "text-[#cc4b37]"

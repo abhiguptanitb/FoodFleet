@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useAppData } from "../context/AppContext";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ICart, IMenuItem, IRestaurant } from "../types";
 import axios from "axios";
 import { restaurantService } from "../main";
@@ -15,6 +15,34 @@ const Cart = () => {
 
   const [loadingItemId, setLoadingItemId] = useState<string | null>(null);
   const [clearingCart, setClearingCart] = useState(false);
+  const [loadingCart, setLoadingCart] = useState(true);
+
+  useEffect(() => {
+    const loadCart = async () => {
+      try {
+        await fetchCart();
+      } finally {
+        setLoadingCart(false);
+      }
+    };
+
+    loadCart();
+  }, []);
+
+  if (loadingCart) {
+    return (
+      <div className="page-wrap flex min-h-[60vh] items-center justify-center">
+        <div className="glass-card px-6 py-12 text-center">
+          <h1 className="text-2xl font-semibold text-[#1f1a17]">
+            Loading cart
+          </h1>
+          <p className="section-copy mt-3 text-sm">
+            We are checking your latest cart items.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (!cart || cart.length === 0) {
     return (

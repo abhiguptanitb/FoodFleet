@@ -1,13 +1,13 @@
 import mongoose from "mongoose";
 const connectDB = async () => {
-    try {
-        await mongoose.connect(process.env.MONGO_URI, {
-            dbName: "FoodFleet",
-        });
-        console.log("connected to mongodb");
+    const mongoUri = process.env.MONGO_URI;
+    if (!mongoUri) {
+        throw new Error("MONGO_URI is missing in auth service environment");
     }
-    catch (error) {
-        console.log(error);
-    }
+    await mongoose.connect(mongoUri, {
+        dbName: process.env.DB_NAME || "FoodFleet",
+        serverSelectionTimeoutMS: 10000,
+    });
+    console.log("Auth service connected to mongodb");
 };
 export default connectDB;

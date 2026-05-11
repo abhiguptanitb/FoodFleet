@@ -9,6 +9,7 @@ import {
   fetchMyCurrentOrder,
   fetchMyProfile,
   toggleRiderAvailablity,
+  updateRiderLocation,
   updateRiderProfile,
   updateOrderStatus,
 } from "../controllers/rider.js";
@@ -23,6 +24,7 @@ router.put("/myprofile", isAuth, uploadFile, updateRiderProfile);
 router.get("/dashboard/stats", isAuth, fetchRiderDashboardStats);
 router.get("/dashboard/history", isAuth, fetchRiderOrderHistory);
 router.get("/orders/available", isAuth, fetchNearbyAvailableOrders);
+router.patch("/location", isAuth, updateRiderLocation);
 router.patch("/toggle", isAuth, toggleRiderAvailablity);
 router.post("/accept/:orderId", isAuth, acceptOrder);
 router.get("/order/current", isAuth, fetchMyCurrentOrder);

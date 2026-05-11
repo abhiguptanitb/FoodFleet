@@ -80,7 +80,6 @@ const AddMenuItem = ({
       resetForm();
       onItemAdded();
     } catch (error) {
-      console.log(error);
       toast.error("Failed to add item");
     } finally {
       setLoading(false);
@@ -189,13 +188,13 @@ const AddMenuItem = ({
               Price
             </label>
             <div className="relative">
-              <FiTag className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--accent)]" />
+              <FiTag className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[var(--accent)]" />
               <input
                 type="number"
                 placeholder="199"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                className="field-input bg-white py-3 pl-11 pr-4 text-sm"
+                className="field-input menu-price-input bg-white py-3 text-sm"
               />
             </div>
           </div>

@@ -7,6 +7,7 @@ import { useGoogleLogin } from "@react-oauth/google";
 import { FcGoogle } from "react-icons/fc";
 import { useAppData } from "../context/AppContext";
 import { getRoleHomePath } from "../utils/roleRoutes";
+import { setAccessToken } from "../utils/authSession";
 import {
   FiAlertCircle,
   FiBriefcase,
@@ -62,19 +63,22 @@ const Login = () => {
     setLoading(true);
     setAuthError("");
     try {
-      const result = await axios.post(`${authService}/api/auth/login`, {
-        code: authResult["code"],
-        role: selectedRole,
-      });
+      const result = await axios.post(
+        `${authService}/api/auth/login`,
+        {
+          code: authResult["code"],
+          role: selectedRole,
+        },
+        { withCredentials: true }
+      );
 
-      localStorage.setItem("token", result.data.token);
+      setAccessToken(result.data.token);
       toast.success(result.data.message);
       setLoading(false);
       setUser(result.data.user);
       setIsAuth(true);
       navigate(getRoleHomePath(result.data.user?.role));
     } catch (error) {
-      console.log(error);
       const message =
         axios.isAxiosError(error) && error.response?.data?.message
           ? error.response.data.message

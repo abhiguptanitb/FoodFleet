@@ -18,9 +18,11 @@ interface Props {
 const RiderCurrentOrder = ({ order, onStatusUpdate }: Props) => {
   const statusLabel = order.status.replace("_", " ");
   const canAdvance =
-    order.status === "rider_assigned" || order.status === "picked_up";
+    order.status === "ready_for_rider" ||
+    order.status === "rider_assigned" ||
+    order.status === "picked_up";
   const nextActionLabel =
-    order.status === "rider_assigned"
+    order.status === "ready_for_rider" || order.status === "rider_assigned"
       ? "Reached Restaurant"
       : order.status === "picked_up"
         ? "Mark as Delivered"

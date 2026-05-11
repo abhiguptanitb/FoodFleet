@@ -5,6 +5,34 @@ import { AuthenticatedRequest } from "../middlewares/isAuth.js";
 import { oauth2client } from "../config/googleConfig.js";
 import axios from "axios";
 
+const ACCESS_TOKEN_EXPIRES_IN = "30m";
+const REFRESH_TOKEN_EXPIRES_IN = "7d";
+const REFRESH_COOKIE_NAME = "foodfleet_refresh_token";
+const REFRESH_COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
+
+const getRefreshSecret = () =>
+  process.env.REFRESH_JWT_SEC || `${process.env.JWT_SEC}:refresh`;
+
+const getCookieOptions = () => {
+  const isProduction = process.env.NODE_ENV === "production";
+
+  return {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" as const : "lax" as const,
+    maxAge: REFRESH_COOKIE_MAX_AGE,
+    path: "/api/auth",
+  };
+};
+
+const parseCookies = (cookieHeader?: string) =>
+  (cookieHeader || "").split(";").reduce<Record<string, string>>((cookies, item) => {
+    const [rawName, ...rest] = item.trim().split("=");
+    if (!rawName || rest.length === 0) return cookies;
+    cookies[rawName] = decodeURIComponent(rest.join("="));
+    return cookies;
+  }, {});
+
 const normalizeId = (value: unknown) => {
   if (typeof value === "string" && value.trim()) {
     return value.trim();
@@ -46,6 +74,31 @@ const serializeUserForToken = (user: {
   role: user.role || null,
   restaurantId: normalizeId(user.restaurantId),
 });
+
+const createAccessToken = (user: ReturnType<typeof serializeUserForToken>) =>
+  jwt.sign({ user }, process.env.JWT_SEC as string, {
+    expiresIn: ACCESS_TOKEN_EXPIRES_IN,
+  });
+
+const createRefreshToken = (userId: string) =>
+  jwt.sign({ userId }, getRefreshSecret(), {
+    expiresIn: REFRESH_TOKEN_EXPIRES_IN,
+  });
+
+const setRefreshCookie = (res: any, userId: string) => {
+  res.cookie(
+    REFRESH_COOKIE_NAME,
+    createRefreshToken(userId),
+    getCookieOptions()
+  );
+};
+
+const clearRefreshCookie = (res: any) => {
+  res.clearCookie(REFRESH_COOKIE_NAME, {
+    ...getCookieOptions(),
+    maxAge: undefined,
+  });
+};
 
 const allowedRoles = ["customer", "rider", "seller"] as const;
 const allowedLoginRoles = [...allowedRoles, "admin"] as const;
@@ -115,9 +168,8 @@ export const loginUser = TryCatch(async (req, res) => {
 
   const serializedUser = serializeUserForToken(user);
 
-  const token = jwt.sign({ user: serializedUser }, process.env.JWT_SEC as string, {
-    expiresIn: "15d",
-  });
+  const token = createAccessToken(serializedUser);
+  setRefreshCookie(res, serializedUser._id);
 
   res.status(200).json({
     message: "Logged Success",
@@ -169,11 +221,59 @@ export const addUserRole = TryCatch(async (req: AuthenticatedRequest, res) => {
 
   const serializedUser = serializeUserForToken(user);
 
-  const token = jwt.sign({ user: serializedUser }, process.env.JWT_SEC as string, {
-    expiresIn: "15d",
-  });
+  const token = createAccessToken(serializedUser);
+  setRefreshCookie(res, serializedUser._id);
 
   res.json({ user: serializedUser, token });
+});
+
+export const refreshAccessToken = TryCatch(async (req, res) => {
+  const refreshToken = parseCookies(req.headers.cookie)[REFRESH_COOKIE_NAME];
+
+  if (!refreshToken) {
+    return res.status(401).json({
+      message: "Refresh token missing",
+    });
+  }
+
+  let decoded: { userId?: string };
+
+  try {
+    decoded = jwt.verify(refreshToken, getRefreshSecret()) as {
+      userId?: string;
+    };
+  } catch (error) {
+    clearRefreshCookie(res);
+    return res.status(401).json({
+      message: "Invalid refresh token",
+    });
+  }
+
+  if (!decoded.userId) {
+    return res.status(401).json({
+      message: "Invalid refresh token",
+    });
+  }
+
+  const user = await User.findById(decoded.userId);
+
+  if (!user) {
+    clearRefreshCookie(res);
+    return res.status(401).json({
+      message: "User not found",
+    });
+  }
+
+  const serializedUser = serializeUserForToken(user);
+  const token = createAccessToken(serializedUser);
+  setRefreshCookie(res, serializedUser._id);
+
+  res.json({ user: serializedUser, token });
+});
+
+export const logoutUser = TryCatch(async (_req, res) => {
+  clearRefreshCookie(res);
+  res.json({ message: "Logged out successfully" });
 });
 
 export const myProfile = TryCatch(async (req: AuthenticatedRequest, res) => {

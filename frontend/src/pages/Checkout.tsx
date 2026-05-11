@@ -44,7 +44,6 @@ const Checkout = () => {
 
         setAddresses(data || []);
       } catch (error) {
-        console.log(error);
       } finally {
         setLoadingAddress(false);
       }
@@ -142,7 +141,6 @@ const Checkout = () => {
       const razorpay = new (window as any).Razorpay(options);
       razorpay.open();
     } catch (error) {
-      console.log(error);
       toast.error("Payment failed. Please refresh the page.");
     } finally {
       setLoadingRazorpay(false);
@@ -174,7 +172,6 @@ const Checkout = () => {
         toast.error("Failed to create payment session");
       }
     } catch (error) {
-      console.log(error);
       toast.error("Payment failed");
     } finally {
       setLoadingStripe(false);

@@ -7,6 +7,7 @@ import { restaurantService } from "../main";
 import LoadingState from "../components/LoadingState";
 import toast from "react-hot-toast";
 import { FiRepeat } from "react-icons/fi";
+import { useAppData } from "../context/AppContext";
 
 const ACTIVE_STATUSES = [
   "placed",
@@ -32,6 +33,7 @@ const Orders = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { socket } = useSocket();
+  const { fetchCart } = useAppData();
   const [reorderingId, setReorderingId] = useState<string | null>(null);
 
   const fetchOrders = async () => {
@@ -92,6 +94,7 @@ const Orders = () => {
           );
         }
       }
+      await fetchCart();
       toast.success("Previous order added to cart");
       navigate("/cart");
     } catch (error: any) {
