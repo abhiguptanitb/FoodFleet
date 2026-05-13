@@ -10,6 +10,7 @@ import {
   FiCreditCard,
   FiMapPin,
   FiPackage,
+  FiPhone,
   FiRefreshCw,
   FiTruck,
 } from "react-icons/fi";
@@ -49,6 +50,42 @@ const formatDateTime = (date: Date | string) =>
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(date));
+
+const RiderIdentity = ({ order }: { order: IOrder }) => {
+  if (!order.riderName && !order.riderPhone && !order.riderImage) return null;
+
+  return (
+    <div className="rounded-2xl border border-[color-mix(in_srgb,var(--text)_12%,transparent)] bg-[#f8fbff] p-3">
+      <div className="flex items-center gap-3">
+        {order.riderImage ? (
+          <img
+            src={order.riderImage}
+            alt={order.riderName || "Assigned rider"}
+            className="h-12 w-12 shrink-0 rounded-2xl object-cover"
+          />
+        ) : (
+          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[var(--accent-soft)] text-[var(--accent)]">
+            <FiTruck size={20} />
+          </div>
+        )}
+        <div className="min-w-0">
+          <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--accent-deep)]">
+            Assigned Rider
+          </p>
+          <p className="mt-1 truncate text-sm font-black text-[var(--text)]">
+            {order.riderName || "Rider assigned"}
+          </p>
+          {order.riderPhone && (
+            <p className="mt-1 flex items-center gap-1 text-xs font-semibold text-[var(--text-soft)]">
+              <FiPhone size={13} />
+              {order.riderPhone}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const OrderCard = ({ order, onStatusUpdate, variant = "active" }: Props) => {
   const [loading, setLoading] = useState(false);
@@ -159,6 +196,8 @@ const OrderCard = ({ order, onStatusUpdate, variant = "active" }: Props) => {
             </p>
           </div>
         </div>
+
+        <RiderIdentity order={order} />
 
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="rounded-2xl border-2 border-[var(--text)] bg-white p-3">

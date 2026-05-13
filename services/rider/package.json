@@ -7,7 +7,8 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "concurrently \"tsc --watch\" \"node --watch dist/index.js\""
+    "dev": "concurrently \"tsc --watch\" \"node --watch dist/index.js\"",
+    "backfill:rider-names": "npm run build && node dist/scripts/backfillRiderNames.js"
   },
   "keywords": [],
   "author": "",

@@ -6,6 +6,7 @@ import axios from "axios";
 import { restaurantService } from "../main";
 import UserOrderMap from "../components/UserOrderMap";
 import LoadingState from "../components/LoadingState";
+import { FiPhone, FiTruck } from "react-icons/fi";
 
 const statusLabel = (status: string) => status.replaceAll("_", " ");
 const ORDER_STEPS = [
@@ -190,6 +191,38 @@ const OrderPage = () => {
               Contact: {order.deliveryAddress.mobile}
             </p>
           </section>
+
+          {(order.riderName || order.riderPhone || order.riderImage) && (
+            <section className="soft-card p-5">
+              <h2 className="text-xl font-semibold text-[#1f1a17]">
+                Assigned Rider
+              </h2>
+              <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center">
+                {order.riderImage ? (
+                  <img
+                    src={order.riderImage}
+                    alt={order.riderName || "Assigned rider"}
+                    className="h-20 w-20 rounded-2xl object-cover"
+                  />
+                ) : (
+                  <div className="grid h-20 w-20 place-items-center rounded-2xl bg-[var(--accent-soft)] text-[var(--accent)]">
+                    <FiTruck size={28} />
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="break-words text-lg font-semibold text-[#1f1a17]">
+                    {order.riderName || "Rider assigned"}
+                  </p>
+                  {order.riderPhone && (
+                    <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-[var(--text-soft)]">
+                      <FiPhone size={15} />
+                      {order.riderPhone}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </section>
+          )}
 
           <section className="soft-card p-5">
             <h2 className="text-xl font-semibold text-[#1f1a17]">Payment Summary</h2>

@@ -6,7 +6,7 @@ import axios from "axios";
 import { restaurantService } from "../main";
 import LoadingState from "../components/LoadingState";
 import toast from "react-hot-toast";
-import { FiRepeat } from "react-icons/fi";
+import { FiPhone, FiRepeat, FiTruck } from "react-icons/fi";
 import { useAppData } from "../context/AppContext";
 
 const ACTIVE_STATUSES = [
@@ -250,6 +250,36 @@ const OrderRow = ({
       <p className="mt-3 text-sm leading-6 text-[var(--text-soft)]">
         {order.items.map((item) => `${item.name} x ${item.quauntity}`).join(", ")}
       </p>
+
+      {(order.riderName || order.riderPhone || order.riderImage) && (
+        <div className="mt-4 flex items-center gap-3 rounded-2xl border border-[#d8e3ef] bg-[#f8fbff] p-3">
+          {order.riderImage ? (
+            <img
+              src={order.riderImage}
+              alt={order.riderName || "Assigned rider"}
+              className="h-12 w-12 shrink-0 rounded-2xl object-cover"
+            />
+          ) : (
+            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[var(--accent-soft)] text-[var(--accent)]">
+              <FiTruck size={20} />
+            </div>
+          )}
+          <div className="min-w-0">
+            <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--accent-deep)]">
+              Assigned Rider
+            </p>
+            <p className="mt-1 truncate text-sm font-semibold text-[#1f1a17]">
+              {order.riderName || "Rider assigned"}
+            </p>
+            {order.riderPhone && (
+              <p className="mt-1 flex items-center gap-1 text-xs font-semibold text-[var(--text-soft)]">
+                <FiPhone size={13} />
+                {order.riderPhone}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="mt-4 flex justify-between border-t border-[#d8e3ef] pt-3 text-sm">
         <span className="text-[var(--text-soft)]">Total</span>
