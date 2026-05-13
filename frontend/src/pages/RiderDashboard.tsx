@@ -39,6 +39,7 @@ L.Icon.Default.mergeOptions({
 
 interface IRider {
   _id: string;
+  riderName?: string;
   phoneNumber: string;
   aadharNumber: string;
   drivingLicenseNumber: string;
@@ -829,7 +830,7 @@ const RiderDashboard = () => {
                 />
                 <div>
                   <p className="text-2xl font-semibold text-slate-900">
-                    {user?.name}
+                    {profile.riderName || user?.name}
                   </p>
                   <p className="mt-1 text-sm text-slate-500">
                     {profile.phoneNumber}

@@ -5,6 +5,11 @@ const schema = new Schema({
         required: true,
         unique: true,
     },
+    riderName: {
+        type: String,
+        required: true,
+        trim: true,
+    },
     picture: {
         type: String,
         required: true,

@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from "mongoose";
 
 export interface IRider extends Document {
   userId: string;
+  riderName: string;
   picture: string;
   phoneNumber: string;
   aadharNumber: string;
@@ -26,6 +27,11 @@ const schema = new Schema<IRider>(
       type: String,
       required: true,
       unique: true,
+    },
+    riderName: {
+      type: String,
+      required: true,
+      trim: true,
     },
     picture: {
       type: String,

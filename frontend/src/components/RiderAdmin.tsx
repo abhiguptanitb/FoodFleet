@@ -13,6 +13,7 @@ import { adminService } from "../main";
 
 type AdminRider = {
   _id: string;
+  riderName?: string;
   picture?: string;
   userId?: string;
   phone?: string;
@@ -61,7 +62,7 @@ const RiderAdmin = ({
   };
 
   const riderName =
-    rider.user?.name || rider.phoneNumber || rider.phone || "Rider Profile";
+    rider.riderName || rider.user?.name || rider.phoneNumber || rider.phone || "Rider Profile";
   const riderContact = rider.phoneNumber || rider.phone || "Phone not available";
   const statusLabel = rider.isVerified ? "Verified" : "Unverified";
 

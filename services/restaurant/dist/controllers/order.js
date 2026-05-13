@@ -335,7 +335,7 @@ export const assignRiderToOrder = TryCatch(async (req, res) => {
             message: "Forbidden",
         });
     }
-    const { orderId, riderId, riderName, riderPhone } = req.body;
+    const { orderId, riderId, riderName, riderImage, riderPhone } = req.body;
     const orderAvailable = await Order.findOne({
         riderId,
         status: { $ne: "delivered" },
@@ -364,6 +364,7 @@ export const assignRiderToOrder = TryCatch(async (req, res) => {
     const orderUpdated = await Order.findOneAndUpdate({ _id: orderId, riderId: null }, {
         riderId,
         riderName,
+        riderImage,
         riderPhone,
         status: "rider_assigned",
     }, { new: true });

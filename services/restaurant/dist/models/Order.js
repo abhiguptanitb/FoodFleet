@@ -20,6 +20,10 @@ const OrderSchema = new Schema({
         type: String,
         default: null,
     },
+    riderImage: {
+        type: String,
+        default: null,
+    },
     riderPhone: {
         type: Number,
         default: null,

@@ -27,6 +27,11 @@ const buildUserIdExpr = (field, userId) => ({
         $in: [{ $toString: `$${field}` }, getUserIdCandidates(userId)],
     },
 });
+const syncRiderName = (rider, name) => {
+    if (!rider.riderName?.trim() && name?.trim()) {
+        rider.riderName = name.trim();
+    }
+};
 export const addRiderProfile = TryCatch(async (req, res) => {
     const user = req.user;
     if (!user) {
@@ -78,6 +83,7 @@ export const addRiderProfile = TryCatch(async (req, res) => {
     const { phoneNumber, aadharNumber, drivingLicenseNumber, latitude, longitude, } = profileInput;
     const riderProfile = await Rider.create({
         userId: normalizedUserId,
+        riderName: user.name,
         picture: uploadResult.url,
         phoneNumber,
         aadharNumber,
@@ -141,6 +147,7 @@ export const toggleRiderAvailablity = TryCatch(async (req, res) => {
         });
     }
     rider.isAvailble = isAvailble;
+    syncRiderName(rider, user.name);
     rider.location = {
         type: "Point",
         coordinates: [locationInput.longitude, locationInput.latitude],
@@ -181,6 +188,7 @@ export const updateRiderLocation = TryCatch(async (req, res) => {
         type: "Point",
         coordinates: [locationInput.longitude, locationInput.latitude],
     };
+    syncRiderName(rider, user.name);
     rider.lastActiveAt = new Date();
     await rider.save();
     res.json({
@@ -208,7 +216,8 @@ export const acceptOrder = TryCatch(async (req, res) => {
             orderId,
             riderId: rider._id.toString(),
             riderUserId: rider.userId,
-            riderName: rider.picture,
+            riderName: rider.riderName || req.user?.name || "Rider",
+            riderImage: rider.picture,
             riderPhone: rider.phoneNumber,
         }, {
             headers: {
@@ -283,6 +292,7 @@ export const updateRiderProfile = TryCatch(async (req, res) => {
     }
     const profileInput = validation.value;
     rider.phoneNumber = profileInput.phoneNumber;
+    syncRiderName(rider, user.name);
     rider.aadharNumber = profileInput.aadharNumber;
     rider.drivingLicenseNumber = profileInput.drivingLicenseNumber;
     const file = req.file;

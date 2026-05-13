@@ -42,6 +42,12 @@ const buildUserIdExpr = (field: string, userId: unknown) => ({
   },
 });
 
+const syncRiderName = (rider: { riderName?: string }, name?: string) => {
+  if (!rider.riderName?.trim() && name?.trim()) {
+    rider.riderName = name.trim();
+  }
+};
+
 export const addRiderProfile = TryCatch(
   async (req: AuthenticatedRequest, res) => {
     const user = req.user;
@@ -119,6 +125,7 @@ export const addRiderProfile = TryCatch(
 
     const riderProfile = await Rider.create({
       userId: normalizedUserId,
+      riderName: user.name,
       picture: uploadResult.url,
       phoneNumber,
       aadharNumber,
@@ -202,6 +209,7 @@ export const toggleRiderAvailablity = TryCatch(
     }
 
     rider.isAvailble = isAvailble;
+    syncRiderName(rider, user.name);
 
     rider.location = {
       type: "Point",
@@ -255,6 +263,7 @@ export const updateRiderLocation = TryCatch(
       type: "Point",
       coordinates: [locationInput.longitude, locationInput.latitude],
     };
+    syncRiderName(rider, user.name);
     rider.lastActiveAt = new Date();
 
     await rider.save();
@@ -292,7 +301,8 @@ export const acceptOrder = TryCatch(async (req: AuthenticatedRequest, res) => {
         orderId,
         riderId: rider._id.toString(),
         riderUserId: rider.userId,
-        riderName: rider.picture,
+        riderName: rider.riderName || req.user?.name || "Rider",
+        riderImage: rider.picture,
         riderPhone: rider.phoneNumber,
       },
       {
@@ -394,6 +404,7 @@ export const updateRiderProfile = TryCatch(
     const profileInput = validation.value!;
 
     rider.phoneNumber = profileInput.phoneNumber;
+    syncRiderName(rider, user.name);
     rider.aadharNumber = profileInput.aadharNumber;
     rider.drivingLicenseNumber = profileInput.drivingLicenseNumber;
 
