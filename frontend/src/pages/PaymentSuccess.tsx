@@ -11,7 +11,11 @@ const PaymentSuccess = () => {
   const { fetchCart, user } = useAppData();
 
   useEffect(() => {
-    fetchCart();
+    const timer = window.setTimeout(() => {
+      fetchCart();
+    }, 700);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   return (

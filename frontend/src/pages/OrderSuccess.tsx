@@ -3,10 +3,12 @@ import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { utilsService } from "../main";
 import toast from "react-hot-toast";
+import { useAppData } from "../context/AppContext";
 
 const OrderSuccess = () => {
   const [params] = useSearchParams();
   const sessionId = params.get("session_id");
+  const { fetchCart } = useAppData();
 
   useEffect(() => {
     const verifyPayment = async () => {
@@ -18,6 +20,9 @@ const OrderSuccess = () => {
         });
 
         toast.success("Payment successful");
+        window.setTimeout(() => {
+          fetchCart();
+        }, 700);
       } catch (error) {
         toast.error("Stripe verification failed");
         console.log(error);

@@ -22,12 +22,27 @@ import Admin from "./pages/Admin";
 import { getRoleHomePath } from "./utils/roleRoutes";
 import LoadingState from "./components/LoadingState";
 
+const getStoredRole = () => {
+  const token = localStorage.getItem("token");
+  if (!token) return "customer";
+
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1] || ""));
+    return payload?.user?.role || "customer";
+  } catch (error) {
+    return "customer";
+  }
+};
+
 const App = () => {
   const { user, loading } = useAppData();
+  const role = user?.role || getStoredRole();
 
   if (loading) {
     return (
-      <div className="app-shell flex min-h-screen items-center justify-center px-4">
+      <div
+        className={`app-shell role-${role} flex min-h-screen items-center justify-center px-4`}
+      >
         <LoadingState
           title="Preparing your workspace"
           copy="We are syncing your account, role access, and live FoodFleet data."
@@ -39,7 +54,7 @@ const App = () => {
   const roleHomePath = getRoleHomePath(user?.role);
 
   return (
-    <div className={`app-shell role-${user?.role || "customer"}`}>
+    <div className={`app-shell role-${role}`}>
       <BrowserRouter>
         <Navbar />
         <Routes>

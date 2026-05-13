@@ -1,4 +1,5 @@
 import axios from "axios";
+import Cart from "../models/Cart.js";
 import Order from "../models/Order.js";
 import { getChannel } from "./rabbitmq.js";
 
@@ -41,6 +42,12 @@ export const startPaymentConsumer = async () => {
       }
 
       console.log("✅Order Placed:", order._id);
+
+      await Cart.deleteMany({
+        userId: order.userId,
+        restaurantId: order.restaurantId,
+        itemId: { $in: order.items.map((item) => item.itemId) },
+      });
 
       //   socket work
 

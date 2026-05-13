@@ -68,6 +68,7 @@ const Account = () => {
                 <img
                   src={user.image}
                   alt={user.name}
+                  referrerPolicy="no-referrer"
                   className="h-[72px] w-[72px] rounded-[24px] object-cover"
                   onError={() => setImageError(true)}
                 />

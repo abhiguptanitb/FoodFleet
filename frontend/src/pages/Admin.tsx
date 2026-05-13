@@ -222,6 +222,7 @@ const Admin = () => {
                     <img
                       src={user.image}
                       alt={user.name}
+                      referrerPolicy="no-referrer"
                       className="h-16 w-16 rounded-2xl object-cover"
                       onError={() => setAdminImageError(true)}
                     />
@@ -445,6 +446,7 @@ const Admin = () => {
                         <img
                           src={customer.image}
                           alt={customer.name || "Customer"}
+                          referrerPolicy="no-referrer"
                           className="h-16 w-16 rounded-2xl border-2 border-[color-mix(in_srgb,var(--text)_12%,transparent)] object-cover"
                         />
                       ) : (

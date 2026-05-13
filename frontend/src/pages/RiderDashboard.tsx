@@ -28,7 +28,6 @@ import RiderOrderRequest from "../components/RiderOrderRequest";
 import RiderCurrentOrder from "../components/RiderCurrentOrder";
 import RiderOrderMap from "../components/RiderOrderMap";
 import { SkeletonState } from "../components/LoadingState";
-import { logoutSession } from "../utils/authSession";
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -132,7 +131,7 @@ const getRiderPoint = (profile: IRider | null) => {
 };
 
 const RiderDashboard = () => {
-  const { user, setIsAuth, setUser } = useAppData();
+  const { user } = useAppData();
   const { socket } = useSocket();
 
   const [profile, setProfile] = useState<IRider | null>(null);
@@ -431,13 +430,6 @@ const RiderDashboard = () => {
     }
   };
 
-  const logoutHandler = async () => {
-    await logoutSession();
-    setIsAuth(false);
-    setUser(null);
-    toast.success("Logged out successfully");
-  };
-
   const [phoneNumber, setPhoneNumber] = useState("");
   const [aadharNumber, setaadharNumber] = useState("");
   const [drivingLicenseNumber, setDrivingLicenseNumber] = useState("");
@@ -543,12 +535,6 @@ const RiderDashboard = () => {
           <section className="hero-panel fade-up hidden px-8 py-10 lg:block">
             <div className="flex items-center justify-between gap-4">
               <p className="pill-label">Rider Onboarding</p>
-              <button
-                onClick={logoutHandler}
-                className="ghost-button px-4 py-2 text-sm font-semibold"
-              >
-                Logout
-              </button>
             </div>
             <h1 className="section-title mt-5">
               Set up your rider profile and start taking deliveries.
@@ -583,12 +569,6 @@ const RiderDashboard = () => {
           <section className="glass-card fade-up mx-auto w-full max-w-xl px-6 py-8 sm:px-8 sm:py-10">
             <div className="flex items-center justify-between gap-4">
               <p className="pill-label">Create Profile</p>
-              <button
-                onClick={logoutHandler}
-                className="ghost-button px-4 py-2 text-sm font-semibold"
-              >
-                Logout
-              </button>
             </div>
             <h1 className="mt-5 text-center text-3xl font-semibold text-[#1f1a17]">
               Add your rider details
@@ -648,13 +628,6 @@ const RiderDashboard = () => {
                 {submitting ? "Submitting..." : "Create Rider Profile"}
               </button>
 
-              <button
-                type="button"
-                onClick={logoutHandler}
-                className="ghost-button w-full py-3.5 text-sm font-semibold lg:hidden"
-              >
-                Logout and go to login
-              </button>
             </div>
           </section>
         </div>

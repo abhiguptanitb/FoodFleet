@@ -617,60 +617,23 @@ a:active {
   box-shadow: 4px 4px 0 color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
-.loading-mark {
-  display: flex;
+.loading-brand-mark {
   height: 4.25rem;
   width: 4.25rem;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid var(--text);
   border-radius: 22px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
-  box-shadow: 6px 6px 0 var(--text);
-  color: #ffffff;
   font-size: 1.35rem;
   font-weight: 900;
   animation: loadingFloat 1.7s ease-in-out infinite;
 }
 
-.loading-orbit {
-  position: relative;
-  display: grid;
+.loading-brand-mark-compact {
   height: 2.75rem;
   width: 2.75rem;
   flex: 0 0 auto;
-  place-items: center;
-  border: 2px solid var(--text);
   border-radius: 16px;
-  background: var(--accent-soft);
-  box-shadow: 3px 3px 0 var(--accent-2);
+  font-size: 1rem;
+  font-weight: 900;
 }
-
-.loading-orbit span {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  height: 0.45rem;
-  width: 0.45rem;
-  border-radius: 999px;
-  background: var(--accent);
-  --dot-x: -50%;
-  animation: loadingDots 1s ease-in-out infinite;
-}
-
-.loading-orbit span:nth-child(1) {
-  --dot-x: calc(-50% - 0.65rem);
-}
-
-.loading-orbit span:nth-child(2) {
-  animation-delay: 140ms;
-}
-
-.loading-orbit span:nth-child(3) {
-  --dot-x: calc(-50% + 0.65rem);
-  animation-delay: 280ms;
-}
-
 .loading-rails {
   display: grid;
   max-width: 22rem;

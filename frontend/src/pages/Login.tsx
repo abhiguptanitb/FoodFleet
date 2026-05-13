@@ -60,8 +60,16 @@ const Login = () => {
   const { setUser, setIsAuth } = useAppData();
 
   const responseGoogle = async (authResult: any) => {
-    setLoading(true);
     setAuthError("");
+
+    if (!authResult?.code) {
+      const message = "Google sign-in did not return an authorization code. Please try again.";
+      setAuthError(message);
+      toast.error(message, { duration: 5000 });
+      return;
+    }
+
+    setLoading(true);
     try {
       const result = await axios.post(
         `${authService}/api/auth/login`,
@@ -80,13 +88,22 @@ const Login = () => {
       navigate(getRoleHomePath(result.data.user?.role));
     } catch (error) {
       const message =
-        axios.isAxiosError(error) && error.response?.data?.message
+        axios.isAxiosError(error) && !error.response
+          ? "Auth service is not reachable. Please start the auth backend and try again."
+          : axios.isAxiosError(error) && error.response?.data?.message
           ? error.response.data.message
           : "Problem while login";
       setAuthError(message);
       toast.error(message, { duration: 5000 });
       setLoading(false);
     }
+  };
+
+  const handleGoogleError = () => {
+    const message = "Google sign-in was cancelled or could not start. Please try again.";
+    setAuthError(message);
+    toast.error(message, { duration: 5000 });
+    setLoading(false);
   };
 
   const startGoogleLogin = () => {
@@ -100,7 +117,7 @@ const Login = () => {
 
   const googleLogin = useGoogleLogin({
     onSuccess: responseGoogle,
-    onError: responseGoogle,
+    onError: handleGoogleError,
     flow: "auth-code",
   });
   return (

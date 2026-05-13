@@ -1,3 +1,5 @@
+import { useAppData } from "../context/AppContext";
+
 type LoadingStateProps = {
   eyebrow?: string;
   title: string;
@@ -17,13 +19,17 @@ const LoadingState = ({
   copy,
   compact = false,
 }: LoadingStateProps) => {
+  const { user } = useAppData();
+  const roleClass = `role-${user?.role || "customer"}`;
+
   if (compact) {
     return (
-      <div className="loading-card loading-card-compact">
-        <div className="loading-orbit" aria-hidden="true">
-          <span />
-          <span />
-          <span />
+      <div className={`loading-card loading-card-compact ${roleClass}`}>
+        <div
+          className="brand-mark loading-brand-mark-compact flex items-center justify-center text-white"
+          aria-hidden="true"
+        >
+          F
         </div>
         <div className="min-w-0">
           <p className="text-sm font-black text-[var(--text)]">{title}</p>
@@ -38,10 +44,13 @@ const LoadingState = ({
   }
 
   return (
-    <div className="page-wrap flex min-h-[60vh] items-center justify-center py-8">
+    <div className={`page-wrap flex min-h-[60vh] items-center justify-center py-8 ${roleClass}`}>
       <div className="loading-card fade-up w-full max-w-xl px-6 py-10 text-center sm:px-8">
-        <div className="loading-mark mx-auto" aria-hidden="true">
-          <span>F</span>
+        <div
+          className="brand-mark loading-brand-mark mx-auto flex items-center justify-center text-white"
+          aria-hidden="true"
+        >
+          F
         </div>
         <p className="pill-label mx-auto mt-6 w-fit">{eyebrow}</p>
         <h1 className="section-title mt-4">{title}</h1>
