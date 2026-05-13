@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { AuthenticatedRequest } from "../middlewares/isAuth.js";
 import TryCatch from "../middlewares/trycatch.js";
 import Address from "../models/Address.js";
+import { validateAddressInput } from "../utils/validation.js";
 
 export const addAddress = TryCatch(async (req: AuthenticatedRequest, res) => {
   const user = req.user;
@@ -12,18 +13,15 @@ export const addAddress = TryCatch(async (req: AuthenticatedRequest, res) => {
     });
   }
 
-  const { mobile, formattedAddress, latitude, longitude } = req.body;
+  const validation = validateAddressInput(req.body);
 
-  if (
-    !mobile ||
-    !formattedAddress ||
-    latitude === undefined ||
-    longitude === undefined
-  ) {
+  if (validation.error) {
     return res.status(400).json({
-      message: "Please give all fields",
+      message: validation.error,
     });
   }
+
+  const { mobile, formattedAddress, latitude, longitude } = validation.value!;
 
   const newAddress = await Address.create({
     userId: user._id.toString(),
@@ -31,7 +29,7 @@ export const addAddress = TryCatch(async (req: AuthenticatedRequest, res) => {
     formattedAddress,
     location: {
       type: "Point",
-      coordinates: [Number(longitude), Number(latitude)],
+      coordinates: [longitude, latitude],
     },
   });
 

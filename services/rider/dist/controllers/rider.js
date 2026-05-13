@@ -2,6 +2,7 @@ import axios from "axios";
 import getBuffer from "../config/datauri.js";
 import TryCatch from "../middlewares/trycatch.js";
 import { Rider } from "../model/Rider.js";
+import { validateLocationInput, validateRiderProfileInput, } from "../utils/validation.js";
 const getUserIdCandidates = (userId) => {
     const candidateIds = new Set();
     if (typeof userId === "string" && userId.trim()) {
@@ -38,6 +39,27 @@ export const addRiderProfile = TryCatch(async (req, res) => {
             message: "Only riders can create rider profile",
         });
     }
+    const [normalizedUserId] = getUserIdCandidates(user._id);
+    const validation = validateRiderProfileInput(req.body, {
+        requireLocation: true,
+    });
+    if (validation.error) {
+        return res.status(400).json({
+            message: validation.error,
+        });
+    }
+    const profileInput = validation.value;
+    if (!normalizedUserId) {
+        return res.status(400).json({
+            message: "Invalid rider account",
+        });
+    }
+    const existingProfile = await Rider.findOne(buildUserIdExpr("userId", user._id));
+    if (existingProfile) {
+        return res.status(400).json({
+            message: "Rider profile already exists",
+        });
+    }
     const file = req.file;
     if (!file) {
         return res.status(400).json({
@@ -53,24 +75,7 @@ export const addRiderProfile = TryCatch(async (req, res) => {
     const { data: uploadResult } = await axios.post(`${process.env.UTILS_SERVICE}/api/upload`, {
         buffer: fileBuffer.content,
     });
-    const { phoneNumber, aadharNumber, drivingLicenseNumber, latitude, longitude, } = req.body;
-    const [normalizedUserId] = getUserIdCandidates(user._id);
-    if (!phoneNumber ||
-        !aadharNumber ||
-        !drivingLicenseNumber ||
-        latitude === undefined ||
-        longitude === undefined ||
-        !normalizedUserId) {
-        return res.status(400).json({
-            message: "All fields are required",
-        });
-    }
-    const existingProfile = await Rider.findOne(buildUserIdExpr("userId", user._id));
-    if (existingProfile) {
-        return res.status(400).json({
-            message: "Rider profile already exists",
-        });
-    }
+    const { phoneNumber, aadharNumber, drivingLicenseNumber, latitude, longitude, } = profileInput;
     const riderProfile = await Rider.create({
         userId: normalizedUserId,
         picture: uploadResult.url,
@@ -117,11 +122,13 @@ export const toggleRiderAvailablity = TryCatch(async (req, res) => {
             message: "isAvailble must be boolean",
         });
     }
-    if (latitude === undefined || longitude === undefined) {
+    const locationValidation = validateLocationInput(req.body);
+    if (locationValidation.error) {
         return res.status(400).json({
-            message: "location is required",
+            message: locationValidation.error,
         });
     }
+    const locationInput = locationValidation.value;
     const rider = await Rider.findOne(buildUserIdExpr("userId", user._id));
     if (!rider) {
         return res.status(404).json({
@@ -136,7 +143,7 @@ export const toggleRiderAvailablity = TryCatch(async (req, res) => {
     rider.isAvailble = isAvailble;
     rider.location = {
         type: "Point",
-        coordinates: [longitude, latitude],
+        coordinates: [locationInput.longitude, locationInput.latitude],
     };
     rider.lastActiveAt = new Date();
     await rider.save();
@@ -157,18 +164,13 @@ export const updateRiderLocation = TryCatch(async (req, res) => {
             message: "Only riders can update rider location",
         });
     }
-    const parsedLatitude = Number(req.body.latitude);
-    const parsedLongitude = Number(req.body.longitude);
-    if (Number.isNaN(parsedLatitude) ||
-        Number.isNaN(parsedLongitude) ||
-        parsedLatitude < -90 ||
-        parsedLatitude > 90 ||
-        parsedLongitude < -180 ||
-        parsedLongitude > 180) {
+    const locationValidation = validateLocationInput(req.body);
+    if (locationValidation.error) {
         return res.status(400).json({
-            message: "Valid latitude and longitude are required",
+            message: locationValidation.error,
         });
     }
+    const locationInput = locationValidation.value;
     const rider = await Rider.findOne(buildUserIdExpr("userId", user._id));
     if (!rider) {
         return res.status(404).json({
@@ -177,7 +179,7 @@ export const updateRiderLocation = TryCatch(async (req, res) => {
     }
     rider.location = {
         type: "Point",
-        coordinates: [parsedLongitude, parsedLatitude],
+        coordinates: [locationInput.longitude, locationInput.latitude],
     };
     rider.lastActiveAt = new Date();
     await rider.save();
@@ -252,8 +254,11 @@ export const fetchMyCurrentOrder = TryCatch(async (req, res) => {
         });
     }
     catch (error) {
-        res.status(500).json({
-            message: error.response.data.message,
+        if (error.response?.status === 404) {
+            return res.json({ order: null });
+        }
+        res.status(error.response?.status || 500).json({
+            message: error.response?.data?.message || "Failed to fetch current order",
         });
     }
 });
@@ -270,13 +275,16 @@ export const updateRiderProfile = TryCatch(async (req, res) => {
             message: "Rider profile not found",
         });
     }
-    const { phoneNumber, aadharNumber, drivingLicenseNumber } = req.body;
-    if (phoneNumber)
-        rider.phoneNumber = phoneNumber;
-    if (aadharNumber)
-        rider.aadharNumber = aadharNumber;
-    if (drivingLicenseNumber)
-        rider.drivingLicenseNumber = drivingLicenseNumber;
+    const validation = validateRiderProfileInput(req.body);
+    if (validation.error) {
+        return res.status(400).json({
+            message: validation.error,
+        });
+    }
+    const profileInput = validation.value;
+    rider.phoneNumber = profileInput.phoneNumber;
+    rider.aadharNumber = profileInput.aadharNumber;
+    rider.drivingLicenseNumber = profileInput.drivingLicenseNumber;
     const file = req.file;
     if (file) {
         const fileBuffer = getBuffer(file);

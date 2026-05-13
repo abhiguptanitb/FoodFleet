@@ -130,6 +130,51 @@ const getRiderPoint = (profile: IRider | null) => {
   };
 };
 
+type RiderDocumentField = "phoneNumber" | "aadharNumber" | "drivingLicenseNumber";
+
+const emptyRiderFieldErrors: Record<RiderDocumentField, string> = {
+  phoneNumber: "",
+  aadharNumber: "",
+  drivingLicenseNumber: "",
+};
+
+const getRiderFieldError = (field: RiderDocumentField, value: string) => {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
+    if (field === "aadharNumber") return "Aadhaar number is required";
+    if (field === "phoneNumber") return "Phone number is required";
+    return "Driving licence number is required";
+  }
+
+  if (field === "aadharNumber") {
+    if (!/^\d+$/.test(trimmedValue)) return "Only use numbers";
+    if (trimmedValue.length !== 12) return "Aadhaar must be exactly 12 digits";
+  }
+
+  if (field === "phoneNumber") {
+    if (!/^\d+$/.test(trimmedValue)) return "Only use numbers";
+    if (!/^[6-9]/.test(trimmedValue)) return "Mobile number must start with 6, 7, 8, or 9";
+    if (trimmedValue.length !== 10) return "Mobile number must be 10 digits";
+  }
+
+  if (field === "drivingLicenseNumber") {
+    if (!/^[A-Z0-9]+$/.test(trimmedValue)) return "Only use letters and numbers";
+    if (!/^[A-Z]{2}/.test(trimmedValue)) return "Start with 2 letters";
+    if (trimmedValue.length >= 4 && !/^[A-Z]{2}[0-9]{2}/.test(trimmedValue)) {
+      return "Use 2 letters followed by 2 numbers";
+    }
+    if (!/^[A-Z]{2}[0-9]{2}[A-Z0-9]{7,13}$/.test(trimmedValue)) {
+      return "Driving licence must be 11 to 17 letters/numbers";
+    }
+  }
+
+  return "";
+};
+
+const FieldError = ({ message }: { message?: string }) =>
+  message ? <p className="field-error">{message}</p> : null;
+
 const RiderDashboard = () => {
   const { user } = useAppData();
   const { socket } = useSocket();
@@ -251,8 +296,7 @@ const RiderDashboard = () => {
       );
 
       setCurrentOrder(data.order);
-    } catch (error) {
-      console.log(error);
+    } catch {
       setCurrentOrder(null);
     }
   };
@@ -436,8 +480,79 @@ const RiderDashboard = () => {
   const [image, setImage] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [editingProfile, setEditingProfile] = useState(false);
+  const [riderFieldErrors, setRiderFieldErrors] = useState(emptyRiderFieldErrors);
+  const [touchedRiderFields, setTouchedRiderFields] = useState<
+    Record<RiderDocumentField, boolean>
+  >({
+    phoneNumber: false,
+    aadharNumber: false,
+    drivingLicenseNumber: false,
+  });
+
+  const updateDigitsOnly = (
+    value: string,
+    maxLength: number,
+    setter: (nextValue: string) => void,
+    field: Extract<RiderDocumentField, "phoneNumber" | "aadharNumber">
+  ) => {
+    const nextValue = value.replace(/\D/g, "").slice(0, maxLength);
+    setter(nextValue);
+    setTouchedRiderFields((prev) => ({ ...prev, [field]: true }));
+    setRiderFieldErrors((prev) => ({
+      ...prev,
+      [field]: /\D/.test(value) ? "Only use numbers" : getRiderFieldError(field, nextValue),
+    }));
+  };
+
+  const updateLicenseNumber = (value: string) => {
+    const nextValue = value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 17);
+    setDrivingLicenseNumber(nextValue);
+    setTouchedRiderFields((prev) => ({ ...prev, drivingLicenseNumber: true }));
+    setRiderFieldErrors((prev) => ({
+      ...prev,
+      drivingLicenseNumber: /[^A-Z0-9]/i.test(value)
+        ? "Only use letters and numbers"
+        : getRiderFieldError("drivingLicenseNumber", nextValue),
+    }));
+  };
+
+  const validateRiderDocuments = () => {
+    const nextErrors = {
+      phoneNumber: getRiderFieldError("phoneNumber", phoneNumber),
+      aadharNumber: getRiderFieldError("aadharNumber", aadharNumber),
+      drivingLicenseNumber: getRiderFieldError(
+        "drivingLicenseNumber",
+        drivingLicenseNumber
+      ),
+    };
+
+    setTouchedRiderFields({
+      phoneNumber: true,
+      aadharNumber: true,
+      drivingLicenseNumber: true,
+    });
+    setRiderFieldErrors(nextErrors);
+
+    return !Object.values(nextErrors).some(Boolean);
+  };
+
+  const riderDocumentsInvalid = Boolean(
+    getRiderFieldError("phoneNumber", phoneNumber) ||
+      getRiderFieldError("aadharNumber", aadharNumber) ||
+      getRiderFieldError("drivingLicenseNumber", drivingLicenseNumber)
+  );
 
   const handleSubmit = async () => {
+    if (!validateRiderDocuments()) {
+      toast.error("Please fix the highlighted fields");
+      return;
+    }
+
+    if (!image) {
+      toast.error("Rider image is required");
+      return;
+    }
+
     if (!navigator.geolocation) {
       toast.error("Location Access Required");
       return;
@@ -445,41 +560,63 @@ const RiderDashboard = () => {
 
     setSubmitting(true);
 
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-      const formData = new FormData();
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const formData = new FormData();
 
-      formData.append("phoneNumber", phoneNumber);
-      formData.append("aadharNumber", aadharNumber);
-      formData.append("drivingLicenseNumber", drivingLicenseNumber);
-      formData.append("latitude", pos.coords.latitude.toString());
-      formData.append("longitude", pos.coords.longitude.toString());
+        formData.append("phoneNumber", phoneNumber);
+        formData.append("aadharNumber", aadharNumber);
+        formData.append("drivingLicenseNumber", drivingLicenseNumber);
+        formData.append("latitude", pos.coords.latitude.toString());
+        formData.append("longitude", pos.coords.longitude.toString());
 
-      if (image) {
         formData.append("file", image);
-      }
 
-      try {
-        const { data } = await axios.post(
-          `${riderService}/api/rider/new`,
-          formData,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
+        try {
+          const { data } = await axios.post(
+            `${riderService}/api/rider/new`,
+            formData,
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
+          );
 
-        toast.success(data.message);
-        fetchProfile();
-      } catch (error: any) {
-        toast.error(error.response.data.message);
-      } finally {
+          toast.success(data.message);
+          fetchProfile();
+        } catch (error: any) {
+          toast.error(error.response?.data?.message || "Failed to create profile");
+        } finally {
+          setSubmitting(false);
+        }
+      },
+      () => {
+        toast.error("Location permission denied");
         setSubmitting(false);
       }
+    );
+  };
+
+  const resetRiderForm = () => {
+    setPhoneNumber("");
+    setaadharNumber("");
+    setDrivingLicenseNumber("");
+    setImage(null);
+    setRiderFieldErrors(emptyRiderFieldErrors);
+    setTouchedRiderFields({
+      phoneNumber: false,
+      aadharNumber: false,
+      drivingLicenseNumber: false,
     });
   };
 
   const updateProfile = async () => {
+    if (!validateRiderDocuments()) {
+      toast.error("Please fix the highlighted fields");
+      return;
+    }
+
     const formData = new FormData();
     formData.append("phoneNumber", phoneNumber || profile?.phoneNumber || "");
     formData.append("aadharNumber", aadharNumber || profile?.aadharNumber || "");
@@ -499,15 +636,12 @@ const RiderDashboard = () => {
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
+          }
         }
       );
       toast.success(data.message);
       setEditingProfile(false);
-      setPhoneNumber("");
-      setaadharNumber("");
-      setDrivingLicenseNumber("");
-      setImage(null);
+      resetRiderForm();
       fetchProfile();
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to update profile");
@@ -580,26 +714,71 @@ const RiderDashboard = () => {
 
             <div className="mt-8 space-y-4">
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
+                maxLength={12}
                 placeholder="Aadhaar number"
                 value={aadharNumber}
-                onChange={(e) => setaadharNumber(e.target.value)}
-                className="field-input"
+                onChange={(e) =>
+                  updateDigitsOnly(e.target.value, 12, setaadharNumber, "aadharNumber")
+                }
+                aria-invalid={Boolean(touchedRiderFields.aadharNumber && riderFieldErrors.aadharNumber)}
+                className={`field-input ${
+                  touchedRiderFields.aadharNumber && riderFieldErrors.aadharNumber
+                    ? "field-input-error"
+                    : ""
+                }`}
+              />
+              <FieldError
+                message={
+                  touchedRiderFields.aadharNumber ? riderFieldErrors.aadharNumber : ""
+                }
               />
               <input
-                type="number"
+                type="text"
+                inputMode="tel"
+                maxLength={10}
                 placeholder="Contact number"
                 value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                className="field-input"
+                onChange={(e) =>
+                  updateDigitsOnly(e.target.value, 10, setPhoneNumber, "phoneNumber")
+                }
+                aria-invalid={Boolean(touchedRiderFields.phoneNumber && riderFieldErrors.phoneNumber)}
+                className={`field-input ${
+                  touchedRiderFields.phoneNumber && riderFieldErrors.phoneNumber
+                    ? "field-input-error"
+                    : ""
+                }`}
+              />
+              <FieldError
+                message={
+                  touchedRiderFields.phoneNumber ? riderFieldErrors.phoneNumber : ""
+                }
               />
 
               <input
                 type="text"
+                maxLength={17}
                 placeholder="Driving licence number"
                 value={drivingLicenseNumber}
-                onChange={(e) => setDrivingLicenseNumber(e.target.value)}
-                className="field-input"
+                onChange={(e) => updateLicenseNumber(e.target.value)}
+                aria-invalid={Boolean(
+                  touchedRiderFields.drivingLicenseNumber &&
+                    riderFieldErrors.drivingLicenseNumber
+                )}
+                className={`field-input ${
+                  touchedRiderFields.drivingLicenseNumber &&
+                  riderFieldErrors.drivingLicenseNumber
+                    ? "field-input-error"
+                    : ""
+                }`}
+              />
+              <FieldError
+                message={
+                  touchedRiderFields.drivingLicenseNumber
+                    ? riderFieldErrors.drivingLicenseNumber
+                    : ""
+                }
               />
 
               <label className="flex cursor-pointer items-center gap-3 rounded-[20px] border border-[#d8e3ef] bg-white px-4 py-4 text-sm text-[var(--text-soft)] shadow-[0_12px_24px_rgba(15,23,42,0.06)] hover:bg-[#eef6ff]">
@@ -622,7 +801,7 @@ const RiderDashboard = () => {
 
               <button
                 className="brand-button w-full py-3.5 text-sm font-semibold"
-                disabled={submitting}
+                disabled={submitting || riderDocumentsInvalid || !image}
                 onClick={handleSubmit}
               >
                 {submitting ? "Submitting..." : "Create Rider Profile"}
@@ -697,6 +876,12 @@ const RiderDashboard = () => {
                     setPhoneNumber(profile.phoneNumber);
                     setaadharNumber(profile.aadharNumber);
                     setDrivingLicenseNumber(profile.drivingLicenseNumber);
+                    setRiderFieldErrors(emptyRiderFieldErrors);
+                    setTouchedRiderFields({
+                      phoneNumber: false,
+                      aadharNumber: false,
+                      drivingLicenseNumber: false,
+                    });
                     setEditingProfile(true);
                   }}
                   className="action-button px-4 py-3 text-sm"
@@ -975,22 +1160,67 @@ const RiderDashboard = () => {
             </p>
             <div className="mt-5 space-y-4">
               <input
-                className="field-input"
+                className={`field-input ${
+                  touchedRiderFields.phoneNumber && riderFieldErrors.phoneNumber
+                    ? "field-input-error"
+                    : ""
+                }`}
                 value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
+                onChange={(e) =>
+                  updateDigitsOnly(e.target.value, 10, setPhoneNumber, "phoneNumber")
+                }
+                inputMode="tel"
+                maxLength={10}
                 placeholder="Phone number"
+                aria-invalid={Boolean(touchedRiderFields.phoneNumber && riderFieldErrors.phoneNumber)}
+              />
+              <FieldError
+                message={
+                  touchedRiderFields.phoneNumber ? riderFieldErrors.phoneNumber : ""
+                }
               />
               <input
-                className="field-input"
+                className={`field-input ${
+                  touchedRiderFields.aadharNumber && riderFieldErrors.aadharNumber
+                    ? "field-input-error"
+                    : ""
+                }`}
                 value={aadharNumber}
-                onChange={(e) => setaadharNumber(e.target.value)}
+                onChange={(e) =>
+                  updateDigitsOnly(e.target.value, 12, setaadharNumber, "aadharNumber")
+                }
+                inputMode="numeric"
+                maxLength={12}
                 placeholder="Aadhaar number"
+                aria-invalid={Boolean(touchedRiderFields.aadharNumber && riderFieldErrors.aadharNumber)}
+              />
+              <FieldError
+                message={
+                  touchedRiderFields.aadharNumber ? riderFieldErrors.aadharNumber : ""
+                }
               />
               <input
-                className="field-input"
+                className={`field-input ${
+                  touchedRiderFields.drivingLicenseNumber &&
+                  riderFieldErrors.drivingLicenseNumber
+                    ? "field-input-error"
+                    : ""
+                }`}
                 value={drivingLicenseNumber}
-                onChange={(e) => setDrivingLicenseNumber(e.target.value)}
+                onChange={(e) => updateLicenseNumber(e.target.value)}
+                maxLength={17}
                 placeholder="Driving license number"
+                aria-invalid={Boolean(
+                  touchedRiderFields.drivingLicenseNumber &&
+                    riderFieldErrors.drivingLicenseNumber
+                )}
+              />
+              <FieldError
+                message={
+                  touchedRiderFields.drivingLicenseNumber
+                    ? riderFieldErrors.drivingLicenseNumber
+                    : ""
+                }
               />
               <label className="ui-row flex cursor-pointer items-center gap-3 p-4 text-sm text-[var(--text-soft)]">
                 <BiUpload className="h-5 w-5 text-[var(--accent)]" />
@@ -1016,7 +1246,7 @@ const RiderDashboard = () => {
               <button
                 type="button"
                 onClick={updateProfile}
-                disabled={submitting}
+                disabled={submitting || riderDocumentsInvalid}
                 className="action-button action-button-primary px-4 py-3 text-sm disabled:opacity-60"
               >
                 {submitting ? "Saving..." : "Submit for Review"}

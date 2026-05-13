@@ -564,9 +564,7 @@ export const getCurrentOrderForRider = TryCatch(async (req, res) => {
   }).populate("restaurantId");
 
   if (!order) {
-    return res.status(404).json({
-      message: "Order not found",
-    });
+    return res.json(null);
   }
 
   res.json(order);

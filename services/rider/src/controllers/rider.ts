@@ -3,6 +3,10 @@ import getBuffer from "../config/datauri.js";
 import { AuthenticatedRequest } from "../middlewares/isAuth.js";
 import TryCatch from "../middlewares/trycatch.js";
 import { Rider } from "../model/Rider.js";
+import {
+  validateLocationInput,
+  validateRiderProfileInput,
+} from "../utils/validation.js";
 
 const getUserIdCandidates = (userId: unknown) => {
   const candidateIds = new Set<string>();
@@ -54,6 +58,34 @@ export const addRiderProfile = TryCatch(
       });
     }
 
+    const [normalizedUserId] = getUserIdCandidates(user._id);
+    const validation = validateRiderProfileInput(req.body, {
+      requireLocation: true,
+    });
+
+    if (validation.error) {
+      return res.status(400).json({
+        message: validation.error,
+      });
+    }
+    const profileInput = validation.value!;
+
+    if (!normalizedUserId) {
+      return res.status(400).json({
+        message: "Invalid rider account",
+      });
+    }
+
+    const existingProfile = await Rider.findOne(
+      buildUserIdExpr("userId", user._id)
+    );
+
+    if (existingProfile) {
+      return res.status(400).json({
+        message: "Rider profile already exists",
+      });
+    }
+
     const file = req.file;
 
     if (!file) {
@@ -83,31 +115,7 @@ export const addRiderProfile = TryCatch(
       drivingLicenseNumber,
       latitude,
       longitude,
-    } = req.body;
-    const [normalizedUserId] = getUserIdCandidates(user._id);
-
-    if (
-      !phoneNumber ||
-      !aadharNumber ||
-      !drivingLicenseNumber ||
-      latitude === undefined ||
-      longitude === undefined ||
-      !normalizedUserId
-    ) {
-      return res.status(400).json({
-        message: "All fields are required",
-      });
-    }
-
-    const existingProfile = await Rider.findOne(
-      buildUserIdExpr("userId", user._id)
-    );
-
-    if (existingProfile) {
-      return res.status(400).json({
-        message: "Rider profile already exists",
-      });
-    }
+    } = profileInput;
 
     const riderProfile = await Rider.create({
       userId: normalizedUserId,
@@ -117,7 +125,7 @@ export const addRiderProfile = TryCatch(
       drivingLicenseNumber,
       location: {
         type: "Point",
-        coordinates: [longitude, latitude],
+        coordinates: [longitude as number, latitude as number],
       },
       isAvailble: false,
       isVerified: false,
@@ -170,11 +178,14 @@ export const toggleRiderAvailablity = TryCatch(
       });
     }
 
-    if (latitude === undefined || longitude === undefined) {
+    const locationValidation = validateLocationInput(req.body);
+
+    if (locationValidation.error) {
       return res.status(400).json({
-        message: "location is required",
+        message: locationValidation.error,
       });
     }
+    const locationInput = locationValidation.value!;
 
     const rider = await Rider.findOne(buildUserIdExpr("userId", user._id));
 
@@ -194,7 +205,7 @@ export const toggleRiderAvailablity = TryCatch(
 
     rider.location = {
       type: "Point",
-      coordinates: [longitude, latitude],
+      coordinates: [locationInput.longitude, locationInput.latitude],
     };
     rider.lastActiveAt = new Date();
 
@@ -223,21 +234,14 @@ export const updateRiderLocation = TryCatch(
       });
     }
 
-    const parsedLatitude = Number(req.body.latitude);
-    const parsedLongitude = Number(req.body.longitude);
+    const locationValidation = validateLocationInput(req.body);
 
-    if (
-      Number.isNaN(parsedLatitude) ||
-      Number.isNaN(parsedLongitude) ||
-      parsedLatitude < -90 ||
-      parsedLatitude > 90 ||
-      parsedLongitude < -180 ||
-      parsedLongitude > 180
-    ) {
+    if (locationValidation.error) {
       return res.status(400).json({
-        message: "Valid latitude and longitude are required",
+        message: locationValidation.error,
       });
     }
+    const locationInput = locationValidation.value!;
 
     const rider = await Rider.findOne(buildUserIdExpr("userId", user._id));
 
@@ -249,7 +253,7 @@ export const updateRiderLocation = TryCatch(
 
     rider.location = {
       type: "Point",
-      coordinates: [parsedLongitude, parsedLatitude],
+      coordinates: [locationInput.longitude, locationInput.latitude],
     };
     rider.lastActiveAt = new Date();
 
@@ -350,8 +354,13 @@ export const fetchMyCurrentOrder = TryCatch(
         order: data,
       });
     } catch (error: any) {
-      res.status(500).json({
-        message: error.response.data.message,
+      if (error.response?.status === 404) {
+        return res.json({ order: null });
+      }
+
+      res.status(error.response?.status || 500).json({
+        message:
+          error.response?.data?.message || "Failed to fetch current order",
       });
     }
   }
@@ -375,11 +384,18 @@ export const updateRiderProfile = TryCatch(
       });
     }
 
-    const { phoneNumber, aadharNumber, drivingLicenseNumber } = req.body;
+    const validation = validateRiderProfileInput(req.body);
 
-    if (phoneNumber) rider.phoneNumber = phoneNumber;
-    if (aadharNumber) rider.aadharNumber = aadharNumber;
-    if (drivingLicenseNumber) rider.drivingLicenseNumber = drivingLicenseNumber;
+    if (validation.error) {
+      return res.status(400).json({
+        message: validation.error,
+      });
+    }
+    const profileInput = validation.value!;
+
+    rider.phoneNumber = profileInput.phoneNumber;
+    rider.aadharNumber = profileInput.aadharNumber;
+    rider.drivingLicenseNumber = profileInput.drivingLicenseNumber;
 
     const file = req.file;
     if (file) {

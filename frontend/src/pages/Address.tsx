@@ -28,6 +28,35 @@ interface Address {
   mobile: number;
 }
 
+type AddressField = "mobile" | "formattedAddress";
+
+const emptyAddressErrors: Record<AddressField, string> = {
+  mobile: "",
+  formattedAddress: "",
+};
+
+const getAddressFieldError = (field: AddressField, value: string) => {
+  const trimmedValue = value.trim();
+
+  if (field === "mobile") {
+    if (!trimmedValue) return "Mobile number is required";
+    if (!/^\d+$/.test(trimmedValue)) return "Only use numbers";
+    if (!/^[6-9]/.test(trimmedValue)) return "Mobile number must start with 6, 7, 8, or 9";
+    if (trimmedValue.length !== 10) return "Mobile number must be 10 digits";
+  }
+
+  if (field === "formattedAddress") {
+    if (!trimmedValue) return "Address is required";
+    if (trimmedValue.length < 8) return "Address must be at least 8 characters";
+    if (trimmedValue.length > 300) return "Address must stay under 300 characters";
+  }
+
+  return "";
+};
+
+const FieldError = ({ message }: { message?: string }) =>
+  message ? <p className="field-error">{message}</p> : null;
+
 const LocationPicker = ({
   setLocation,
 }: {
@@ -92,6 +121,13 @@ const AddAddressPage = () => {
   const [formattedAddress, setFormattedAddress] = useState("");
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
+  const [addressErrors, setAddressErrors] = useState(emptyAddressErrors);
+  const [touchedAddressFields, setTouchedAddressFields] = useState<
+    Record<AddressField, boolean>
+  >({
+    mobile: false,
+    formattedAddress: false,
+  });
 
   const fetchFormattedAddress = async (lat: number, lng: number) => {
     try {
@@ -99,7 +135,12 @@ const AddAddressPage = () => {
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
       );
       const data = await res.json();
-      setFormattedAddress(data.display_name || "");
+      const nextAddress = data.display_name || "";
+      setFormattedAddress(nextAddress);
+      setAddressErrors((prev) => ({
+        ...prev,
+        formattedAddress: getAddressFieldError("formattedAddress", nextAddress),
+      }));
     } catch {
       toast.error("Failed to fetch address");
     }
@@ -110,6 +151,47 @@ const AddAddressPage = () => {
     setLongitude(lng);
     fetchFormattedAddress(lat, lng);
   };
+
+  const updateMobile = (value: string) => {
+    const nextValue = value.replace(/\D/g, "").slice(0, 10);
+    setMobile(nextValue);
+    setTouchedAddressFields((prev) => ({ ...prev, mobile: true }));
+    setAddressErrors((prev) => ({
+      ...prev,
+      mobile: /\D/.test(value) ? "Only use numbers" : getAddressFieldError("mobile", nextValue),
+    }));
+  };
+
+  const updateFormattedAddress = (value: string) => {
+    setFormattedAddress(value);
+    setTouchedAddressFields((prev) => ({ ...prev, formattedAddress: true }));
+    setAddressErrors((prev) => ({
+      ...prev,
+      formattedAddress: getAddressFieldError("formattedAddress", value),
+    }));
+  };
+
+  const validateAddressForm = () => {
+    const nextErrors = {
+      mobile: getAddressFieldError("mobile", mobile),
+      formattedAddress: getAddressFieldError("formattedAddress", formattedAddress),
+    };
+
+    setTouchedAddressFields({
+      mobile: true,
+      formattedAddress: true,
+    });
+    setAddressErrors(nextErrors);
+
+    return !Object.values(nextErrors).some(Boolean);
+  };
+
+  const addressFormInvalid = Boolean(
+    getAddressFieldError("mobile", mobile) ||
+      getAddressFieldError("formattedAddress", formattedAddress) ||
+      latitude === null ||
+      longitude === null
+  );
 
   const fetchAddresses = async () => {
     const headers = getAuthHeaders();
@@ -142,8 +224,8 @@ const AddAddressPage = () => {
       return;
     }
 
-    if (!mobile || !formattedAddress) {
-      toast.error("Please fill in both mobile and address details");
+    if (!validateAddressForm()) {
+      toast.error("Please fix the highlighted fields");
       return;
     }
 
@@ -158,7 +240,7 @@ const AddAddressPage = () => {
       await axios.post(
         `${restaurantService}/api/address/new`,
         {
-          formattedAddress,
+          formattedAddress: formattedAddress.trim(),
           mobile,
           latitude,
           longitude,
@@ -171,6 +253,11 @@ const AddAddressPage = () => {
       setFormattedAddress("");
       setLatitude(null);
       setLongitude(null);
+      setAddressErrors(emptyAddressErrors);
+      setTouchedAddressFields({
+        mobile: false,
+        formattedAddress: false,
+      });
       fetchAddresses();
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to add address");
@@ -241,22 +328,49 @@ const AddAddressPage = () => {
           <h2 className="text-xl font-semibold text-[#1f1a17]">Save New Address</h2>
           <div className="mt-4 space-y-4">
             <input
-              type="number"
+              type="text"
+              inputMode="tel"
+              maxLength={10}
               placeholder="Mobile number"
               value={mobile}
-              onChange={(e) => setMobile(e.target.value)}
-              className="field-input"
+              onChange={(e) => updateMobile(e.target.value)}
+              aria-invalid={Boolean(touchedAddressFields.mobile && addressErrors.mobile)}
+              className={`field-input ${
+                touchedAddressFields.mobile && addressErrors.mobile
+                  ? "field-input-error"
+                  : ""
+              }`}
+            />
+            <FieldError
+              message={touchedAddressFields.mobile ? addressErrors.mobile : ""}
             />
             <textarea
               placeholder="Selected address will appear here"
               value={formattedAddress}
-              onChange={(e) => setFormattedAddress(e.target.value)}
+              onChange={(e) => updateFormattedAddress(e.target.value)}
               rows={4}
-              className="field-input"
+              maxLength={300}
+              aria-invalid={Boolean(
+                touchedAddressFields.formattedAddress &&
+                  addressErrors.formattedAddress
+              )}
+              className={`field-input ${
+                touchedAddressFields.formattedAddress &&
+                addressErrors.formattedAddress
+                  ? "field-input-error"
+                  : ""
+              }`}
+            />
+            <FieldError
+              message={
+                touchedAddressFields.formattedAddress
+                  ? addressErrors.formattedAddress
+                  : ""
+              }
             />
 
             <button
-              disabled={adding}
+              disabled={adding || addressFormInvalid}
               onClick={addAddress}
               className="brand-button flex w-full items-center justify-center gap-2 py-3.5 text-sm font-semibold disabled:opacity-50"
             >

@@ -1,5 +1,6 @@
 import TryCatch from "../middlewares/trycatch.js";
 import Address from "../models/Address.js";
+import { validateAddressInput } from "../utils/validation.js";
 export const addAddress = TryCatch(async (req, res) => {
     const user = req.user;
     if (!user) {
@@ -7,22 +8,20 @@ export const addAddress = TryCatch(async (req, res) => {
             message: "Unauthorized",
         });
     }
-    const { mobile, formattedAddress, latitude, longitude } = req.body;
-    if (!mobile ||
-        !formattedAddress ||
-        latitude === undefined ||
-        longitude === undefined) {
+    const validation = validateAddressInput(req.body);
+    if (validation.error) {
         return res.status(400).json({
-            message: "Please give all fields",
+            message: validation.error,
         });
     }
+    const { mobile, formattedAddress, latitude, longitude } = validation.value;
     const newAddress = await Address.create({
         userId: user._id.toString(),
         mobile,
         formattedAddress,
         location: {
             type: "Point",
-            coordinates: [Number(longitude), Number(latitude)],
+            coordinates: [longitude, latitude],
         },
     });
     res.json({

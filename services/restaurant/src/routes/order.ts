@@ -21,7 +21,6 @@ import {
 const router = express.Router();
 
 router.get("/myorder", isAuth, getMyOrders);
-router.get("/:id", isAuth, fetchSingleOrder);
 router.post("/new", isAuth, createOrder);
 router.get("/payment/:id", fetchOrderForPayment);
 router.get(
@@ -46,5 +45,6 @@ router.get("/nearby-ready/rider", getNearbyReadyOrdersForRider);
 router.get("/stats/rider", getRiderDeliveredStats);
 router.get("/history/rider", getRiderDeliveredHistory);
 router.put("/update/status/rider", updateOrderStatusRider);
+router.get("/:id", isAuth, fetchSingleOrder);
 
 export default router;
