@@ -49,8 +49,6 @@ export const connectRabbitMQ = async () => {
       await channel.assertQueue(orderReadyQueue, {
         durable: true,
       });
-
-      console.log("Connected to RabbitMQ (restaurant service)");
       return;
     } catch (error) {
       lastError = error;

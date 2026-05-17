@@ -54,9 +54,8 @@ const SelectRole = () => {
       setAccessToken(data.token);
       setUser(data.user);
       navigate(getRoleHomePath(data.user?.role), { replace: true });
-    } catch (error) {
+    } catch {
       alert("Something went wrong");
-      console.log(error);
     }
   };
 

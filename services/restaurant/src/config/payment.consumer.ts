@@ -41,8 +41,6 @@ export const startPaymentConsumer = async () => {
         return;
       }
 
-      console.log("✅Order Placed:", order._id);
-
       await Cart.deleteMany({
         userId: order.userId,
         restaurantId: order.restaurantId,

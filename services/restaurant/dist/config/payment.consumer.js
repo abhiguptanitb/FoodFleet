@@ -30,7 +30,6 @@ export const startPaymentConsumer = async () => {
                 channel.ack(msg);
                 return;
             }
-            console.log("✅Order Placed:", order._id);
             await Cart.deleteMany({
                 userId: order.userId,
                 restaurantId: order.restaurantId,

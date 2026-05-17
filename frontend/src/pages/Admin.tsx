@@ -110,8 +110,8 @@ const Admin = () => {
       setRestaurant(data.restaurants);
       setRiders(response.data.riders);
       setCustomers(customerResponse.data.customers);
-    } catch (error) {
-      console.log(error);
+    } catch {
+      toast.error("Failed to load admin data");
     } finally {
       setLoading(false);
     }

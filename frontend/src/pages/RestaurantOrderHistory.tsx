@@ -53,8 +53,7 @@ const RestaurantOrderHistory = () => {
 
       setRestaurants(restaurantsResponse.data.restaurants || []);
       setOrders(historyResponse.data.orders || []);
-    } catch (error) {
-      console.log(error);
+    } catch {
       setOrders([]);
     } finally {
       setLoading(false);

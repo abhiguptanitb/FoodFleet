@@ -11,8 +11,6 @@ const connectDB = async () => {
     dbName: process.env.DB_NAME || "FoodFleet",
     serverSelectionTimeoutMS: 10000,
   });
-
-  console.log("Auth service connected to mongodb");
 };
 
 export default connectDB;

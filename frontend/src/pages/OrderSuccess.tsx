@@ -23,9 +23,8 @@ const OrderSuccess = () => {
         window.setTimeout(() => {
           fetchCart();
         }, 700);
-      } catch (error) {
+      } catch {
         toast.error("Stripe verification failed");
-        console.log(error);
       }
     };
 

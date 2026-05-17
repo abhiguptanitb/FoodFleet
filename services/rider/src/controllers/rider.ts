@@ -604,7 +604,6 @@ export const updateOrderStatus = TryCatch(
         message: data.message,
       });
     } catch (error: any) {
-      console.log(error);
       res.status(500).json({
         message: error.response.data.message,
       });

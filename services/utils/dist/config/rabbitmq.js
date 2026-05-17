@@ -21,7 +21,6 @@ export const connectRabbitMQ = async () => {
             await channel.assertQueue(paymentQueue, {
                 durable: true,
             });
-            console.log("Connected to RabbitMQ");
             return;
         }
         catch (error) {

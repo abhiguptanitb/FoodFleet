@@ -37,8 +37,8 @@ const OrderPage = () => {
       });
 
       setOrder(data);
-    } catch (error) {
-      console.log(error);
+    } catch {
+      setOrder(null);
     } finally {
       setLoading(false);
     }

@@ -99,7 +99,7 @@ const RiderOrderMap = ({ order }: Props) => {
             }
           );
         },
-        (err) => console.log("Location Error:", err),
+        () => undefined,
         {
           enableHighAccuracy: true,
           maximumAge: 5000,

@@ -42,8 +42,6 @@ export const connectRabbitMQ = async () => {
       await channel.assertQueue(orderReadyQueue, {
         durable: true,
       });
-
-      console.log("Connected to RabbitMQ (rider service)");
       return;
     } catch (error) {
       lastError = error;

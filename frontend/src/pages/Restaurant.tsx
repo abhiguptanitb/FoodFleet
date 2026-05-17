@@ -114,8 +114,7 @@ const Restaurant = () => {
         }
       );
       setPerformance(performanceResponse.data);
-    } catch (error) {
-      console.log("Error fetching sales stats:", error);
+    } catch {
       // Keep existing stats on error
     }
   };
@@ -161,8 +160,8 @@ const Restaurant = () => {
         setSelectedRestaurantId("");
         setShowAddRestaurant(true);
       }
-    } catch (error) {
-      console.log(error);
+    } catch {
+      toast.error("Failed to load restaurants");
     } finally {
       setLoading(false);
     }
@@ -180,8 +179,8 @@ const Restaurant = () => {
       );
 
       setMenuItems(data);
-    } catch (error) {
-      console.log(error);
+    } catch {
+      setMenuItems([]);
     }
   };
 
@@ -342,8 +341,7 @@ const Restaurant = () => {
       updateRestaurantInState(data.restaurant);
       toast.success(data.message);
       closeEditModal();
-    } catch (error) {
-      console.log(error);
+    } catch {
       toast.error("Failed to update restaurant");
     } finally {
       setSavingRestaurant(false);
@@ -369,7 +367,6 @@ const Restaurant = () => {
       updateRestaurantInState(data.restaurant);
       toast.success(data.message);
     } catch (error: any) {
-      console.log(error);
       toast.error(error?.response?.data?.message || "Failed to update status");
     } finally {
       setTogglingRestaurantId(null);

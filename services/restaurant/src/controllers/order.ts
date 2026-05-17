@@ -380,18 +380,11 @@ export const updateOrderStatus = TryCatch(
 
     // now assign riders
     if (status === "ready_for_rider") {
-      console.log(
-        "Publishing Order ready for rider event for order",
-        order._id
-      );
-
       await publishEvent("ORDER_READY_FOR_RIDER", {
         orderId: order._id.toString(),
         restaurantId: restaurant._id.toString(),
         location: restaurant.autoLocation,
       });
-
-      console.log("Event Published successfully");
     }
 
     res.json({

@@ -252,8 +252,8 @@ const RiderDashboard = () => {
         const merged = new Set([...prev, ...orderIds]);
         return Array.from(merged);
       });
-    } catch (error) {
-      console.log(error);
+    } catch {
+      setIncomingOrders([]);
     }
   };
 
@@ -338,8 +338,7 @@ const RiderDashboard = () => {
         totalOrdersDelivered: data.totalOrdersDelivered || 0,
         range: data.range || range,
       });
-    } catch (error) {
-      console.log(error);
+    } catch {
       setStats({
         totalEarnings: 0,
         totalOrdersDelivered: 0,
@@ -364,8 +363,7 @@ const RiderDashboard = () => {
       );
 
       setHistoryOrders(data.orders || []);
-    } catch (error) {
-      console.log(error);
+    } catch {
       setHistoryOrders([]);
     } finally {
       setHistoryLoading(false);

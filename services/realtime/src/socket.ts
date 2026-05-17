@@ -28,8 +28,7 @@ export const initSocket = (server: http.Server) => {
       socket.data.user = decoded.user;
 
       next();
-    } catch (error) {
-      console.log("❌ Socket auth failed: ", error);
+    } catch {
       next(new Error("Unauthorized"));
     }
   });
@@ -54,14 +53,6 @@ export const initSocket = (server: http.Server) => {
       if (typeof restaurantId !== "string" || !restaurantId.trim()) return;
 
       socket.join(`restaurant:${restaurantId.trim()}`);
-      console.log(`User ${userId} joined restaurant:${restaurantId.trim()}`);
-    });
-
-    console.log(`User connected: ${userId}`);
-    console.log("Socket room: ", [...socket.rooms]);
-
-    socket.on("disconnect", () => {
-      console.log(`User disconnected:${userId}`);
     });
   });
 

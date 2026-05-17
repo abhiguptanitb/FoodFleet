@@ -48,8 +48,8 @@ const Orders = () => {
       );
 
       setOrders(data.orders || []);
-    } catch (error) {
-      console.log(error);
+    } catch {
+      setOrders([]);
     } finally {
       setLoading(false);
     }

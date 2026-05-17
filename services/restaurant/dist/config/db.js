@@ -4,10 +4,9 @@ const connectDB = async () => {
         await mongoose.connect(process.env.MONGO_URI, {
             dbName: process.env.DB_NAME || "FoodFleet",
         });
-        console.log("connected to mongodb");
     }
     catch (error) {
-        console.log(error);
+        console.error(error);
     }
 };
 export default connectDB;

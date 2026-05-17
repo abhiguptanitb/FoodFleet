@@ -28,8 +28,8 @@ const RestaurantPage = () => {
       );
 
       setRestaurant(data || null);
-    } catch (error) {
-      console.log(error);
+    } catch {
+      setRestaurant(null);
     } finally {
       setLoading(false);
     }
@@ -47,8 +47,8 @@ const RestaurantPage = () => {
       );
 
       setMenuItems(data);
-    } catch (error) {
-      console.log(error);
+    } catch {
+      setMenuItems([]);
     }
   };
 

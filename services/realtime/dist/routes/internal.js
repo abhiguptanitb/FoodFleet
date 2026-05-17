@@ -14,7 +14,6 @@ router.post("/emit", (req, res) => {
         });
     }
     const io = getIO();
-    console.log(`📶 Emitting event ${event} to room ${room}`);
     io.to(room).emit(event, payload ?? {});
     return res.json({ sucess: true });
 });
