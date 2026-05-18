@@ -13,21 +13,42 @@ FoodFleet is a full-stack food delivery platform built with a React/Vite fronten
 
 ## Table of Contents
 
-- [Overview](#overview)
-- [Current Features](#current-features)
-- [AI Features](#ai-features)
-- [Architecture](#architecture)
-- [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
-- [Services and Ports](#services-and-ports)
-- [Environment Variables](#environment-variables)
-- [Installation](#installation)
-- [Running Locally](#running-locally)
-- [API Map](#api-map)
-- [Demo Flow](#demo-flow)
-- [Build](#build)
-- [Docker](#docker)
-- [Notes](#notes)
+- [FoodFleet](#foodfleet)
+  - [Table of Contents](#table-of-contents)
+  - [Overview](#overview)
+  - [Current Features](#current-features)
+  - [AI Features](#ai-features)
+    - [Seller Description Generation](#seller-description-generation)
+    - [Smart Food Search](#smart-food-search)
+    - [Seller Performance Insight](#seller-performance-insight)
+  - [Architecture](#architecture)
+  - [Tech Stack](#tech-stack)
+    - [Frontend](#frontend)
+    - [Backend](#backend)
+  - [Project Structure](#project-structure)
+  - [Services and Ports](#services-and-ports)
+  - [Environment Variables](#environment-variables)
+    - [Frontend](#frontend-1)
+    - [Auth Service](#auth-service)
+    - [Restaurant Service](#restaurant-service)
+    - [Utils Service](#utils-service)
+    - [Realtime Service](#realtime-service)
+    - [Rider Service](#rider-service)
+    - [Admin Service](#admin-service)
+  - [Installation](#installation)
+  - [Running Locally](#running-locally)
+  - [API Map](#api-map)
+    - [Auth Service](#auth-service-1)
+    - [Restaurant Service](#restaurant-service-1)
+    - [Utils Service](#utils-service-1)
+    - [Realtime Service](#realtime-service-1)
+    - [Rider Service](#rider-service-1)
+    - [Admin Service](#admin-service-1)
+  - [Demo Flow](#demo-flow)
+  - [Build](#build)
+  - [Docker](#docker)
+  - [Notes](#notes)
+  - [Author](#author)
 
 ## Overview
 
@@ -629,3 +650,9 @@ A root `docker-compose.yml` is not currently included, so local development is s
 - `services/restaurant`, `services/utils`, and `services/rider` require RabbitMQ during startup.
 - The AI routes fall back to local responses if the configured provider is missing or fails.
 - Use Node.js `20.19+` or `22.12+` for the cleanest Vite 7 frontend experience.
+
+## Author
+
+Abhi Gupta
+
+- GitHub: [@abhiguptanitb](https://github.com/abhiguptanitb)
