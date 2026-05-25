@@ -29,7 +29,7 @@ const parseCookies = (cookieHeader?: string) =>
   (cookieHeader || "").split(";").reduce<Record<string, string>>((cookies, item) => {
     const [rawName, ...rest] = item.trim().split("=");
     if (!rawName || rest.length === 0) return cookies;
-    cookies[rawName] = decodeURIComponent(rest.join("="));
+    cookies[rawName] = decodeURIComponent(rest.join("=")); 
     return cookies;
   }, {});
 

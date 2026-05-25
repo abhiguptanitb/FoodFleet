@@ -33,7 +33,7 @@ const createAudit = async ({
   });
 };
 
-export const getPendingRestaurant = TryCatch(async (req, res) => {
+export const getPendingRestaurant = TryCatch(async (req, res) => { //getRestaurantsByVerificationStatus
   const status = typeof req.query.status === "string" ? req.query.status : "all";
   const query =
     status === "pending"
