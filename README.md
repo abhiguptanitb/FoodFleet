@@ -148,46 +148,80 @@ OPENAI_MODEL=gpt-4.1-mini
 
 ## Architecture
 
-```text
-                           +-------------------------+
-                           |        Frontend         |
-                           | React + Vite + TS       |
-                           +-----------+-------------+
-                                       |
-      +--------------------------------+--------------------------------+
-      |                                |                                |
-      v                                v                                v
-+-------------+              +-------------------+              +-------------+
-| Auth        |              | Restaurant        |              | Utils       |
-| Google/JWT  |              | Restaurants       |              | Uploads     |
-| Roles       |              | Menus/Carts       |              | Payments    |
-+-------------+              | Addresses/Orders  |              +------+------+
-                             | Analytics/AI      |                     |
-                             +---------+---------+                     |
-                                       |                               |
-                       +---------------+---------------+               |
-                       |                               |               |
-                       v                               v               |
-                 +-----------+                   +-----------+         |
-                 | Realtime  |                   | Rider     |         |
-                 | Socket.io |                   | Delivery  |         |
-                 | Rooms/API |                   | Location  |         |
-                 +-----+-----+                   +-----+-----+         |
-                       ^                               ^               |
-                       |                               |               |
-                       +-------------+-----------------+---------------+
-                                     |
-                              +------+------+
-                              | RabbitMQ    |
-                              | Events      |
-                              +-------------+
+FoodFleet uses a client-facing microservice architecture. The React app calls the backend services directly through service-specific base URLs, while backend services use a mix of internal HTTP calls and RabbitMQ events for cross-service workflows.
 
-                              +-------------+
-                              | Admin       |
-                              | Verification|
-                              | Audit/Users |
-                              +-------------+
+```text
+                               +----------------------------+
+                               | Frontend                   |
+                               | React + Vite + TypeScript  |
+                               | Customer/Seller/Rider/Admin|
+                               +-------------+--------------+
+                                             |
+          +----------------------------------+----------------------------------+
+          |             HTTP APIs + JWT access token                            |
+          v                                                                     v
++----------------+   +-------------------+   +----------------+   +----------------+
+| Auth Service   |   | Restaurant Service|   | Utils Service  |   | Admin Service  |
+| Google OAuth   |   | Restaurants/Menu  |   | Cloudinary     |   | Verification   |
+| JWT/Refresh    |   | Cart/Address      |   | Razorpay/Stripe|   | Users/Audit    |
+| Role Selection |   | Orders/AI/Stats   |   | Payment APIs   |   |                |
++--------+-------+   +---------+---------+   +--------+-------+   +--------+-------+
+         |                     |                      |                    |
+         v                     v                      |                    v
+  +-------------+       +-------------+                |             +-------------+
+  | MongoDB     |       | MongoDB     |<---------------+             | MongoDB     |
+  | users       |       | restaurants |  internal HTTP: fetch order  | admin views |
+  +-------------+       | orders      |  amount before checkout      +-------------+
+                        | carts       |
+                        +------+------+                 +-------------------------+
+                               ^                        | External Providers      |
+                               |                        | Google/Cloudinary       |
+                               |                        | Razorpay/Stripe/AI APIs |
+                               |                        +-------------------------+
+                               |
+              payment_success  |                  order_ready_for_rider
+          +--------------------+-----------------------------+
+          |                      RabbitMQ                    |
+          |         payment_queue / order_ready_queue         |
+          +--------------------+-----------------------------+
+                               |                  |
+                               v                  v
+                        +------+------+    +------+------+
+                        | Restaurant  |    | Rider       |
+                        | consumer    |    | Service     |
+                        | marks paid  |    | Profiles    |
+                        | emits order |    | Location    |
+                        +------+------+    | Delivery    |
+                               |           +------+------+
+                               |                  |
+                               |                  v
+                               |           +-------------+
+                               |           | MongoDB     |
+                               |           | riders      |
+                               |           +-------------+
+                               |
+                               v
+                        +------+------+
+                        | Realtime    |
+                        | Socket.io   |
+                        | user rooms  |
+                        | restaurant  |
+                        | rooms       |
+                        +------+------+
+                               ^
+                               |
+                         WebSocket clients
 ```
+
+Important runtime flows:
+
+- Authentication starts in the `auth` service with Google OAuth, then the frontend sends the JWT to protected service endpoints.
+- Restaurant/menu images and rider documents are uploaded through the `utils` service to Cloudinary.
+- Payments are created and verified in `utils`; after Razorpay/Stripe verification, `utils` publishes `PAYMENT_SUCCESS` to RabbitMQ.
+- The `restaurant` service consumes payment events, marks orders as paid, clears cart items, and emits realtime updates through the internal realtime endpoint.
+- When a seller marks an order `ready_for_rider`, the `restaurant` service publishes `ORDER_READY_FOR_RIDER`; the `rider` service consumes it, finds nearby verified riders, and notifies them through `realtime`.
+- Rider accept/current/history/stat actions are exposed through the `rider` service, which uses internal HTTP calls to the `restaurant` service for order state changes.
+- The `admin` service operates on verification, customer, and audit data through MongoDB-backed admin routes.
 
 ## Tech Stack
 

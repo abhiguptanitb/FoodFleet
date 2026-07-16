@@ -3,6 +3,10 @@ import axios from "axios";
 import { razorpay } from "../config/razorpay.js";
 import { verifyRazorpaySignature } from "../config/verifyRazorpay.js";
 import { publishPaymentSuccess } from "../config/payment.producer.js";
+import dotenv from "dotenv";
+import Stripe from "stripe";
+dotenv.config();
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export const createRazorpayOrder = async (req: Request, res: Response) => {
   const { orderId } = req.body;
@@ -59,13 +63,6 @@ export const verifyRazorpayPayment = async (req: Request, res: Response) => {
   });
 };
 
-import dotenv from "dotenv";
-
-dotenv.config();
-
-import Stripe from "stripe";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export const payWithStripe = async (req: Request, res: Response) => {
   try {
