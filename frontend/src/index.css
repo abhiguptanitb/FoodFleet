@@ -559,6 +559,10 @@ a:active {
   box-shadow: 0 10px 0 rgba(10, 17, 40, 0.04);
 }
 
+.leaflet-container {
+  z-index: 0;
+}
+
 .brand-mark {
   border: 2px solid var(--text);
   background:
