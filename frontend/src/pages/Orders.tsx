@@ -221,9 +221,14 @@ const OrderRow = ({
       onClick={onClick}
     >
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm font-semibold text-[#1f1a17]">
-          Order #{order._id.slice(-6)}
-        </p>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-[#1f1a17]">
+            {order.restaurantName}
+          </p>
+          <p className="mt-1 text-xs font-semibold text-[var(--text-soft)]">
+            Order #{order._id.slice(-6)}
+          </p>
+        </div>
         <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-semibold capitalize text-[var(--accent)]">
           {statusLabel(order.status)}
         </span>

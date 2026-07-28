@@ -613,14 +613,6 @@ export const updateOrderStatusRider = TryCatch(async (req, res) => {
         });
     }
 });
-/**
- * 📊 Get Restaurant Sales Statistics
- * - Calculates revenue from delivered paid orders
- * - Counts total delivered orders
- * - Finds top-selling item
- * - Data is persisted at database level (immune to user deletions)
- * - New sales automatically accumulate
- */
 export const getRestaurantSalesStats = TryCatch(async (req, res) => {
     const user = req.user;
     const { restaurantId } = req.params;

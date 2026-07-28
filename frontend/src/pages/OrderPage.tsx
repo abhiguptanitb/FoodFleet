@@ -116,8 +116,11 @@ const OrderPage = () => {
       <section className="hero-panel fade-up p-5 sm:p-6">
         <p className="pill-label">Order Tracking</p>
         <h1 className="mt-4 text-3xl font-semibold text-[#1f1a17]">
-          Order #{order._id.slice(-6)}
+          {order.restaurantName}
         </h1>
+        <p className="mt-2 text-sm font-semibold text-[var(--text-soft)]">
+          Order #{order._id.slice(-6)}
+        </p>
         <div className="mt-4 inline-flex rounded-full bg-[var(--accent-soft)] px-4 py-2 text-sm font-semibold capitalize text-[var(--accent)]">
           {statusLabel(order.status)}
         </div>
